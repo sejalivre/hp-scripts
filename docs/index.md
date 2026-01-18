@@ -2,23 +2,62 @@
 /* Estilo Dark Mode Personalizado - HP Info */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    background-color: #0d1117;
-    color: #c9d1d9;
+    background-color: #0d1117 !important;
+    color: #c9d1d9 !important;
     line-height: 1.6;
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
 }
-a { color: #58a6ff; text-decoration: none; }
+a { color: #58a6ff !important; text-decoration: none; }
 a:hover { text-decoration: underline; }
-h1, h2, h3 { color: #ffffff; border-bottom: 1px solid #21262d; padding-bottom: 0.3em; }
-code { background-color: #161b22; color: #ff7b72; padding: 0.2em 0.4em; border-radius: 6px; font-family: monospace; }
-pre { background-color: #161b22; padding: 16px; overflow: auto; border-radius: 6px; }
-pre code { background-color: transparent; color: #c9d1d9; padding: 0; }
-table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-th { background-color: #161b22; color: #ffffff; font-weight: bold; text-align: left; border: 1px solid #30363d; padding: 10px; }
-td { border: 1px solid #30363d; padding: 10px; }
-tr:nth-child(even) { background-color: #12161c; }
+
+/* Títulos */
+h1, h2, h3 { color: #ffffff !important; border-bottom: 1px solid #21262d; padding-bottom: 0.3em; }
+
+/* Tabelas (Correção do Fundo Branco) */
+table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: #0d1117 !important; }
+th {
+    background-color: #161b22 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    text-align: left;
+    border: 1px solid #30363d !important;
+    padding: 10px;
+}
+td {
+    background-color: #0d1117 !important; /* Garante fundo preto nas celulas */
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    padding: 10px;
+}
+/* Efeito zebrado escuro nas linhas pares */
+tr:nth-child(even) td {
+    background-color: #12161c !important;
+}
+
+/* Códigos e Blocos */
+code {
+    background-color: #1f2937 !important; /* Cinza um pouco mais claro para destacar do fundo */
+    color: #ff7b72 !important;
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    font-family: monospace;
+}
+pre {
+    background-color: #161b22 !important;
+    padding: 16px;
+    overflow: auto;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+}
+pre code {
+    background-color: transparent !important;
+    color: #c9d1d9 !important;
+    padding: 0;
+}
+
+/* Outros */
 blockquote { border-left: 4px solid #1f6feb; color: #8b949e; padding-left: 15px; margin-left: 0; }
 hr { border: 0; border-top: 1px solid #30363d; margin: 24px 0; }
 footer { margin-top: 50px; font-size: 0.8em; text-align: center; color: #8b949e; border-top: 1px solid #30363d; padding-top: 20px; }
@@ -68,5 +107,5 @@ Você pode baixar o repositório ou rodar diretamente:
 **MIT License** — você pode usar, modificar e distribuir livremente.
 
 <footer>
-    <p><em>Mantido por <a href="[https://docs.hpinfo.com.br/](https://docs.hpinfo.com.br/)">HP Info</a>. <br>Última atualização: 2026.</em></p>
+    <p><em>Mantido por <a href="https://docs.hpinfo.com.br/">HP Info</a>. <br>Última atualização: 2026.</em></p>
 </footer>
