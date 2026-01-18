@@ -1,10 +1,9 @@
-```Markdown
 <style>
-/* Estilo Dark Mode Personalizado */
+/* Estilo Dark Mode Personalizado - HP Info */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    background-color: #0d1117; /* Fundo escuro estilo GitHub Dark */
-    color: #c9d1d9; /* Texto claro */
+    background-color: #0d1117;
+    color: #c9d1d9;
     line-height: 1.6;
     max-width: 800px;
     margin: 0 auto;
@@ -52,19 +51,22 @@ Coleção de scripts **PowerShell** práticos e prontos para uso. O objetivo é 
 ### 1. Pré-requisitos
 Execute o PowerShell como **Administrador** e libere a execução de scripts:
 
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-2. Como usar
-Você pode baixar o repositório ou rodar diretamente (se implementarmos o método irm):
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-PowerShell
-.\info.ps1    # Inventário
-.\print.ps1   # Impressão
-.\net.ps1     # Rede
-📄 Licença
-MIT License — você pode usar, modificar e distribuir livremente.
+### 2. Como usar
 
-<footer> <p><em>Mantido por <a href="https://docs.hpinfo.com.br/">HP Info</a>.
+Você pode baixar o repositório ou rodar diretamente:
 
+    .\info.ps1    # Inventário
+    .\print.ps1   # Impressão
+    .\net.ps1     # Rede
 
-Última atualização: 2026.</em></p> </footer>
+---
+
+## 📄 Licença
+
+**MIT License** — você pode usar, modificar e distribuir livremente.
+
+<footer>
+    <p><em>Mantido por <a href="[https://docs.hpinfo.com.br/](https://docs.hpinfo.com.br/)">HP Info</a>. <br>Última atualização: 2026.</em></p>
+</footer>
