@@ -1,8 +1,7 @@
-
-```markdown
 [![Verificacao de Qualidade](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
 
 # HP-Scripts (Automação e Gerenciamento)
+...
 
 -> **Documentação Oficial:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
 
