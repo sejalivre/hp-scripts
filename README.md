@@ -4,3 +4,8 @@
 
 
 Coleção de scripts PowerShell para automação de tarefas administrativas e gerenciamento de sistemas.
+
+
+
+
+Uma iniciativa [hpinfo.com.br](https://hpinfo.com.br)
