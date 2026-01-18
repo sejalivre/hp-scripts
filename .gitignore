@@ -1,0 +1,6 @@
+﻿.vscode/
+*.log
+*.ps1.xml
+*~
+bin/
+obj/
