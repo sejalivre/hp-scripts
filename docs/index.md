@@ -76,4 +76,5 @@ MIT License — sinta-se à vontade para usar, modificar e distribuir.
 Gostou? Dê uma ⭐ * **📂 Repositório:** [GitHub - hp-scripts](https://github.com/sejalivre/hp-scripts)
 
 Visite nosso site principal: [hpinfo.com.br](https://www.hpinfo.com.br)
+<footer> <p><em>Mantido por <a href="https://www.hpinfo.com.br/" style="color: #58a6ff;">HP Info</a>. Última atualização: 2026.</em></p> </footer><style> /* Estilos para modo escuro (compatível com GitHub) */ @media (prefers-color-scheme: dark) { body { color: #c9d1d9; background-color: #0d1117; } h1, h2, h3 { color: #58a6ff; } a { color: #58a6ff; } code { background-color: #161b22; color: #8b949e; border: 1px solid #30363d; } blockquote { color: #8b949e; border-left-color: #3b434b; } table { border-color: #30363d; } th, td { border-color: #30363d; } } </style>
 
