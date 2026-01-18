@@ -82,7 +82,7 @@ Coleção de scripts **PowerShell** práticos e prontos para uso. O objetivo é 
 | `info.ps1` | Inventário de hardware | CPU, RAM, discos, relatório HTML | Auditoria, diagnóstico |
 | `print.ps1` | Problemas de impressão | Reinicia Spooler, limpa fila | Help desk |
 | `net.ps1` | Conectividade de rede | Reset TCP/IP, flush DNS | Falhas de internet |
-
+| `.\update.ps1` | Repara e atualiza o windows Update |
 ---
 
 ## 🚀 Começando
@@ -99,8 +99,31 @@ Você pode baixar o repositório ou rodar diretamente:
     .\info.ps1    # Inventário
     .\print.ps1   # Impressão
     .\net.ps1     # Rede
-
+    .\update.ps1
 ---
+
+## 🔄 Automação de Updates (update.ps1)
+
+O **Update Manager** é a nossa ferramenta de "Cura Tudo" para problemas de atualização do Windows. Ele não apenas baixa as atualizações, mas prepara o terreno limpando arquivos corrompidos antigos.
+
+### O que ele faz?
+1.  **Diagnóstico:** Verifica espaço em disco e integridade do sistema operacional.
+2.  **Limpeza:** Remove caches antigos do Windows Update que costumam travar downloads.
+3.  **Instalação:** Baixa e instala todas as atualizações pendentes (incluindo drivers, se configurado).
+4.  **Relatório:** Salva um histórico completo do que foi feito.
+
+### ⚠️ Requisitos
+* É necessário executar o PowerShell como **Administrador**.
+* O computador pode pedir para reiniciar automaticamente ao final.
+
+### Onde ver o que aconteceu? (Logs)
+Se você precisar auditar o que o script fez, acesse o arquivo de log gerado automaticamente:
+> 📂 `C:\Windows\Logs\WindowsUpdateScript.log`
+
+### Execução Manual
+Se você baixou o repositório, navegue até a pasta e execute:
+```powershell
+.\update.ps1
 
 ## 📄 Licença
 
