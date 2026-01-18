@@ -43,7 +43,7 @@ powershell
 🆘 Suporte e Contribuição
 Este é um projeto Open Source mantido pela comunidade.
 
-📂 Repositório: GitHub - hp-scripts
+ * **📂 Repositório:** [GitHub - hp-scripts](https://github.com/sejalivre/hp-scripts)
 
 🐛 Reportar Erros: Utilize a aba Issues no GitHub.
 
