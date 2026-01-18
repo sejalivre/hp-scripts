@@ -2,10 +2,10 @@
 
 # HP Scripts
 
-ðŸ“š **DocumentaÃ§Ã£o Oficial:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
+ðŸ“š **Documentação Oficial:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
 
 
-ColeÃ§Ã£o de scripts PowerShell para automaÃ§Ã£o de tarefas administrativas e gerenciamento de sistemas.
+Coleção de scripts PowerShell para automação de tarefas administrativas e gerenciamento de sistemas.
 
 
 
