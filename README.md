@@ -1,4 +1,3 @@
-﻿Aqui está o arquivo `README.md` completo e formatado corretamente. Pode copiar e colar tudo no seu editor:
 
 ```markdown
 [![Verificacao de Qualidade](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
