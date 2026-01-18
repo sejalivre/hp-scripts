@@ -1,4 +1,5 @@
-Markdown# 🖥️ HP-Scripts
+```markdown
+# 🖥️ HP-Scripts
 
 > **Suíte de automação para administração de sistemas Windows**
 
@@ -28,53 +29,100 @@ Execute **como Administrador** uma única vez (por usuário):
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-Dica de segurança: se preferir mais restrição, use AllSigned e assine os scripts.
-2. Como usar
+```
 
-Baixe o script desejado (ou clone o repositório inteiro)
-Abra o PowerShell como Administrador
-Navegue até a pasta do script
-Execute:
+**Dica de segurança:** se preferir mais restrição, use `AllSigned` e assine os scripts.
 
-PowerShell.\info.ps1     # Inventário de hardware
+### 2. Como usar
+
+1. Baixe o script desejado (ou clone o repositório inteiro)
+2. Abra o PowerShell como Administrador
+3. Navegue até a pasta do script
+4. Execute:
+
+```powershell
+.\info.ps1     # Inventário de hardware
 .\print.ps1    # Correção de impressora
 .\net.ps1      # Reset de rede
+```
 
+---
 
-✨ Funcionalidades em destaque
+## ✨ Funcionalidades em destaque
 
-Relatórios em HTML limpos e fáceis de compartilhar
-Correções seguras e reversíveis sempre que possível
-Pouca ou nenhuma dependência externa
-Mensagens claras em português com códigos de erro quando aplicável
+- **Relatórios em HTML** limpos e fáceis de compartilhar
+- **Correções seguras** e reversíveis sempre que possível
+- Pouca ou nenhuma dependência externa
+- **Mensagens claras em português** com códigos de erro quando aplicável
 
+---
 
-🛠️ Contribuindo
+## 🛠️ Contribuindo
 
-Fork o projeto
-Crie sua feature branch (git checkout -b feature/melhor-log-de-erros)
-Commit suas mudanças (git commit -m 'Adiciona log detalhado de erros no info.ps1')
-Push para a branch (git push origin feature/melhor-log-de-erros)
-Abra um Pull Request
+1. **Fork** o projeto
+2. Crie sua feature branch: `git checkout -b feature/melhor-log-de-erros`
+3. Commit suas mudanças: `git commit -m 'Adiciona log detalhado de erros no info.ps1'`
+4. Push para a branch: `git push origin feature/melhor-log-de-erros`
+5. Abra um **Pull Request**
 
-Pull requests com:
-
-novas ferramentas
-melhorias de robustez
-tradução / documentação
-correção de bugs
+**Pull requests com:**
+- Novas ferramentas
+- Melhorias de robustez
+- Tradução / documentação
+- Correção de bugs
 
 são muito bem-vindos!
-→ Abra uma issue para discutir ideias ou reportar bugs.
 
-📄 Licença
-MIT License — sinta-se à vontade para usar, modificar e distribuir.
+→ **Abra uma issue** para discutir ideias ou reportar bugs.
 
-❤️ Agradecimentos / Mantido por
+---
 
-Última atualização: Janeiro 2026
-Gostou? Dê uma ⭐ * **📂 Repositório:** [GitHub - hp-scripts](https://github.com/sejalivre/hp-scripts)
+## 📄 Licença
 
-Visite nosso site principal: [hpinfo.com.br](https://www.hpinfo.com.br)
-<footer> <p><em>Mantido por <a href="https://www.hpinfo.com.br/" style="color: #58a6ff;">HP Info</a>. Última atualização: 2026.</em></p> </footer><style> /* Estilos para modo escuro (compatível com GitHub) */ @media (prefers-color-scheme: dark) { body { color: #c9d1d9; background-color: #0d1117; } h1, h2, h3 { color: #58a6ff; } a { color: #58a6ff; } code { background-color: #161b22; color: #8b949e; border: 1px solid #30363d; } blockquote { color: #8b949e; border-left-color: #3b434b; } table { border-color: #30363d; } th, td { border-color: #30363d; } } </style>
+**MIT License** — sinta-se à vontade para usar, modificar e distribuir.
 
+---
+
+## ❤️ Agradecimentos
+
+- **📂 Repositório:** [GitHub - hp-scripts](https://github.com/sejalivre/hp-scripts)
+- **🌐 Site principal:** [hpinfo.com.br](https://www.hpinfo.com.br)
+
+**Última atualização:** Janeiro 2026  
+**Gostou?** Dê uma ⭐ no repositório!
+
+<footer>
+  <p><em>Mantido por <a href="https://www.hpinfo.com.br/" style="color: #58a6ff;">HP Info</a>. Última atualização: 2026.</em></p>
+</footer>
+
+<style>
+  /* Estilos para modo escuro (compatível com GitHub) */
+  @media (prefers-color-scheme: dark) {
+    body {
+      color: #c9d1d9;
+      background-color: #0d1117;
+    }
+    h1, h2, h3 {
+      color: #58a6ff;
+    }
+    a {
+      color: #58a6ff;
+    }
+    code {
+      background-color: #161b22;
+      color: #8b949e;
+      border: 1px solid #30363d;
+    }
+    blockquote {
+      color: #8b949e;
+      border-left-color: #3b434b;
+    }
+    table {
+      border-color: #30363d;
+    }
+    th, td {
+      border-color: #30363d;
+    }
+  }
+</style>
+```
