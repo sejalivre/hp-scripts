@@ -1,55 +1,111 @@
-Markdown
-# 🖥️ Bem-vindo ao HP-Scripts
+<style>
+/* Estilo Dark Mode Personalizado - HP Info */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background-color: #0d1117 !important;
+    color: #c9d1d9 !important;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+a { color: #58a6ff !important; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Títulos */
+h1, h2, h3 { color: #ffffff !important; border-bottom: 1px solid #21262d; padding-bottom: 0.3em; }
+
+/* Tabelas (Correção do Fundo Branco) */
+table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: #0d1117 !important; }
+th {
+    background-color: #161b22 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    text-align: left;
+    border: 1px solid #30363d !important;
+    padding: 10px;
+}
+td {
+    background-color: #0d1117 !important; /* Garante fundo preto nas celulas */
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+    padding: 10px;
+}
+/* Efeito zebrado escuro nas linhas pares */
+tr:nth-child(even) td {
+    background-color: #12161c !important;
+}
+
+/* Códigos e Blocos */
+code {
+    background-color: #1f2937 !important; /* Cinza um pouco mais claro para destacar do fundo */
+    color: #ff7b72 !important;
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    font-family: monospace;
+}
+pre {
+    background-color: #161b22 !important;
+    padding: 16px;
+    overflow: auto;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+}
+pre code {
+    background-color: transparent !important;
+    color: #c9d1d9 !important;
+    padding: 0;
+}
+
+/* Outros */
+blockquote { border-left: 4px solid #1f6feb; color: #8b949e; padding-left: 15px; margin-left: 0; }
+hr { border: 0; border-top: 1px solid #30363d; margin: 24px 0; }
+footer { margin-top: 50px; font-size: 0.8em; text-align: center; color: #8b949e; border-top: 1px solid #30363d; padding-top: 20px; }
+</style>
+
+# 🖥️ HP-Scripts
 
 > **Suíte de automação para administração de sistemas Windows**
 
-O **HP-Scripts** é uma coleção de ferramentas PowerShell desenvolvidas para simplificar e automatizar tarefas comuns de administração em ambientes Windows. Toda a documentação oficial está disponível abaixo.
+[![GitHub license](https://img.shields.io/github/license/sejalivre/hp-scripts?style=flat-square&color=blue)](https://github.com/sejalivre/hp-scripts/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/sejalivre/hp-scripts?style=flat-square&color=green)](https://github.com/sejalivre/hp-scripts/issues)
+[![GitHub stars](https://img.shields.io/github/stars/sejalivre/hp-scripts?style=flat-square&color=yellow)](https://github.com/sejalivre/hp-scripts/stargazers)
+
+Coleção de scripts **PowerShell** práticos e prontos para uso. O objetivo é simplificar tarefas repetitivas de TI.
 
 ---
 
-## 🛠️ **Ferramentas Disponíveis**
+## 📋 Ferramentas Disponíveis
 
-### 🔍 **1. Inventário de Hardware (`info.ps1`)**
-Gera um relatório **HTML completo** sobre a saúde e especificações do hardware da máquina.
-
-* **📊 Dados coletados:** Processador, Memória RAM, Discos (incluindo S.M.A.R.T), Drivers e Logs de Erro.
-* **🎯 Ideal para:** Auditoria de máquinas e diagnóstico prévio de manutenção.
-
-### 🖨️ **2. Solução de Impressão (`print.ps1`)**
-Resolve os problemas mais comuns de **filas de impressão travadas**.
-
-* **⚙️ Funções:** Reinicia o Spooler, limpa arquivos temporários de impressão e aplica correções de registro para erros de "Acesso Negado".
-
-### 🌐 **3. Diagnóstico de Rede (`net.ps1`)**
-Restaura a **conectividade da estação de trabalho** com comandos automatizados.
-
-* **🔧 Funções:** Reseta a pilha TCP/IP, libera cache de DNS, reinicia serviços de rede (DHCP, DNS Client) e ajusta regras de firewall.
+| Script | Função | Recursos | Indicado para |
+| :--- | :--- | :--- | :--- |
+| `info.ps1` | Inventário de hardware | CPU, RAM, discos, relatório HTML | Auditoria, diagnóstico |
+| `print.ps1` | Problemas de impressão | Reinicia Spooler, limpa fila | Help desk |
+| `net.ps1` | Conectividade de rede | Reset TCP/IP, flush DNS | Falhas de internet |
 
 ---
 
-## 🚀 **Guia Rápido de Uso**
+## 🚀 Começando
 
-### 📋 **Pré-requisitos**
-Para executar qualquer script desta coleção, é necessário liberar a política de execução do PowerShell. Execute o comando abaixo como **Administrador**:
+### 1. Pré-requisitos
+Execute o PowerShell como **Administrador** e libere a execução de scripts:
 
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-▶️ Como Executar
-Baixe a ferramenta desejada e execute via terminal PowerShell:
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-PowerShell
-.\nome-do-script.ps1
-🆘 Suporte e Contribuição
-Este é um projeto Open Source mantido pela comunidade.
+### 2. Como usar
 
-📂 Repositório: GitHub - hp-scripts
+Você pode baixar o repositório ou rodar diretamente:
 
-🐛 Reportar Erros: Utilize a aba Issues no GitHub.
+    .\info.ps1    # Inventário
+    .\print.ps1   # Impressão
+    .\net.ps1     # Rede
 
-🤝 Contribuir: Pull requests são bem-vindos!
+---
 
-💡 Dica: Para melhor visualização no GitHub, ative o modo escuro nas configurações do seu perfil.
+## 📄 Licença
 
-<footer> <p><em>Mantido por <a href="https://www.hpinfo.com.br/" style="color: #58a6ff;">HP Info</a>. Última atualização: 2026.</em></p> </footer>
+**MIT License** — você pode usar, modificar e distribuir livremente.
 
-<style> /* Força o tema escuro para garantir visualização correta */ body { color: #c9d1d9; background-color: #0d1117; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; } h1, h2, h3 { color: #58a6ff; } a { color: #58a6ff; text-decoration: none; } a:hover { text-decoration: underline; } code { background-color: #161b22; color: #8b949e; border: 1px solid #30363d; padding: 2px 5px; border-radius: 4px; } pre code { background-color: transparent; border: none; color: inherit; } pre { background-color: #161b22; border: 1px solid #30363d; padding: 16px; border-radius: 6px; overflow: auto; } blockquote { color: #8b949e; border-left: 4px solid #3b434b; padding-left: 1em; margin-left: 0; } hr { border: 1px solid #30363d; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #30363d; padding: 8px; } </style>
+<footer>
+    <p><em>Mantido por <a href="https://docs.hpinfo.com.br/">HP Info</a>. <br>Última atualização: 2026.</em></p>
+</footer>
