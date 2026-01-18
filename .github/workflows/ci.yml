@@ -1,9 +1,9 @@
 ﻿name: Verificacao de Qualidade
-on: [push, pull_request] # Quando rodar? Em todo push ou PR.
+on: [push, pull_request]
 
 jobs:
   analise-de-codigo:
-    runs-on: ubuntu-latest # Qual computador usar? (Linux é mais rápido/barato)
+    runs-on: ubuntu-latest
     steps:
       - name: Baixar o código do repositório
         uses: actions/checkout@v3
@@ -11,14 +11,12 @@ jobs:
       - name: Testar sintaxe com PSScriptAnalyzer
         shell: pwsh
         run: |
-          # Instala o analisador e roda nos scripts
           Install-Module PSScriptAnalyzer -Force
-          \ = Invoke-ScriptAnalyzer -Path . -Recurse
+          # Correção: Usando crase para escapar o cifrão
+          $resultado = Invoke-ScriptAnalyzer -Path . -Recurse
           
-          # Mostra os erros/avisos na tela
-          \ | Format-Table -AutoSize
+          $resultado | Format-Table -AutoSize
           
-          # Se houver erros graves, falha a automação
-          if (\.Severity -contains 'Error') {
+          if ($resultado.Severity -contains 'Error') {
               Write-Error "Erros críticos encontrados no código!"
           }
