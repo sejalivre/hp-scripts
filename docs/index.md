@@ -1,4 +1,5 @@
-﻿# Bem-vindo ao HP-Scripts
+```markdown
+# Bem-vindo ao HP-Scripts
 
 O **HP-Scripts** é uma suíte de automação desenvolvida para simplificar a rotina de administração de sistemas Windows. Aqui você encontra a documentação oficial de cada ferramenta.
 
@@ -28,16 +29,27 @@ Para executar qualquer script desta coleção, é necessário liberar a polític
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-Como Executar
+```
+
+### Como Executar
 Baixe a ferramenta desejada e execute via terminal:
 
-PowerShell
+```powershell
 .\nome-do-script.ps1
-🆘 Suporte e Contribuição
+```
+
+---
+
+## 🆘 Suporte e Contribuição
+
 Este é um projeto Open Source.
 
-Repositório: GitHub - hp-scripts
+- **Repositório:** [GitHub - hp-scripts](https://github.com/hp-scripts)
+- **Reportar Erros:** Utilize a aba Issues no GitHub.
 
-Reportar Erros: Utilize a aba Issues no GitHub.
+---
 
-<footer> <p><em>Mantido por HP Info. Última atualização: 2026.</em></p> </footer>
+<footer>
+  <p><em>Mantido por HP Info. Última atualização: 2026.</em></p>
+</footer>
+```
