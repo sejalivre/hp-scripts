@@ -75,6 +75,16 @@ cd hp-scripts
 
 ```
 
+Markdown## 🚀 Uso Rápido (Quick Start)
+
+Não é necessário baixar nada manualmente. Basta abrir o **PowerShell** (como Administrador preferencialmente) e rodar o comando da ferramenta desejada.
+
+### Menu Principal (Recomendado)
+Acessa todas as ferramentas através de uma interface interativa.
+```powershell
+irm get.hpinfo.com.br/menu | iex
+Ferramentas IndividuaisSe preferir rodar direto sem passar pelo menu:FerramentaComandoInfo do PC`irm get.hpinfo.com.br/infoReparo de Rede`irm get.hpinfo.com.br/netImpressoras`irm get.hpinfo.com.br/printBackup`irm get.hpinfo.com.br/backup
+
 ## ⚠️ Isenção de Responsabilidade
 
 Estes scripts alteram configurações do sistema (Registro do Windows e Serviços). Recomenda-se analisar o código antes de executar em ambiente de produção.
