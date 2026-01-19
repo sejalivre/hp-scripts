@@ -5,13 +5,13 @@
 .DESCRIPTION
     Este script coleta informações detalhadas do sistema (CPU, RAM, Discos, Rede, 
     Drivers, Logs de Erro, etc.) e gera um relatório HTML interativo e estilizado.
-    Utiliza ferramentas externas (CoreTemp, CrystalDiskInfo) se disponíveis na pasta 'tools'.
+    Baixa ferramentas externas (CoreTemp, CrystalDiskInfo) diretamente do GitHub.
 
 .NOTES
     Arquivo: info.ps1
     Autor: [Seu Nome/Organização]
     Site: hpinfo.com.br
-    Data: 2025
+    Data: 2026
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -43,67 +43,79 @@ $Style = @"
 "@
 #endregion
 
-#region 2. Preparação de Ferramentas (7z e Extração)
+#region 2. Preparação de Ferramentas (Download e Extração)
 # ==============================================================================
-# Extração de ferramentas temporárias para pasta TEMP
+# Baixa ferramentas do GitHub para pasta TEMP e extrai
 # ==============================================================================
 
-$ScriptDir   = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
-$ToolsDir    = Join-Path $ScriptDir "tools"
-$SevenTxe    = Join-Path $ToolsDir "7z.txe"
-$SevenExe    = Join-Path $ToolsDir "7z.exe"
-$Password    = "0" # Senha padrão das ferramentas HPTI
+# --- BLOCO DE PREPARAÇÃO DE FERRAMENTAS ---
+$repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+$tempDir    = "$env:TEMP\HP-Tools"
+$7zipTxe    = "$tempDir\7z.txe"
+$7zipExe    = "$tempDir\7z.exe"
+$Password   = "0" # Senha padrão das ferramentas HPTI (mantido do original)
 
-# Cria cópia temporária do 7z.exe se necessário
-if (Test-Path $SevenTxe) {
-    Copy-Item -Path $SevenTxe -Destination $SevenExe -Force
-} else {
-    # USO DE WRITE-WARNING PARA ERRO DE ARQUIVO
-    Write-Warning "ERRO: 7z.txe não encontrado em $ToolsDir"
+# 1. Cria diretório temporário se não existir
+if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
+
+# 2. Função para baixar arquivos se não existirem
+function Baixar-Ferramenta ($nomeArquivo) {
+    $destino = "$tempDir\$nomeArquivo"
+    $url = "$repoBase/$nomeArquivo"
+    
+    # Se já existe, não baixa de novo (opcional, remove se quiser forçar sempre)
+    if (Test-Path $destino) { return $true }
+
+    Write-Host " -> Baixando $nomeArquivo..." -ForegroundColor Yellow
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $destino -ErrorAction Stop
+    } catch {
+        Write-Warning "ERRO ao baixar $nomeArquivo. Verifique a conexão ou a URL."
+        return $false
+    }
+    return $true
 }
 
-# Pasta temporária única para esta execução
-$TempBase = Join-Path $env:TEMP "HPTI_Tools_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-New-Item -Path $TempBase -ItemType Directory -Force | Out-Null
+# 3. Baixa e Prepara o 7-Zip
+Baixar-Ferramenta "7z.txe"
 
+if (Test-Path $7zipTxe) {
+    # Renomeia/Copia para .exe para execução correta
+    Copy-Item -Path $7zipTxe -Destination $7zipExe -Force
+} else {
+    Write-Warning "ERRO CRÍTICO: 7z.txe não foi baixado. Ferramentas externas não funcionarão."
+}
+
+# 4. Lista de Ferramentas para Baixar e Extrair
 $ToolsToExtract = @(
-    @{ Name = "CoreTemp";        Archive = "CoreTemp.7z";        SubFolder = "CoreTemp";        MainExe = "CoreTemp.exe" }
-    @{ Name = "CrystalDiskInfo"; Archive = "CrystalDiskInfo.7z"; SubFolder = "CrystalDiskInfo"; MainExe = $null }
+    @{ Name = "CoreTemp";        Archive = "CoreTemp.7z";        SubFolder = "CoreTemp" }
+    @{ Name = "CrystalDiskInfo"; Archive = "CrystalDiskInfo.7z"; SubFolder = "CrystalDiskInfo" }
 )
 
 $ExtractedPaths = @{}
 
-if (Test-Path $SevenExe) {
+if (Test-Path $7zipExe) {
     foreach ($tool in $ToolsToExtract) {
-        $archivePath = Join-Path $ToolsDir $tool.Archive
-        $extractPath = Join-Path $TempBase $tool.SubFolder
-
-        if (-not (Test-Path $archivePath)) {
-            # USO DE WRITE-WARNING PARA AVISO DE FALTA DE ARQUIVO
-            Write-Warning "Aviso: $($tool.Archive) não encontrado"
-            continue
-        }
-
-        # USO DE WRITE-OUTPUT PARA STATUS NORMAL
-        Write-Output "Extraindo $($tool.Name) ..."
-        New-Item -Path $extractPath -ItemType Directory -Force | Out-Null
         
-        # Extração via 7zip linha de comando
-        & $SevenExe x "$archivePath" -o"$extractPath" -p"$Password" -y | Out-Null
-
-        if ($LASTEXITCODE -eq 0) {
-            # USO DE WRITE-OUTPUT PARA SUCESSO
-            Write-Output "$($tool.Name) extraído OK"
-            $ExtractedPaths[$tool.Name] = $extractPath
+        # Baixa o arquivo .7z específico
+        if (Baixar-Ferramenta $tool.Archive) {
+            Write-Host " -> Extraindo $($tool.Name)..." -ForegroundColor Yellow
+            
+            # Define argumentos do 7zip
+            # x: extrair, -o: destino, -y: sim para tudo, -p: senha
+            $argumentos = "x `"$tempDir\$($tool.Archive)`" -o`"$tempDir`" -p`"$Password`" -y"
+            
+            Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
+            
+            # Salva o caminho para uso nas seções posteriores
+            $ExtractedPaths[$tool.Name] = Join-Path $tempDir $tool.SubFolder
+            
         } else {
-            # USO DE WRITE-WARNING PARA FALHA NA EXTRAÇÃO
-            Write-Warning "Falha na extração de $($tool.Archive) - código $LASTEXITCODE"
+            Write-Warning "Falha ao obter $($tool.Name)"
         }
     }
-    # Limpeza do 7z.exe
-    Remove-Item -Path $SevenExe -Force -ErrorAction SilentlyContinue
+    Write-Host "Ferramentas prontas para uso!" -ForegroundColor Green
 }
-
 Start-Sleep -Milliseconds 800
 #endregion
 
