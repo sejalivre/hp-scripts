@@ -131,6 +131,6 @@ irm get.hpinfo.com.br/update | iex
 ---
 
 <footer>
-    <p>REpositorio <a href="https://github.com/sejalivre/hp-scripts">GitHub - hp-scripts</a>. 
+    <p>REpositorio <a href="https://github.com/sejalivre/hp-scripts">GitHub - hp-scripts</a> </p>
     <p>Mantido por <a href="https://hpinfo.com.br">HP Info</a>. <br>Documentação gerada via GitHub Pages.</p>
 </footer>
