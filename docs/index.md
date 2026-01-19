@@ -15,7 +15,7 @@ a:hover { text-decoration: underline; }
 /* Títulos */
 h1, h2, h3 { color: #ffffff !important; border-bottom: 1px solid #21262d; padding-bottom: 0.3em; }
 
-/* Tabelas (Correção do Fundo Branco) */
+/* Tabelas */
 table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: #0d1117 !important; }
 th {
     background-color: #161b22 !important;
@@ -26,19 +26,17 @@ th {
     padding: 10px;
 }
 td {
-    background-color: #0d1117 !important; /* Garante fundo preto nas celulas */
+    background-color: #0d1117 !important;
     color: #c9d1d9 !important;
     border: 1px solid #30363d !important;
     padding: 10px;
 }
-/* Efeito zebrado escuro nas linhas pares */
-tr:nth-child(even) td {
-    background-color: #12161c !important;
-}
+/* Efeito zebrado */
+tr:nth-child(even) td { background-color: #12161c !important; }
 
-/* Códigos e Blocos */
+/* Códigos */
 code {
-    background-color: #1f2937 !important; /* Cinza um pouco mais claro para destacar do fundo */
+    background-color: #1f2937 !important;
     color: #ff7b72 !important;
     padding: 0.2em 0.4em;
     border-radius: 6px;
@@ -63,73 +61,75 @@ hr { border: 0; border-top: 1px solid #30363d; margin: 24px 0; }
 footer { margin-top: 50px; font-size: 0.8em; text-align: center; color: #8b949e; border-top: 1px solid #30363d; padding-top: 20px; }
 </style>
 
-# 🖥️ HP-Scripts
+# 🖥️ HP-Scripts Documentation
 
-> **Suíte de automação para administração de sistemas Windows**
+> **Suíte profissional de automação para Windows.**
 
-[![GitHub license](https://img.shields.io/github/license/sejalivre/hp-scripts?style=flat-square&color=blue)](https://github.com/sejalivre/hp-scripts/blob/main/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/sejalivre/hp-scripts?style=flat-square&color=green)](https://github.com/sejalivre/hp-scripts/issues)
-[![GitHub stars](https://img.shields.io/github/stars/sejalivre/hp-scripts?style=flat-square&color=yellow)](https://github.com/sejalivre/hp-scripts/stargazers)
-
-Coleção de scripts **PowerShell** práticos e prontos para uso. O objetivo é simplificar tarefas repetitivas de TI.
+Bem-vindo à documentação oficial. Aqui você aprende a utilizar nossos scripts para agilizar o suporte técnico.
 
 ---
 
-## 📋 Ferramentas Disponíveis
+## 🚀 O jeito mais fácil (Menu Principal)
 
-| Script | Função | Recursos | Indicado para |
-| :--- | :--- | :--- | :--- |
-| `info.ps1` | Inventário de hardware | CPU, RAM, discos, relatório HTML | Auditoria, diagnóstico |
-| `print.ps1` | Problemas de impressão | Reinicia Spooler, limpa fila | Help desk |
-| `net.ps1` | Conectividade de rede | Reset TCP/IP, flush DNS | Falhas de internet |
-| `.\update.ps1` | Repara e atualiza o windows Update |
+Não precisa baixar nada. Abra o PowerShell como **Administrador** e cole:
+
+    irm get.hpinfo.com.br/menu | iex
+
+Isso abrirá nossa Central de Suporte interativa, baixando as ferramentas necessárias sob demanda.
+
 ---
 
-## 🚀 Começando
+## 📦 Ferramentas Disponíveis
 
-### 1. Pré-requisitos
-Execute o PowerShell como **Administrador** e libere a execução de scripts:
+| Ferramenta | Script | O que faz? |
+| :--- | :--- | :--- |
+| **Info System** | `info.ps1` | Relatório HTML completo (Hardware, Temperatura, S.M.A.R.T). |
+| **Rede Fix** | `net.ps1` | Resolve "Sem Internet", limpa DNS e reseta adaptadores. |
+| **Print Fix** | `print.ps1` | Destrava impressoras e limpa spooler. |
+| **Update Mgr** | `update.ps1` | Força atualizações e corrige erros do Windows Update. |
+| **Backup Pro** | `backup.ps1` | Salva dados e configurações antes da formatação. |
 
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-### 2. Como usar
-
-Você pode baixar o repositório ou rodar diretamente:
-
-    .\info.ps1    # Inventário
-    .\print.ps1   # Impressão
-    .\net.ps1     # Rede
-    .\update.ps1
 ---
 
-## 🔄 Automação de Updates (update.ps1)
+## 💾 Backup e Migração (`backup.ps1`)
 
-O **Update Manager** é a nossa ferramenta de "Cura Tudo" para problemas de atualização do Windows. Ele não apenas baixa as atualizações, mas prepara o terreno limpando arquivos corrompidos antigos.
+Esta ferramenta foi desenhada para técnicos que precisam formatar computadores mas não podem perder as configurações do cliente.
 
-### O que ele faz?
-1.  **Diagnóstico:** Verifica espaço em disco e integridade do sistema operacional.
-2.  **Limpeza:** Remove caches antigos do Windows Update que costumam travar downloads.
-3.  **Instalação:** Baixa e instala todas as atualizações pendentes (incluindo drivers, se configurado).
-4.  **Relatório:** Salva um histórico completo do que foi feito.
+### O que é salvo?
+1.  **Rede:** Senhas de Wi-Fi salvas (incluindo as chaves de segurança) e IPs.
+2.  **Impressoras:** Lista de filas instaladas e drivers.
+3.  **Arquivos:** Documentos, Planilhas, PDFs e Favoritos.
+4.  **Personalização:** Papel de Parede atual e ícones da Área de Trabalho.
+5.  **Programas:** Lista completa de softwares instalados (para referência futura).
 
-### ⚠️ Requisitos
-* É necessário executar o PowerShell como **Administrador**.
-* O computador pode pedir para reiniciar automaticamente ao final.
+### Como usar
+Este script requer que você defina uma **pasta de destino**. Recomenda-se baixar o repositório e executar localmente:
 
-### Onde ver o que aconteceu? (Logs)
-Se você precisar auditar o que o script fez, acesse o arquivo de log gerado automaticamente:
-> 📂 `C:\Windows\Logs\WindowsUpdateScript.log`
-
-### Execução Manual
-Se você baixou o repositório, navegue até a pasta e execute:
 ```powershell
-.\update.ps1
+# Exemplo de uso
+.\backup.ps1 -Destino "C:\Backups"
+```
 
-## 📄 Licença
+> **Nota:** O script criará uma pasta com o nome `Backup_Sistema_DATA_HORA` dentro de `C:\Backups` e gerará um arquivo `restaurar.ps1` dentro dela para ajudar na recuperação manual.
 
-**MIT License** — você pode usar, modificar e distribuir livremente.
+---
+
+## 🔄 Windows Update (`update.ps1`)
+
+O "Cura Tudo" para atualizações travadas.
+
+1.  Para os serviços de update (`wuauserv`, `bits`).
+2.  Limpa as pastas `SoftwareDistribution` e `catroot2`.
+3.  Executa correções do sistema (`DISM` e `SFC`).
+4.  Baixa e instala atualizações pendentes automaticamente.
+
+**Uso Web:**
+```powershell
+irm get.hpinfo.com.br/update | iex
+```
+
+---
 
 <footer>
-<p><em>Veja mais em  <a href="[https://docs.hpinfo.com.br](https://github.com/sejalivre/hp-scripts)/">Repositorio de Scripts</a>. </p> 
-    <p><em>Mantido por <a href="https://docs.hpinfo.com.br/">HP Info</a>. <br>Última atualização: 2026.</em></p>
+    <p>Mantido por <a href="https://hpinfo.com.br">HP Info</a>. <br>Documentação gerada via GitHub Pages.</p>
 </footer>
