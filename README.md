@@ -1,103 +1,70 @@
-[![Verificacao de Qualidade](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
+[![Qualidade do Código](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
+[![Documentação](https://img.shields.io/badge/docs-online-blue)](https://docs.hpinfo.com.br)
 
 # HP-Scripts (Automação e Gerenciamento)
-...
 
--> **Documentação Oficial:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
+Coleção de scripts PowerShell voltados para inventário de hardware, manutenção de rede, backups e solução de problemas.
 
-Coleção de scripts PowerShell voltados para inventário de hardware, manutenção de rede e solução de problemas de impressão.
+**Documentação Completa:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
 
-## 🚀 Como Começar
+---
 
-Para utilizar estes scripts, você precisa clonar este repositório ou baixar o arquivo ZIP.
+## 🚀 Uso Rápido (Web)
 
-### 🔓 Habilitando a Execução de Scripts
-Por padrão, o Windows bloqueia a execução de scripts baixados da internet por segurança. Para permitir o uso, abra o PowerShell como **Administrador** e execute:
+Você pode executar o **Menu Principal** diretamente da internet sem baixar nada. Abra o PowerShell como Administrador e rode:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
+irm get.hpinfo.com.br/menu | iex
 ```
 
-Isso permite rodar scripts criados localmente e scripts assinados baixados da internet.
+*Isso baixará e executará o orquestrador que gerencia todas as ferramentas abaixo.*
 
 ---
 
 ## 📂 Catálogo de Scripts
 
-### 1. Inventário do Sistema (`info.ps1`)
+| Script | Função | Descrição |
+| :--- | :--- | :--- |
+| **`menu.ps1`** | **Launcher** | Menu interativo para baixar e rodar as ferramentas sob demanda. |
+| **`info.ps1`** | **Inventário** | Gera relatório HTML com dados de CPU, RAM, S.M.A.R.T, Drivers e CoreTemp. |
+| **`backup.ps1`** | **Backup** | Salva Wi-Fi, Impressoras, Atalhos e Documentos antes da formatação. |
+| **`net.ps1`** | **Rede** | Reseta pilha TCP/IP, limpa cache DNS e renova configurações. |
+| **`print.ps1`** | **Impressão** | Reinicia Spooler, limpa fila travada e ajusta registros RPC. |
+| **`update.ps1`** | **Updates** | Repara o Windows Update e instala patches pendentes. |
 
-Gera um relatório HTML rico e detalhado sobre a estação de trabalho.
+---
 
-* **O que faz:** Coleta dados de CPU (incluindo temperatura via CoreTemp), Saúde do Disco (S.M.A.R.T via CrystalDiskInfo), RAM, Drivers com falha e atualizações do Windows.
-* **Como usar:**
+## 🛠️ Execução Manual (Download)
 
+Se você clonou o repositório (`git clone`), use os comandos abaixo:
+
+### 1. Backup e Migração
+Este script exige que você defina uma pasta de destino para salvar os dados.
+
+```powershell
+.\backup.ps1 -Destino "C:\Backups"
+```
+
+### 2. Inventário
 ```powershell
 .\info.ps1
-
 ```
 
-*O relatório será salvo na sua Área de Trabalho.*
-
-### 2. Reset de Impressão (`print.ps1`)
-
-Soluciona problemas comuns de impressoras travadas ou spooler parado.
-
-* **O que faz:** Para o serviço Spooler, limpa a fila de impressão travada, aplica correções de registro (RPC Auth/PointAndPrint) e reinicia o serviço.
-* **Como usar:** (Executar como Administrador)
-
+### 3. Updates do Windows
 ```powershell
-.\print.ps1
-
-```
-
-### 3. Reset de Rede (`net.ps1`)
-
-Ferramenta para diagnóstico e reparo de conectividade.
-
-* **O que faz:** Reseta configurações de IP (winsock/int ip), limpa o cache DNS, libera firewall e garante que serviços críticos de rede (DHCP, DNS Client) estejam ativos.
-* **Como usar:** (Executar como Administrador)
-
-```powershell
-.\net.ps1
-
+.\update.ps1
 ```
 
 ---
 
-### `update.ps1` - Gerenciador de Atualizações e Reparos
-
-Script avançado para manutenção completa do Windows Update. Ideal para máquinas que não estão atualizando ou precisam de manutenção preventiva.
-
-**Principais Funcionalidades:**
-* 🧹 **Limpeza Profunda:** Para serviços (`wuauserv`, `bits`), limpa a pasta `SoftwareDistribution` e `catroot2`.
-* 🛠️ **Auto-Reparo:** Executa automaticamente `DISM /RestoreHealth` e `SFC /Scannow` se detectar problemas.
-* 📦 **Dependências:** Instala e configura automaticamente o módulo `PSWindowsUpdate`.
-* 📝 **Logs Detalhados:** Gera logs de execução em `C:\Windows\Logs\WindowsUpdateScript.log`.
-
-**Como usar (One-Liner):**
-Abra o PowerShell como Administrador e rode:
+## ⚠️ Requisitos
+* Windows 10 ou 11.
+* PowerShell executando como **Administrador**.
+* Política de execução liberada:
 ```powershell
-irm [https://raw.githubusercontent.com/sejalivre/hp-scripts/main/update.ps1](https://raw.githubusercontent.com/sejalivre/hp-scripts/main/update.ps1) | iex
-
-## 🛠️ Instalação (Git)
-
-Se você tem o Git instalado:
-
-```bash
-git clone [https://github.com/sejalivre/hp-scripts.git](https://github.com/sejalivre/hp-scripts.git)
-cd hp-scripts
-
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
-
-## ⚠️ Isenção de Responsabilidade
-
-Estes scripts alteram configurações do sistema (Registro do Windows e Serviços). Recomenda-se analisar o código antes de executar em ambiente de produção.
 
 ---
 
-Uma iniciativa [hpinfo.com.br](https://hpinfo.com.br)
-
-```
-
-```
+Uma iniciativa [HP Info](https://hpinfo.com.br).
