@@ -65,6 +65,21 @@ Ferramenta para diagnóstico e reparo de conectividade.
 
 ---
 
+### `update.ps1` - Gerenciador de Atualizações e Reparos
+
+Script avançado para manutenção completa do Windows Update. Ideal para máquinas que não estão atualizando ou precisam de manutenção preventiva.
+
+**Principais Funcionalidades:**
+* 🧹 **Limpeza Profunda:** Para serviços (`wuauserv`, `bits`), limpa a pasta `SoftwareDistribution` e `catroot2`.
+* 🛠️ **Auto-Reparo:** Executa automaticamente `DISM /RestoreHealth` e `SFC /Scannow` se detectar problemas.
+* 📦 **Dependências:** Instala e configura automaticamente o módulo `PSWindowsUpdate`.
+* 📝 **Logs Detalhados:** Gera logs de execução em `C:\Windows\Logs\WindowsUpdateScript.log`.
+
+**Como usar (One-Liner):**
+Abra o PowerShell como Administrador e rode:
+```powershell
+irm [https://raw.githubusercontent.com/sejalivre/hp-scripts/main/update.ps1](https://raw.githubusercontent.com/sejalivre/hp-scripts/main/update.ps1) | iex
+
 ## 🛠️ Instalação (Git)
 
 Se você tem o Git instalado:
