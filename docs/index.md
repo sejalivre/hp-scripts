@@ -130,5 +130,6 @@ Se você baixou o repositório, navegue até a pasta e execute:
 **MIT License** — você pode usar, modificar e distribuir livremente.
 
 <footer>
+<p><em>Mantido por <a href="[https://docs.hpinfo.com.br](https://github.com/sejalivre/hp-scripts)/">REpositorio de Scripts</a>. </p> 
     <p><em>Mantido por <a href="https://docs.hpinfo.com.br/">HP Info</a>. <br>Última atualização: 2026.</em></p>
 </footer>
