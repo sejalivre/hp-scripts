@@ -49,44 +49,46 @@ $Style = @"
 # ==============================================================================
 
 # --- BLOCO DE PREPARAÇÃO DE FERRAMENTAS ---
+#region 2. Preparação de Ferramentas (Download e Extração)
+# ==============================================================================
+# Baixa ferramentas do GitHub para pasta TEMP e extrai em subpastas
+# ==============================================================================
+
+# --- DEFINIÇÃO DE CAMINHOS ---
 $repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
 $tempDir    = "$env:TEMP\HP-Tools"
 $7zipTxe    = "$tempDir\7z.txe"
 $7zipExe    = "$tempDir\7z.exe"
-$Password   = "0" # Senha padrão das ferramentas HPTI (mantido do original)
+$Password   = "0" 
 
-# 1. Cria diretório temporário se não existir
+# 1. Garante que o diretório principal existe
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
-# 2. Função para baixar arquivos se não existirem
+# 2. Função de Download
 function Baixar-Ferramenta ($nomeArquivo) {
     $destino = "$tempDir\$nomeArquivo"
     $url = "$repoBase/$nomeArquivo"
     
-    # Se já existe, não baixa de novo (opcional, remove se quiser forçar sempre)
+    # Otimização: Se o arquivo .7z já existe, não baixa de novo (economiza banda)
     if (Test-Path $destino) { return $true }
 
     Write-Host " -> Baixando $nomeArquivo..." -ForegroundColor Yellow
     try {
         Invoke-WebRequest -Uri $url -OutFile $destino -ErrorAction Stop
     } catch {
-        Write-Warning "ERRO ao baixar $nomeArquivo. Verifique a conexão ou a URL."
+        Write-Warning "ERRO ao baixar $nomeArquivo."
         return $false
     }
     return $true
 }
 
-# 3. Baixa e Prepara o 7-Zip
+# 3. Prepara o 7-Zip (Motor de extração)
 Baixar-Ferramenta "7z.txe"
-
 if (Test-Path $7zipTxe) {
-    # Renomeia/Copia para .exe para execução correta
     Copy-Item -Path $7zipTxe -Destination $7zipExe -Force
-} else {
-    Write-Warning "ERRO CRÍTICO: 7z.txe não foi baixado. Ferramentas externas não funcionarão."
 }
 
-# 4. Lista de Ferramentas para Baixar e Extrair
+# 4. Lista de Ferramentas e Lógica de Extração
 $ToolsToExtract = @(
     @{ Name = "CoreTemp";        Archive = "CoreTemp.7z";        SubFolder = "CoreTemp" }
     @{ Name = "CrystalDiskInfo"; Archive = "CrystalDiskInfo.7z"; SubFolder = "CrystalDiskInfo" }
@@ -97,26 +99,33 @@ $ExtractedPaths = @{}
 if (Test-Path $7zipExe) {
     foreach ($tool in $ToolsToExtract) {
         
-        # Baixa o arquivo .7z específico
+        # Define onde essa ferramenta específica vai morar
+        $pastaDestino = Join-Path $tempDir $tool.SubFolder
+        
+        # Baixa o .7z
         if (Baixar-Ferramenta $tool.Archive) {
+            
+            # Se a pasta da ferramenta não existe, cria (para o 7z jogar dentro dela)
+            if (-not (Test-Path $pastaDestino)) { New-Item -ItemType Directory -Path $pastaDestino -Force | Out-Null }
+
             Write-Host " -> Extraindo $($tool.Name)..." -ForegroundColor Yellow
             
-            # Define argumentos do 7zip
-            # x: extrair, -o: destino, -y: sim para tudo, -p: senha
-            $argumentos = "x `"$tempDir\$($tool.Archive)`" -o`"$tempDir`" -p`"$Password`" -y"
+            # A MÁGICA: O parametro -o agora aponta para a subpasta
+            $argumentos = "x `"$tempDir\$($tool.Archive)`" -o`"$pastaDestino`" -p`"$Password`" -y"
             
             Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
             
-            # Salva o caminho para uso nas seções posteriores
-            $ExtractedPaths[$tool.Name] = Join-Path $tempDir $tool.SubFolder
+            # Registra o caminho correto para o resto do script usar
+            $ExtractedPaths[$tool.Name] = $pastaDestino
             
-        } else {
-            Write-Warning "Falha ao obter $($tool.Name)"
         }
     }
-    Write-Host "Ferramentas prontas para uso!" -ForegroundColor Green
+    Write-Host "Ferramentas prontas!" -ForegroundColor Green
+} else {
+    Write-Warning "Motor 7-Zip não encontrado. As ferramentas não serão extraídas."
 }
 Start-Sleep -Milliseconds 800
+#endregion
 #endregion
 
 #region 3. Início do HTML
