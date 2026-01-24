@@ -43,12 +43,12 @@ catch {
 Write-Host "`nConcluído."
 Start-Sleep -Seconds 5
 
-    # Registra a tarefa (Sobrescreve se ja existir devido ao -Force)
-    # Adicionado -ErrorAction Stop para capturar erro no catch
-    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Principal $Principal -Settings $Settings -Description "Sincroniza o horario do Windows com a internet 45s apos o logon." -Force -ErrorAction Stop | Out-Null
+# Registra a tarefa (Sobrescreve se ja existir devido ao -Force)
+# Adicionado -ErrorAction Stop para capturar erro no catch
+Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Principal $Principal -Settings $Settings -Description "Sincroniza o horario do Windows com a internet 45s apos o logon." -Force -ErrorAction Stop | Out-Null
     
-    Write-Host "Tarefa '$TaskName' criada com sucesso!" -ForegroundColor Green
-    Write-Host "A tarefa rodara 45 segundos apos qualquer logon de usuario." -ForegroundColor Gray
+Write-Host "Tarefa '$TaskName' criada com sucesso!" -ForegroundColor Green
+Write-Host "A tarefa rodara 45 segundos apos qualquer logon de usuario." -ForegroundColor Gray
 
 }
 catch {
