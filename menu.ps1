@@ -1,48 +1,59 @@
 # Arquivo: menu.ps1
+# Launcher Central - HP-Scripts (v2.2)
 Clear-Host
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "   HP-SCRIPTS - CENTRAL DE SUPORTE        " -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "1. Exibir Informacoes do PC (info.ps1)"
-Write-Host "2. Reparar Conexao de Rede (net.ps1)"
-Write-Host "3. Gerenciar Impressoras (print.ps1)"
-Write-Host "4. Atualizar Sistema/Drivers (update.ps1)"
-Write-Host "5. Realizar Backup (backup.ps1)"
-Write-Host "Q. Sair"
-Write-Host ""
 
-$escolha = Read-Host "Digite o numero da opcao"
-
-# URL Base para facilitar manutencao
 $baseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main"
 
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "             HP-SCRIPTS - CENTRAL DE SUPORTE              " -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host " Descrição: Automação técnica e personalização.            " -ForegroundColor Gray
+Write-Host ""
+
+Write-Host "1. [INFO]   Exibir Informações do PC" -ForegroundColor White
+Write-Host "2. [NET]    Reparar Conexão de Rede" -ForegroundColor White
+Write-Host "3. [PRINT]  Gerenciar Impressoras" -ForegroundColor White
+Write-Host "4. [UPDATE] Atualizar Sistema/Drivers" -ForegroundColor White
+Write-Host "5. [BACKUP] Realizar Backup do Sistema" -ForegroundColor White
+Write-Host "6. [HORA]   Sincronizar Relógio (NTP)" -ForegroundColor White
+Write-Host "7. [ACT]    Ativação Windows/Office" -ForegroundColor Yellow
+Write-Host "8. [WALL]   Aplicar Wallpaper HP 4K (Praia)" -ForegroundColor Magenta
+Write-Host "   -> Baixa e define o fundo de tela automaticamente." -ForegroundColor Gray
+
+Write-Host ""
+Write-Host "Q. [SAIR]   Encerrar Script" -ForegroundColor Red
+Write-Host ""
+
+$escolha = Read-Host "Digite o número da opção"
+
 Switch ($escolha) {
-    "1" {
-        Write-Host "Carregando Info..." -ForegroundColor Yellow
-        irm "$baseUrl/info.ps1" | iex
+    "1" { Write-Host "Carregando Info..."; irm "$baseUrl/info.ps1" | iex }
+    "2" { Write-Host "Iniciando reparo de rede..."; irm "$baseUrl/net.ps1" | iex }
+    "3" { Write-Host "Carregando módulo de impressão..."; irm "$baseUrl/print.ps1" | iex }
+    "4" { Write-Host "Iniciando atualizações..."; irm "$baseUrl/update.ps1" | iex }
+    "5" { Write-Host "Iniciando backup..."; irm "$baseUrl/backup.ps1" | iex }
+    "6" { Write-Host "Sincronizando horário..."; irm "$baseUrl/hora.ps1" | iex }
+    "7" { Write-Host "Iniciando ativador..."; irm "https://get.activated.win" | iex }
+    "8" { 
+        Write-Host "Configurando Wallpaper..." -ForegroundColor Magenta
+        $wpUrl = "$baseUrl/tools/4k-praia.jpg"
+        $wpPath = "$env:TEMP\4k-praia.jpg"
+        
+        # Download da imagem
+        Invoke-WebRequest -Uri $wpUrl -OutFile $wpPath
+        
+        # Código para aplicar o Wallpaper via SystemParametersInfo (Win32 API)
+        $code = @'
+using System.Runtime.InteropServices;
+public class Wallpaper {
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+}
+'@
+        Add-Type -TypeDefinition $code
+        [Wallpaper]::SystemParametersInfo(20, 0, $wpPath, 3)
+        Write-Host "[OK] Wallpaper aplicado com sucesso!" -ForegroundColor Green
     }
-    "2" {
-        Write-Host "Iniciando reparo de rede..." -ForegroundColor Yellow
-        irm "$baseUrl/net.ps1" | iex
-    }
-    "3" {
-        Write-Host "Carregando modulo de impressao..." -ForegroundColor Yellow
-        irm "$baseUrl/print.ps1" | iex
-    }
-    "4" {
-        Write-Host "Iniciando atualizacoes..." -ForegroundColor Yellow
-        irm "$baseUrl/update.ps1" | iex
-    }
-    "5" {
-        Write-Host "Iniciando backup..." -ForegroundColor Yellow
-        irm "$baseUrl/backup.ps1" | iex
-    }
-    "Q" {
-        Write-Host "Saindo..."
-        Exit
-    }
-    Default {
-        Write-Host "Opcao Invalida." -ForegroundColor Red
-    }
+    "Q" { Write-Host "Saindo..."; Exit }
+    Default { Write-Host "Opção Inválida." -ForegroundColor Red }
 }
