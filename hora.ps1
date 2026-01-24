@@ -17,7 +17,7 @@ try {
     # Inicia o serviço caso não esteja rodando
     Start-Service -Name w32time
 
-    # Atualiza a hora
+    # Atualiza a hora  
     net stop w32time
     w32tm /unregister
     w32tm /register
