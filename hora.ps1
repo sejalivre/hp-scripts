@@ -1,5 +1,5 @@
 
-# Verifica se o script está rodando com privilégios de administrador
+# Verifica se o script está rodando com privilégios de administrador 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]$identity
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -9,13 +9,17 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 }
 
 try {
-    Write-Host "1. Sincronizando horário imediatamente..." -ForegroundColor Cyan
-    # Garante que o serviço de hora está rodando
-    Start-Service w32time -ErrorAction SilentlyContinue
-    
-    # Força a sincronização
-    $syncResult = w32tm /resync /nowait
-    Write-Host "Comando de sincronização enviado." -ForegroundColor Green
+    Write-Host "1. Configurando e sincronizando horário..." -ForegroundColor Cyan
+
+    # Configura o serviço de hora para iniciar automaticamente
+    Set-Service -Name w32time -StartupType Automatic
+
+    # Inicia o serviço caso não esteja rodando
+    Start-Service -Name w32time
+
+    # Atualiza a hora
+    w32tm /resync /nowait
+    Write-Host "Serviço configurado para automático e sincronização iniciada." -ForegroundColor Green
 
     Write-Host "`n2. Configurando tarefa agendada..." -ForegroundColor Cyan
     $TaskName = "SincronizarHoraLogon"
