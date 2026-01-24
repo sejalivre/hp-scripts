@@ -18,13 +18,13 @@ try {
     
     Start-Sleep -Seconds 2
     # O parametro /force ajuda a ignorar restrições
-    w32tm /resync /rediscover /force
+    w32tm /resync /rediscover
     
     Write-Host "Horario sincronizado com sucesso (limites ignorados)." -ForegroundColor Green
 
     # 2. Configuração da Tarefa Agendada
     $TaskName = "SincronizarHorarioHPTI"
-    $Action = New-ScheduledTaskAction -Execute "w32tm.exe" -Argument "/resync /rediscover /force"
+    $Action = New-ScheduledTaskAction -Execute "w32tm.exe" -Argument "/resync /rediscover"
     
     $Trigger = New-ScheduledTaskTrigger -AtLogOn
     $Trigger.Delay = "PT45S" 
