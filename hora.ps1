@@ -17,9 +17,9 @@ try {
     
     Write-Host "Serviço configurado e tentativa de sincronização enviada." -ForegroundColor Green
 
-    # 2. Configuração da Tarefa Agendada 
+    # 2. Configuração da Tarefa  Agendada 
     $TaskName = "SincronizarHorarioHPTI"
-    $Action = New-ScheduledTaskAction -Execute "w32tm.exe" -Argument "w32tm /resync /rediscover"
+    $Action = New-ScheduledTaskAction -Execute "w32tm.exe" -Argument "/resync /rediscover"
     
     # Correção do Erro 'Delay': Usamos uma estrutura compatível com versões anteriores
     $Trigger = New-ScheduledTaskTrigger -AtLogOn
