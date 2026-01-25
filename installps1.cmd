@@ -38,8 +38,10 @@ if %ERRORLEVEL% EQU 0 (
 
 :FINAL
 echo ======================================================
-echo Operacao finalizada!
-pause
+
 
 REM certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
-pause
+
+
+Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

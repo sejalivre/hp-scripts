@@ -253,3 +253,6 @@ Write-Host "Local: $backupFolder" -ForegroundColor Yellow
 Write-Host "`nArquivos criados:" -ForegroundColor Cyan
 Get-ChildItem $backupFolder | ForEach-Object { Write-Host "  - $($_.Name)" }
 Write-Host "`nExecute como Administrador para informações completas de WiFi" -ForegroundColor Yellow
+
+Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
