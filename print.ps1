@@ -85,4 +85,7 @@ try {
 
 # USO DE WRITE-OUTPUT
 Write-Output "`nFinalizado. Pressione qualquer tecla para sair..."
-Pause
+
+
+Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

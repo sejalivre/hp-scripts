@@ -85,4 +85,7 @@ Write-Host "=======================================" -ForegroundColor Cyan
 
 # Reiniciar o Explorer para o usuário
 Start-Process explorer.exe
-Pause
+
+
+Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

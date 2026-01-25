@@ -94,4 +94,7 @@ try {
 
 # USO DE WRITE-OUTPUT
 Write-Output "`nConcluído. Recomenda-se reiniciar o computador para aplicar todas as alterações."
-Pause
+
+
+Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
