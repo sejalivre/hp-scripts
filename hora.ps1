@@ -3,8 +3,8 @@
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]$identity
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "Este script precisa de permissões de administrador. Reiniciando como Admin..." -ForegroundColor Yellow
-    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Write-Warning "Este script precisa ser executado como Administrador."
+    Write-Warning "Por favor, abra o PowerShell como Administrador e tente novamente."
     exit
 }
 
@@ -18,7 +18,7 @@ try {
     w32tm /register
     net start w32time
 
-    # Remove limites de correção de fase
+    # Remove limites de correção de fase   
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config"
     Set-ItemProperty -Path $regPath -Name "MaxPosPhaseCorrection" -Value 4294967295
     Set-ItemProperty -Path $regPath -Name "MaxNegPhaseCorrection" -Value 4294967295
@@ -44,18 +44,78 @@ try {
     
     # Cria o script auxiliar em c:\intel
     $scriptContent = @'
-# Script auxiliar para sincronização de horário via tarefa agendada
-try {
-    $service = Get-Service -Name w32time -ErrorAction SilentlyContinue
-    if ($service.Status -ne 'Running') {
-        Start-Service -Name w32time -ErrorAction Stop
-        Start-Sleep -Seconds 2
+    # Script auxiliar para sincronização de horário via tarefa agendada
+    $logPath = "C:\intel\time_sync_log.txt"
+    Start-Transcript -Path $logPath -Append
+
+    function Log-Message {
+        param([string]$Message)
+        $TimeStamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Write-Output "[$TimeStamp] $Message"
     }
-    w32tm /resync /rediscover
-    exit 0
-} catch {
-    exit 1
-}
+
+    Log-Message "Iniciando script de sincronização de horário..."
+
+    try {
+        $service = Get-Service -Name w32time -ErrorAction SilentlyContinue
+        if ($service.Status -ne 'Running') {
+            Log-Message "Serviço w32time não está rodando. Iniciando..."
+            Start-Service -Name w32time -ErrorAction Stop
+            Start-Sleep -Seconds 2
+        } else {
+            Log-Message "Serviço w32time já está rodando."
+        }
+
+        # Tenta sincronizar com retentativas
+        $maxRetries = 5
+        $retryCount = 0
+        $synced = $false
+
+        while (-not $synced -and $retryCount -lt $maxRetries) {
+            $retryCount++
+            Log-Message "Tentativa $retryCount de $maxRetries..."
+            
+            # Verifica conectividade básica antes de tentar
+            if (Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet) {
+                Log-Message "Conectividade de rede detectada."
+                
+                try {
+                    $result = w32tm /resync /rediscover 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Log-Message "Sucesso: $result"
+                        $synced = $true
+                    } else {
+                        Log-Message "Falha no comando w32tm: $result"
+                        throw "Erro ao executar w32tm"
+                    }
+                } catch {
+                    Log-Message "Erro ao tentar sincronizar: $_"
+                }
+            } else {
+                Log-Message "Sem conectividade de rede ainda."
+            }
+
+            if (-not $synced) {
+                Log-Message "Aguardando 10 segundos antes da próxima tentativa..."
+                Start-Sleep -Seconds 10
+            }
+        }
+
+        if ($synced) {
+            Log-Message "Sincronização concluída com sucesso."
+            Stop-Transcript
+            exit 0
+        } else {
+            Log-Message "Falha após todas as tentativas."
+            Stop-Transcript
+            exit 1
+        }
+
+    } catch {
+        Log-Message "Erro crítico no script: $_"
+        Stop-Transcript
+        exit 1
+    }
 '@
     
     $scriptPath = "$intelPath\sync-time-hpti.ps1"
