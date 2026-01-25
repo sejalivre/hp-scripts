@@ -843,6 +843,3 @@ try { Start-Process $ReportPath } catch {}
 # USO DE WRITE-OUTPUT PARA STATUS FINAL
 Write-Output "Finalizado."
 #endregion
-
-Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

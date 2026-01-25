@@ -144,6 +144,3 @@ catch {
 
 Write-Host "`nPressione qualquer tecla para sair..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-
-Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
