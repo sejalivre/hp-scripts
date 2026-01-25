@@ -1,7 +1,7 @@
 # tools/nextdns/nextdns.ps1
 # Menu de Gerenciamento NextDNS - HP-Scripts
 
-$baseUrl = "get.hpinfo.com.br/nextdns"
+$baseUrl = "get.hpinfo.com.br/tools/nextdns"
 
 function Show-NextDNSMenu {
     do {
