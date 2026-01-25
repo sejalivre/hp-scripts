@@ -6,7 +6,7 @@
     Versão: 1.3.1 (Correção de Escopo e URL) 
 #>
 
-# Configuração de Origem
+# Configuração de Origem 
 $baseUrl = "get.hpinfo.com.br"
 
 # 1. Definição das Ferramentas (Fácil de adicionar novos itens aqui!) 
