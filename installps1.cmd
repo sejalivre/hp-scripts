@@ -30,4 +30,6 @@ if %ERRORLEVEL% EQU 0 (
 
 echo ======================================================
 echo Operacao finalizada!
+
+REM certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
 pause
