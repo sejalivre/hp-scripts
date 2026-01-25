@@ -6,7 +6,7 @@
 #>
 
 # Configuração de Origem (CDN/GitHub)
-$baseUrl = "https://get.hpinfo.com.br"
+$baseUrl = "get.hpinfo.com.br"
 
 function Show-MainMenu {
     do {
