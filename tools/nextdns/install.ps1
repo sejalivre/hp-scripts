@@ -1,10 +1,16 @@
-# install.ps1 - Instalador HPTI NextDNS
-# Versão Final Consolidada (Bypass 404)
+<#
+.SYNOPSIS
+    Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
+#>
 
-$ErrorActionPreference = "SilentlyContinue"
+# --- VERIFICAÇÃO DE ADMINISTRADOR ---
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "Execute como ADMINISTRADOR!"
+    Start-Sleep -Seconds 3
+    Exit
+}
 
-# --- CONFIGURAÇÕES DE INFRAESTRUTURA ---
-# Link direto para a pasta tools onde ficam os binários
+# --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas para evitar 404) ---
 $repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
 $dnsBase    = "$repoBase/nextdns"
 $tempDir    = "$env:TEMP\HP-Tools"
@@ -12,38 +18,100 @@ $7zipExe    = "$tempDir\7z.exe"
 $nextDnsZip = "$tempDir\nextdns.7z"
 $extractDir = "$tempDir\nextdns_extracted"
 
-# 1. Garante pastas [cite: 66, 69]
+# 1. Garante que as pastas existem
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
 
-# 2. Motor de Extração (Baixa o 7z.txe e renomeia para .exe) 
+# 2. Baixa o motor 7-Zip (se não existir)
 if (-not (Test-Path $7zipExe)) {
     Write-Host " -> Preparando motor de extração..." -ForegroundColor Gray
-    Invoke-WebRequest -Uri "$repoBase/7z.txe" -OutFile "$tempDir\7z.txe"
+    Invoke-WebRequest -Uri "$repoBase/7z.txe" -OutFile "$tempDir\7z.txe" -UseBasicParsing
     Copy-Item -Path "$tempDir\7z.txe" -Destination $7zipExe -Force
 }
 
-# 3. Baixa o pacote NextDNS (Certifique-se que o arquivo está em tools/nextdns/nextdns.7z) 
+# 3. Baixa o pacote NextDNS do seu repositório
 Write-Host " -> Baixando pacote NextDNS..." -ForegroundColor Yellow
-try {
-    Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -ErrorAction Stop
-} catch {
-    Write-Error "ERRO 404: O arquivo nextdns.7z não foi encontrado no GitHub!"
-    Write-Host "Verifique se ele está em: hp-scripts/tools/nextdns/nextdns.7z" -ForegroundColor Red
-    return
-}
+Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -ErrorAction Stop -UseBasicParsing
 
-# 4. Extração [cite: 69]
+# 4. Extração Silenciosa
 Write-Host " -> Extraindo ferramentas..." -ForegroundColor Yellow
 $argumentos = "x `"$nextDnsZip`" -o`"$extractDir`" -p`"0`" -y"
 Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
 
-# 5. Execução do Instalador Extraído [cite: 70]
+# 5. Caminhos dos arquivos extraídos
 $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
+$CertPath      = Join-Path $extractDir "NextDNS.cer"
+
+# --- EXECUÇÃO DA INSTALAÇÃO ---
 if (Test-Path $InstallerPath) {
-    Write-Host " -> Instalando NextDNS..." -ForegroundColor Cyan
+    Write-Host " -> Instalando NextDNS Silenciosamente..." -ForegroundColor Cyan
     Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=3a495c" -Wait
-    Write-Host "[OK] Instalado com sucesso." -ForegroundColor Green
+    Write-Host "[OK] Executável instalado." -ForegroundColor Green
 } else {
-    Write-Error "Arquivo instalador não encontrado dentro do .7z!"
+    Write-Error "ERRO: Instalador não encontrado na extração!"
+    return
 }
+
+# --- INSTALAÇÃO DO CERTIFICADO ---
+if (Test-Path $CertPath) {
+    Write-Host " -> Instalando certificado de bloqueio..." -ForegroundColor Yellow
+    Import-Certificate -FilePath $CertPath -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+    Write-Host "[OK] Certificado importado." -ForegroundColor Green
+}
+
+# --- OCULTAR DO PAINEL DE CONTROLE (SystemComponent) ---
+Write-Host " -> Ocultando do Painel de Controle..." -ForegroundColor Gray
+Start-Sleep -Seconds 5
+$uninstallPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+)
+foreach ($path in $uninstallPaths) {
+    if (Test-Path $path) {
+        Get-ChildItem -Path $path | ForEach-Object {
+            $displayName = Get-ItemProperty -Path $_.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue
+            if ($displayName.DisplayName -like "*NextDNS*") {
+                New-ItemProperty -Path $_.PSPath -Name "SystemComponent" -Value 1 -PropertyType DWORD -Force | Out-Null
+            }
+        }
+    }
+}
+
+# --- LIMPEZA E FINALIZAÇÃO DE REDE ---
+Write-Host " -> Limpando Cache DNS e reiniciando navegadores..." -ForegroundColor Magenta
+ipconfig /flushdns | Out-Null
+
+$browsers = @("chrome", "msedge", "firefox", "brave", "opera")
+foreach ($b in $browsers) { Stop-Process -Name $b -Force -ErrorAction SilentlyContinue }
+
+# --- AGENDAMENTO DA TAREFA DE REPARO ---
+Write-Host " -> Configurando tarefa agendada de reparo..." -ForegroundColor Cyan
+$HptiDir = "$env:ProgramFiles\HPTI"
+if (!(Test-Path $HptiDir)) { New-Item -ItemType Directory -Path $HptiDir -Force | Out-Null }
+
+$DestScript = Join-Path $HptiDir "reparar_nextdns.ps1"
+# Baixa o script de reparo para a pasta permanente
+Invoke-WebRequest -Uri "$dnsBase/reparar_nextdns.ps1" -OutFile $DestScript -UseBasicParsing
+
+$TaskName = "HPTI_NextDNS_Reparo"
+$Action   = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
+$Trigger1 = New-ScheduledTaskTrigger -AtLogOn
+$Trigger2 = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 60) -RepetitionDuration (New-TimeSpan -Days 3650)
+$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$Settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+
+Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger @($Trigger1, $Trigger2) -Principal $Principal -Settings $Settings -Force | Out-Null
+
+# --- ATUALIZAR IP VINCULADO (DDNS) ---
+Write-Host " -> Atualizando IP vinculado no painel NextDNS..." -ForegroundColor Cyan
+try {
+    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/3a495c/97a2d3980330d01a" -UseBasicParsing | Out-Null
+    Write-Host "[OK] IP Vinculado." -ForegroundColor Green
+} catch {
+    Write-Warning "Não foi possível atualizar o IP no painel."
+}
+
+Write-Host "`n==========================================" -ForegroundColor Cyan
+Write-Host "   INSTALAÇÃO HPTI CONCLUÍDA COM SUCESSO!  " -ForegroundColor White -BackgroundColor DarkGreen
+Write-Host "==========================================" -ForegroundColor Cyan
+Start-Sleep -Seconds 5
