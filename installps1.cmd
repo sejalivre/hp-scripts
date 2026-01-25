@@ -5,17 +5,21 @@ echo ======================================================
 echo   Verificador de Versao do PowerShell (Core)
 echo ======================================================
 
-:: Verifica se o Winget esta disponivel
+:: 1. Verifica se o Winget esta disponivel
 where winget >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-    echo [ERRO] Winget nao encontrado. Certifique-se de que a Loja Windows esta atualizada.
-    echo Tentando instalacao via script web alternativo...
+    echo [AVISO] Winget nao encontrado.
+    echo Tentando instalacao via script web alternativo (MSI)...
     powershell -Command "& {iex ((New-Object System.Net.WebClient).DownloadString('https://aka.ms/install-powershell.ps1')) -UseMSI -Quiet}"
-    pause
-    exit /b
+    if %ERRORLEVEL% EQU 0 (
+        echo [OK] Instalacao via Web concluida.
+    ) else (
+        echo [ERRO] Falha na instalacao alternativa.
+    )
+    goto :FINAL
 )
 
-:: Verifica se o PowerShell 7 ja esta instalado
+:: 2. Se o Winget existe, verifica se o PowerShell 7 ja esta instalado
 winget list --id Microsoft.PowerShell --exact >nul 2>nul
 
 if %ERRORLEVEL% EQU 0 (
@@ -23,13 +27,19 @@ if %ERRORLEVEL% EQU 0 (
     winget upgrade --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
     echo [OK] Processo de atualizacao concluido.
 ) else (
-    echo [INFO] PowerShell 7 nao encontrado. Iniciando instalacao...
+    echo [INFO] PowerShell 7 nao encontrado. Iniciando instalacao via Winget...
     winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
-    echo [OK] Instalacao concluida.
+    if %ERRORLEVEL% NEQ 0 (
+        echo [ERRO] Erro ao instalar via Winget.
+    ) else (
+        echo [OK] Instalacao concluida.
+    )
 )
 
+:FINAL
 echo ======================================================
 echo Operacao finalizada!
+pause
 
 REM certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
 pause

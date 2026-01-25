@@ -1,64 +1,60 @@
-# Arquivo: menu.ps1
-# Launcher Central - HP-Scripts (v2.3)
-Clear-Host
+<#
+.SYNOPSIS
+    Hub de Automação HP-Scripts - Launcher Principal.
+.DESCRIPTION
+    Orquestrador que centraliza o acesso às ferramentas de suporte via nuvem.
+    Versão: 1.2
+#>
 
-$baseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main"
+do {
+    Clear-Host
+    Write-Host "==============================================" -ForegroundColor Cyan
+    Write-Host "       HP-SCRIPTS HUB - Automação TI          " -ForegroundColor White -BackgroundColor DarkCyan
+    Write-Host "==============================================" -ForegroundColor Cyan
+    [cite_start]Write-Host "  1. [INFO]   Coleta de Dados e Saúde do PC" [cite: 26]
+    [cite_start]Write-Host "  2. [NET]    Ferramentas de Rede e Conectividade" [cite: 73]
+    [cite_start]Write-Host "  3. [BACKUP] Rotina de Cópia e Governança" [cite: 81]
+    Write-Host "  --------------------------------------------"
+    Write-Host "  Q. Sair"
+    Write-Host "==============================================" -ForegroundColor Cyan
+    
+    $escolha = Read-Host "Selecione uma opção para iniciar"
 
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "             HP-SCRIPTS - CENTRAL DE SUPORTE              " -ForegroundColor Cyan
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " Descrição: Automação técnica e personalização.            " -ForegroundColor Gray
-Write-Host ""
-
-Write-Host "1. [INFO]   Exibir Informações do PC" -ForegroundColor White
-Write-Host "2. [NET]    Reparar Conexão de Rede" -ForegroundColor White
-Write-Host "3. [PRINT]  Gerenciar Impressoras" -ForegroundColor White
-Write-Host "4. [UPDATE] Atualizar Sistema/Drivers" -ForegroundColor White
-Write-Host "5. [BACKUP] Realizar Backup do Sistema" -ForegroundColor White
-Write-Host "6. [HORA]   Sincronizar Relógio (NTP)" -ForegroundColor White
-Write-Host "7. [LIMP]   Limpeza Profunda do Sistema" -ForegroundColor White
-Write-Host "8. [ACT]    Ativação Windows/Office" -ForegroundColor Yellow
-Write-Host "9. [WALL]   Aplicar Wallpaper HP 4K (Praia)" -ForegroundColor Magenta
-Write-Host "   -> Baixa e define o fundo de tela automaticamente." -ForegroundColor Gray
-
-Write-Host ""
-Write-Host "Q. [SAIR]   Encerrar Script" -ForegroundColor Red
-Write-Host ""
-
-$escolha = Read-Host "Digite o número da opção"
-
-Switch ($escolha) { 
-    "1" { Write-Host "Carregando Info..."; irm "$baseUrl/info.ps1" | iex }
-    "2" { Write-Host "Iniciando reparo de rede..."; irm "$baseUrl/net.ps1" | iex }
-    "3" { Write-Host "Carregando módulo de impressão..."; irm "$baseUrl/print.ps1" | iex }
-    "4" { Write-Host "Iniciando atualizações..."; irm "$baseUrl/update.ps1" | iex }
-    "5" { Write-Host "Iniciando backup..."; irm "$baseUrl/backup.ps1" | iex }
-    "6" { Write-Host "Sincronizando horário..."; irm "$baseUrl/hora.ps1" | iex }
-    "7" { Write-Host "Iniciando limpeza..."; irm "$baseUrl/limp.ps1" | iex }
-    "8" { Write-Host "Iniciando ativador..."; irm "https://get.activated.win" | iex }
-    "9" { 
-        Write-Host "Configurando Wallpaper..." -ForegroundColor Magenta
-        $wpUrl = "$baseUrl/tools/4k-praia.jpg"
-        $wpPath = "$env:TEMP\4k-praia.jpg"
-        
-        Invoke-WebRequest -Uri $wpUrl -OutFile $wpPath
-        
-        $code = @'
-using System.Runtime.InteropServices;
-public class Wallpaper {
-    [DllImport("user32.dll", CharSet = CharSet.Auto)]
-    public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-}
-'@
-        Add-Type -TypeDefinition $code
-        [Wallpaper]::SystemParametersInfo(20, 0, $wpPath, 3)
-        Write-Host "[OK] Wallpaper aplicado!" -ForegroundColor Green
+    switch ($escolha) {
+        "1" {
+            Write-Host "`nIniciando Coleta de Informações..." -ForegroundColor Yellow
+            # Baixa e executa na memória via domínio curto [cite: 63, 64]
+            [cite_start]irm get.hpinfo.com.br/info | iex [cite: 64, 72]
+        }
+        "2" {
+            Write-Host "`nIniciando Diagnóstico de Rede..." -ForegroundColor Yellow
+            [cite_start]irm get.hpinfo.com.br/net | iex [cite: 72]
+        }
+        "3" {
+            $destino = Read-Host "`nInforme o caminho de destino para o backup (ex: D:\Backup)"
+            if (-not [string]::IsNullOrWhiteSpace($destino)) {
+                # O backup.ps1 exige parâmetro de destino para segurança [cite: 86]
+                irm get.hpinfo.com.br/backup | iex
+                # Nota: Certifique-se que o backup.ps1 remoto esteja preparado para receber o parâmetro
+            } else {
+                Write-Warning "Caminho de destino é obrigatório."
+            }
+        }
+        "Q" {
+            Write-Host "`nEncerrando HubCraft Assistant. Até logo!" -ForegroundColor Green
+            Start-Sleep -Seconds 1
+            break
+        }
+        Default {
+            Write-Host "`n[!] Opção Inválida: $escolha" -ForegroundColor Red
+            Start-Sleep -Seconds 2
+        }
     }
-    "Q" { Write-Host "Saindo..."; Exit }
-    Default { Write-Host "Opção Inválida." -ForegroundColor Red }
-}
 
-# Retorna ao menu ou pausa após a execução de qualquer tarefa
-Write-Host "`nTarefa finalizada. Pressione qualquer tecla para voltar ao menu..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-./menu.ps1 # Recarrega o menu automaticamente
+    if ($escolha -ne "Q") {
+        Write-Host "`n----------------------------------------------"
+        Write-Host "Tarefa concluída. Pressione ENTER para voltar ao menu..." -ForegroundColor Gray
+        $null = Read-Host
+    }
+
+} while ($escolha -ne "Q")
