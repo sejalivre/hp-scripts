@@ -1,18 +1,7 @@
-# ==========================================================
 # limp.ps1 - Limpeza Profunda e Otimização de Cache
-# Projeto: HPCRAFT (v1.2.1)
-# ==========================================================
+# Executar como Administrador
 
 $ErrorActionPreference = "SilentlyContinue"
-
-# Função para medir o espaço recuperado
-function Get-FolderSize($Path) {
-    if (Test-Path $Path) {
-        $size = (Get-ChildItem $Path -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
-        return if ($size) { $size } else { 0 }
-    }
-    return 0
-}
 
 Write-Host "=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
@@ -24,7 +13,7 @@ foreach ($p in $processos) {
 }
 Start-Sleep -Seconds 2
 
-# Captura de estado inicial
+# Captura de estado inicial para estatística
 $espacoAntes = (Get-PSDrive C).Free
 
 # 2. Limpeza de Temporários e Prefetch
@@ -42,19 +31,19 @@ foreach ($caminho in $pastasLimpar) {
     Remove-Item -Path $caminho -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-# 3. Parar Serviços e Limpar Cache do Windows Update
+# 3. Parar Serviços e Limpar Cache do Windows Update [cite: 1]
 Write-Host "Limpando cache do Windows Update..." -ForegroundColor Yellow
 $servicos = @("wuauserv", "bits", "cryptsvc")
-[cite_start]foreach ($s in $servicos) { Stop-Service $s -Force } [cite: 1]
+foreach ($s in $servicos) { Stop-Service $s -Force }
 
-[cite_start]$updateFolders = @("C:\Windows\SoftwareDistribution", "C:\Windows\System32\catroot2") [cite: 1]
+$updateFolders = @("C:\Windows\SoftwareDistribution", "C:\Windows\System32\catroot2")
 foreach ($folder in $updateFolders) {
     Remove-Item -Path "$folder\*" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-[cite_start]foreach ($s in $servicos) { Start-Service $s } [cite: 1]
+foreach ($s in $servicos) { Start-Service $s }
  
-# 4. Limpeza de Cache de Navegadores (Mantendo Senhas e Favoritos)
+# 4. Limpeza de Cache de Navegadores
 Write-Host "Limpando cache de navegadores..." -ForegroundColor Yellow
 $browserCaches = @(
     "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*",
@@ -83,5 +72,5 @@ if ($totalLimpoMB -gt 0) {
 }
 Write-Host "=======================================" -ForegroundColor Cyan
 
-# Reiniciar o Explorer para devolver a barra de tarefas ao usuário
+# Reiniciar o Explorer para devolver a interface ao usuário
 Start-Process explorer.exe
