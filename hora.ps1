@@ -1,14 +1,15 @@
+
+# Verifica se o script está rodando com privilégios de administrador 
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$principal = [Security.Principal.WindowsPrincipal]$identity
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Este script precisa de permissões de administrador. Reiniciando como Admin..." -ForegroundColor Yellow
+    Start-Process powershell.exe "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
+
 try {
-    # Verifica se está rodando como administrador
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    
-    if (-not $isAdmin) {
-        Write-Host "ERRO: Este script precisa ser executado como Administrador!" -ForegroundColor Red
-        Write-Host "Execute novamente com privilégios de administrador." -ForegroundColor Yellow
-        exit 1
-    }
-    
-    Write-Host "1. Configurando e sincronizando horario..." -ForegroundColor Cyan
+    Write-Host "1. Configurando e sincronizando horário..." -ForegroundColor Cyan
 
     # Garante que o serviço esteja limpo e rodando
     Set-Service -Name w32time -StartupType Automatic
@@ -17,7 +18,7 @@ try {
     w32tm /register
     net start w32time
 
-    # REMÉDIO PARA O ERRO: Remove limites de correção de fase
+    # Remove limites de correção de fase
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config"
     Set-ItemProperty -Path $regPath -Name "MaxPosPhaseCorrection" -Value 4294967295
     Set-ItemProperty -Path $regPath -Name "MaxNegPhaseCorrection" -Value 4294967295
@@ -26,17 +27,22 @@ try {
     w32tm /config /manualpeerlist:"a.st1.ntp.br b.st1.ntp.br pool.ntp.org" /syncfromflags:manual /reliable:YES /update
     
     Start-Sleep -Seconds 2
-    # O parametro /force ajuda a ignorar restrições
     w32tm /resync /rediscover
     
-    Write-Host "Horario sincronizado com sucesso (limites ignorados)." -ForegroundColor Green
+    Write-Host "Horário sincronizado com sucesso." -ForegroundColor Green
 
     Write-Host "`n2. Configurando tarefa agendada..." -ForegroundColor Cyan
     
-    # 2. Configuração da Tarefa Agendada
     $TaskName = "SincronizarHorarioHPTI"
     
-    # Cria o script auxiliar diretamente em C:\Windows\System32 para acesso SYSTEM
+    # Cria a pasta c:\intel se não existir
+    $intelPath = "C:\intel"
+    if (-not (Test-Path $intelPath)) {
+        New-Item -Path $intelPath -ItemType Directory -Force | Out-Null
+        Write-Host "Pasta $intelPath criada." -ForegroundColor Cyan
+    }
+    
+    # Cria o script auxiliar em c:\intel
     $scriptContent = @'
 # Script auxiliar para sincronização de horário via tarefa agendada
 try {
@@ -52,7 +58,7 @@ try {
 }
 '@
     
-    $scriptPath = "C:\Windows\System32\sync-time-hpti.ps1"
+    $scriptPath = "$intelPath\sync-time-hpti.ps1"
     Set-Content -Path $scriptPath -Value $scriptContent -Force -ErrorAction Stop
     
     $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`""
@@ -65,9 +71,15 @@ try {
 
     Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Principal $Principal -Settings $Settings -Description "Sincroniza o horario via HPTI Informatica 45s apos logon." -Force -ErrorAction Stop | Out-Null
     
-    Write-Host "Tarefa '$TaskName' atualizada com sucesso!" -ForegroundColor Green
+    Write-Host "Tarefa '$TaskName' criada com sucesso!" -ForegroundColor Green
     Write-Host "Script auxiliar criado em: $scriptPath" -ForegroundColor Cyan
+    Write-Host "A tarefa rodará 45 segundos após qualquer logon de usuário." -ForegroundColor Gray
+
 }
 catch {
-    Write-Error "Erro: $_"
+    Write-Error "Ocorreu um erro: $_"
+    Read-Host "Pressione Enter para sair..."
 }
+
+Write-Host "`nConcluído."
+Start-Sleep -Seconds 5
