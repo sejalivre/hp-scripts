@@ -12,7 +12,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas para Web) ---
 
-$dnsBase    = "get.hpinfo.com.br/tools/nextdns"
+$dnsBase    = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools/nextdns"
 $tempDir    = "$env:TEMP\HP-Tools"
 $7zipExe    = "$tempDir\7z.exe"
 $nextDnsZip = "$tempDir\nextdns.7z"
