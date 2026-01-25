@@ -305,6 +305,3 @@ function Main {
 
 # Executa o script
 Main
-
-Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

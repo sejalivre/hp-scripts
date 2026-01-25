@@ -77,6 +77,8 @@ public class Wallpaper {
         }
     }
 
-    
+    Write-Host "`n----------------------------------------------------------"
+    Write-Host "Tarefa finalizada. Pressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
-} while ($true)
+} while ($true) # Mantém o loop ativo

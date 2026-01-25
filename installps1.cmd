@@ -42,6 +42,3 @@ echo ======================================================
 
 REM certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
 
-
-Write-Host "`nPressione qualquer tecla para voltar ao menu..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
