@@ -1,5 +1,5 @@
 # Arquivo: menu.ps1
-# Launcher Central - HP-Scripts (v2.2)
+# Launcher Central - HP-Scripts (v2.3)
 Clear-Host
 
 $baseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main"
@@ -16,8 +16,9 @@ Write-Host "3. [PRINT]  Gerenciar Impressoras" -ForegroundColor White
 Write-Host "4. [UPDATE] Atualizar Sistema/Drivers" -ForegroundColor White
 Write-Host "5. [BACKUP] Realizar Backup do Sistema" -ForegroundColor White
 Write-Host "6. [HORA]   Sincronizar Relógio (NTP)" -ForegroundColor White
-Write-Host "7. [ACT]    Ativação Windows/Office" -ForegroundColor Yellow
-Write-Host "8. [WALL]   Aplicar Wallpaper HP 4K (Praia)" -ForegroundColor Magenta
+Write-Host "7. [LIMP]   Limpeza Profunda do Sistema" -ForegroundColor White
+Write-Host "8. [ACT]    Ativação Windows/Office" -ForegroundColor Yellow
+Write-Host "9. [WALL]   Aplicar Wallpaper HP 4K (Praia)" -ForegroundColor Magenta
 Write-Host "   -> Baixa e define o fundo de tela automaticamente." -ForegroundColor Gray
 
 Write-Host ""
@@ -26,23 +27,22 @@ Write-Host ""
 
 $escolha = Read-Host "Digite o número da opção"
 
-Switch ($escolha) {
+Switch ($escolha) { 
     "1" { Write-Host "Carregando Info..."; irm "$baseUrl/info.ps1" | iex }
     "2" { Write-Host "Iniciando reparo de rede..."; irm "$baseUrl/net.ps1" | iex }
     "3" { Write-Host "Carregando módulo de impressão..."; irm "$baseUrl/print.ps1" | iex }
     "4" { Write-Host "Iniciando atualizações..."; irm "$baseUrl/update.ps1" | iex }
     "5" { Write-Host "Iniciando backup..."; irm "$baseUrl/backup.ps1" | iex }
     "6" { Write-Host "Sincronizando horário..."; irm "$baseUrl/hora.ps1" | iex }
-    "7" { Write-Host "Iniciando ativador..."; irm "https://get.activated.win" | iex }
-    "8" { 
+    "7" { Write-Host "Iniciando limpeza..."; irm "$baseUrl/limp.ps1" | iex }
+    "8" { Write-Host "Iniciando ativador..."; irm "https://get.activated.win" | iex }
+    "9" { 
         Write-Host "Configurando Wallpaper..." -ForegroundColor Magenta
         $wpUrl = "$baseUrl/tools/4k-praia.jpg"
         $wpPath = "$env:TEMP\4k-praia.jpg"
         
-        # Download da imagem
         Invoke-WebRequest -Uri $wpUrl -OutFile $wpPath
         
-        # Código para aplicar o Wallpaper via SystemParametersInfo (Win32 API)
         $code = @'
 using System.Runtime.InteropServices;
 public class Wallpaper {
@@ -52,8 +52,13 @@ public class Wallpaper {
 '@
         Add-Type -TypeDefinition $code
         [Wallpaper]::SystemParametersInfo(20, 0, $wpPath, 3)
-        Write-Host "[OK] Wallpaper aplicado com sucesso!" -ForegroundColor Green
+        Write-Host "[OK] Wallpaper aplicado!" -ForegroundColor Green
     }
     "Q" { Write-Host "Saindo..."; Exit }
     Default { Write-Host "Opção Inválida." -ForegroundColor Red }
 }
+
+# Retorna ao menu ou pausa após a execução de qualquer tarefa
+Write-Host "`nTarefa finalizada. Pressione qualquer tecla para voltar ao menu..."
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+./menu.ps1 # Recarrega o menu automaticamente
