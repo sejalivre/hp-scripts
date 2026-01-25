@@ -2,7 +2,7 @@
 .SYNOPSIS
     Launcher Principal HP-Scripts - Hub de Automação Profissional.
 .DESCRIPTION
-    Orquestrador dinâmico que utiliza Lazy Loading para ferramentas de TI.
+    Orquestrador  dinâmico que utiliza Lazy Loading para ferramentas de TI.
     Versão: 1.3.1 (Correção de Escopo e URL) 
 #>
 

@@ -1,237 +1,194 @@
-# backup.ps1 - Versão salva na pasta do usuário
+# Script para gerar relatório do sistema + senhas Wi-Fi + softwares + restore script
+# Executar como administrador
 
-# Define pasta base de backup (pasta do usuário + \backup)
-$UserProfile = [Environment]::GetFolderPath("UserProfile")
-$BaseBackupDir = Join-Path $UserProfile "backup"
-
-# Cria a pasta base se não existir
-if (-not (Test-Path $BaseBackupDir)) {
-    New-Item -ItemType Directory -Path $BaseBackupDir -Force | Out-Null
-    Write-Host "Pasta criada: $BaseBackupDir" -ForegroundColor Cyan
+# Verifica administrador
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "ERRO: Execute como ADMINISTRADOR!" -ForegroundColor Red
+    Write-Host "Clique direito → Executar com PowerShell → Executar como administrador" -ForegroundColor Yellow
+    pause
+    exit
 }
 
-# Criar pasta de backup com timestamp
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$backupFolder = Join-Path $BaseBackupDir ("Backup_Sistema_" + $timestamp)
-New-Item -ItemType Directory -Path $backupFolder | Out-Null
+# Pastas de destino
+$basePath       = "C:\Intel"
+$reportFile     = Join-Path $basePath "RelatorioSistema.txt"
+$wifiExportPath = Join-Path $basePath "WiFiProfiles"
+$restoreFile    = Join-Path $basePath "restore.ps1"
 
-# Função para registrar log
-function Write-Log {
-    param([string]$Message)
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logMessage = "[$timestamp] $Message"
-    Write-Output $logMessage
-    Add-Content -Path "$backupFolder\backup.log" -Value $logMessage
+# Cria pastas se não existirem
+if (-not (Test-Path $basePath))       { New-Item -Path $basePath -ItemType Directory -Force | Out-Null }
+if (-not (Test-Path $wifiExportPath)) { New-Item -Path $wifiExportPath -ItemType Directory -Force | Out-Null }
+
+# Função para adicionar seção
+function Add-Section {
+    param ([string]$Title, [string]$Content)
+    Add-Content -Path $reportFile -Value "`n=== $Title ===" -Encoding UTF8
+    Add-Content -Path $reportFile -Value $Content -Encoding UTF8
 }
 
-Write-Log "Iniciando backup do sistema..."
-Write-Log "Pasta de backup: $backupFolder"
+# Limpa relatório anterior
+if (Test-Path $reportFile) { Remove-Item $reportFile -Force }
+New-Item -Path $reportFile -ItemType File -Force | Out-Null
 
-# 1. INFORMAÇÕES BÁSICAS DO SISTEMA
-Write-Log "Coletando informações básicas do sistema..."
-$systemInfo = @{
-    DataHora       = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    NomeComputador = $env:COMPUTERNAME
-    NomeUsuario    = $env:USERNAME
-    Dominio        = $env:USERDOMAIN
-    SistemaOperacional = (Get-WmiObject Win32_OperatingSystem).Caption
-    Arquitetura    = (Get-WmiObject Win32_OperatingSystem).OSArchitecture
-}
+# Nome da máquina
+$oldHostname = $env:COMPUTERNAME
+Add-Section "Nome da Máquina" $oldHostname
 
-$systemInfo | ConvertTo-Json | Out-File "$backupFolder\01_sistema_info.json"
-Write-Log "Informações básicas salvas"
+# Configurações de rede
+$netConfigs = Get-NetIPConfiguration | Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WiFi' }
+$networkConfigsStr = $netConfigs | Format-List | Out-String
+Add-Section "Configurações de Rede" $networkConfigsStr
 
-# 2. CONFIGURAÇÕES DE REDE
-Write-Log "Coletando configurações de rede..."
-$networkInfo = Get-NetIPConfiguration -All | Select-Object InterfaceAlias, InterfaceIndex, IPv4Address, IPv6Address, DNSServer
-$networkInfo | Export-Csv "$backupFolder\02_configuracoes_rede.csv" -NoTypeInformation -Encoding UTF8
+# Captura comandos de restore apenas para interfaces com IP estático (não DHCP)
+$netRestoreCommands = @()
+foreach ($config in $netConfigs) {
+    $alias = $config.InterfaceAlias
+    $adapter = Get-NetAdapter -Name $alias -ErrorAction SilentlyContinue
+    if (-not $adapter) { continue }
 
-# 3. SENHAS DE WIFI (requer elevação)
-Write-Log "Coletando informações de redes WiFi..."
-$wifiProfiles = netsh wlan show profiles
-$wifiProfiles | Out-File "$backupFolder\03_wifi_profiles.txt"
+    $ipConfig = Get-NetIPConfiguration -InterfaceAlias $alias
+    $dhcpEnabled = (Get-NetIPInterface -InterfaceAlias $alias -AddressFamily IPv4).Dhcp -eq 'Enabled'
 
-$wifiDetails = @()
-$profiles = ($wifiProfiles | Select-String "All User Profile" | ForEach-Object { $_.ToString().Split(":")[1].Trim() })
+    if (-not $dhcpEnabled -and $ipConfig.IPv4Address.IPAddress -and $ipConfig.IPv4Address.IPAddress -notmatch '^169\.254|^0\.0\.0\.') {
+        $ip     = $ipConfig.IPv4Address.IPAddress
+        $prefix = $ipConfig.IPv4Address.PrefixLength
+        $gw     = $ipConfig.IPv4DefaultGateway.NextHop
+        $dns    = if ($ipConfig.DNSServer.ServerAddresses) { "'$($ipConfig.DNSServer.ServerAddresses -join "','")'" } else { $null }
 
-foreach ($profile in $profiles) {
-    try {
-        $profileInfo = netsh wlan show profile name="$profile" key=clear
-        $wifiDetails += "`n=== Perfil: $profile ==="
-        $wifiDetails += $profileInfo
-    }
-    catch {
-        Write-Log "Erro ao acessar perfil WiFi: $profile"
-    }
-}
-
-$wifiDetails -join "`n" | Out-File "$backupFolder\03_wifi_detalhes.txt"
-Write-Log "Informações WiFi salvas"
-
-# 4. IMPRESSORAS INSTALADAS
-Write-Log "Coletando informações de impressoras..."
-$printers = Get-Printer | Select-Object Name, Type, PortName, DriverName, Shared, ShareName
-$printers | Export-Csv "$backupFolder\04_impressoras.csv" -NoTypeInformation -Encoding UTF8
-
-$printerDrivers = Get-PrinterDriver | Select-Object Name, Manufacturer, DriverVersion
-$printerDrivers | Export-Csv "$backupFolder\04_impressoras_drivers.csv" -NoTypeInformation -Encoding UTF8
-
-# 5. PASTAS COMPARTILHADAS
-Write-Log "Coletando informações de pastas compartilhadas..."
-$sharedFolders = Get-SmbShare | Where-Object { $_.Path -ne $null } | Select-Object Name, Path, Description
-$sharedFolders | Export-Csv "$backupFolder\05_pastas_compartilhadas.csv" -NoTypeInformation -Encoding UTF8
-
-# 6. PROGRAMAS INSTALADOS
-Write-Log "Coletando lista de programas instalados..."
-$programs64 = Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | 
-    Where-Object { $_.DisplayName -ne $null } | 
-    Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
-
-$programs32 = Get-ItemProperty "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | 
-    Where-Object { $_.DisplayName -ne $null } | 
-    Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
-
-$allPrograms = $programs64 + $programs32 | Sort-Object DisplayName
-$allPrograms | Export-Csv "$backupFolder\06_programas_instalados.csv" -NoTypeInformation -Encoding UTF8
-
-# 7. CERTIFICADOS DIGITAIS
-Write-Log "Coletando informações de certificados digitais..."
-try {
-    $certificates = Get-ChildItem Cert:\CurrentUser\My | Select-Object Subject, Issuer, Thumbprint, NotBefore, NotAfter
-    $certificates | Export-Csv "$backupFolder\07_certificados_usuario.csv" -NoTypeInformation -Encoding UTF8
-} catch {
-    Write-Log "Não foi possível acessar os certificados do usuário"
-}
-
-try {
-    $machineCerts = Get-ChildItem Cert:\LocalMachine\My | Select-Object Subject, Issuer, Thumbprint, NotBefore, NotAfter
-    $machineCerts | Export-Csv "$backupFolder\07_certificados_maquina.csv" -NoTypeInformation -Encoding UTF8
-} catch {
-    Write-Log "Não foi possível acessar os certificados da máquina"
-}
-
-# 8. ÍCONES DA ÁREA DE TRABALHO
-Write-Log "Copiando atalhos da área de trabalho..."
-$desktopPath = [Environment]::GetFolderPath("Desktop")
-$desktopBackup = Join-Path $backupFolder "Desktop_Icons"
-New-Item -ItemType Directory -Path $desktopBackup | Out-Null
-
-if (Test-Path $desktopPath) {
-    Get-ChildItem -Path $desktopPath -Filter "*.lnk" | Copy-Item -Destination $desktopBackup -Force
-    Write-Log "Atalhos da área de trabalho copiados"
-}
-
-# 9. PAPEL DE PAREDE ATUAL
-Write-Log "Salvando configuração do papel de parede..."
-try {
-    $wallpaperPath = (Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name Wallpaper).Wallpaper
-    if ($wallpaperPath -and (Test-Path $wallpaperPath)) {
-        $wallpaperBackup = Join-Path $backupFolder "wallpaper"
-        New-Item -ItemType Directory -Path $wallpaperBackup | Out-Null
-        Copy-Item -Path $wallpaperPath -Destination $wallpaperBackup -Force
-        
-        $wallpaperReg = @{
-            Wallpaper      = $wallpaperPath
-            TileWallpaper  = (Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name TileWallpaper).TileWallpaper
-            WallpaperStyle = (Get-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name WallpaperStyle).WallpaperStyle
+        $netRestoreCommands += "# Restaurando IP estático na interface '$alias'"
+        $netRestoreCommands += "New-NetIPAddress -InterfaceAlias '$alias' -IPAddress '$ip' -PrefixLength $prefix -DefaultGateway '$gw' -AddressFamily IPv4 -ErrorAction SilentlyContinue"
+        if ($dns) {
+            $netRestoreCommands += "Set-DnsClientServerAddress -InterfaceAlias '$alias' -ServerAddresses $dns"
         }
-        $wallpaperReg | ConvertTo-Json | Out-File "$wallpaperBackup\wallpaper_settings.json"
-        Write-Log "Papel de parede salvo"
+        $netRestoreCommands += ""
     }
-} catch {
-    Write-Log "Não foi possível salvar o papel de parede"
 }
 
-# 10. CONFIGURAÇÕES ADICIONAIS DO USUÁRIO
-Write-Log "Salvando configurações adicionais..."
+# === Wi-Fi ===
+Write-Host "Exportando perfis Wi-Fi..." -ForegroundColor Cyan
 
-# Favoritos do Internet Explorer/Edge
-$favoritesPath = [Environment]::GetFolderPath("Favorites")
-if (Test-Path $favoritesPath) {
-    $favBackup = Join-Path $backupFolder "Favoritos"
-    Copy-Item -Path $favoritesPath -Destination $favBackup -Recurse -Force
-    Write-Log "Favoritos copiados"
-}
-
-# Documentos importantes (exemplo: só alguns tipos)
-$myDocs = [Environment]::GetFolderPath("MyDocuments")
-if (Test-Path $myDocs) {
-    $docTypes = @("*.doc", "*.docx", "*.xls", "*.xlsx", "*.pdf", "*.txt")
-    $docsBackup = Join-Path $backupFolder "Documentos"
-    New-Item -ItemType Directory -Path $docsBackup | Out-Null
-    
-    foreach ($type in $docTypes) {
-        Get-ChildItem -Path $myDocs -Filter $type -Recurse -ErrorAction SilentlyContinue | 
-            ForEach-Object {
-                $relativePath = $_.FullName.Substring($myDocs.Length + 1)
-                $destPath = Join-Path $docsBackup $relativePath
-                $destDir = Split-Path $destPath -Parent
-                if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-                Copy-Item -Path $_.FullName -Destination $destPath -Force
-            }
+$profileLines = netsh wlan show profiles
+$wifiProfiles = @()
+foreach ($line in $profileLines) {
+    if ($line -match ':\s*(.+)$') {
+        $name = $matches[1].Trim()
+        if ($name -and $name -ne '<Nenhum>' -and $name -notmatch '^(\s*|-|política|group)') {
+            $wifiProfiles += $name
+        }
     }
-    Write-Log "Documentos importantes copiados"
 }
 
-# 11. RELATÓRIO RESUMIDO
-Write-Log "Gerando relatório resumido..."
+Write-Host "Perfis encontrados: $($wifiProfiles.Count)" -ForegroundColor Yellow
 
-$report = @"
-RELATÓRIO DE BACKUP DO SISTEMA
-===============================
-Data/Hora: $(Get-Date -Format "dd/MM/yyyy HH:mm:ss")
-Computador: $($env:COMPUTERNAME)
-Usuário: $($env:USERNAME)
+$wifiInfo = ""
+$exportCount = 0
 
-Pasta de backup: $backupFolder
+foreach ($profile in $wifiProfiles) {
+    $exportResult = netsh wlan export profile name="$profile" folder="$wifiExportPath" key=clear
+    if ($exportResult -match "exportado|êxito|exported|successfully") { $exportCount++ }
+}
 
-RESUMO:
-- Informações do Sistema............: $(if (Test-Path "$backupFolder\01_sistema_info.json") {"OK"} else {"Falhou"})
-- Configurações de Rede.............: $(if (Test-Path "$backupFolder\02_configuracoes_rede.csv") {"OK"} else {"Falhou"})
-- Redes WiFi........................: $(if (Test-Path "$backupFolder\03_wifi_detalhes.txt") {"OK"} else {"Falhou"})
-- Impressoras.......................: $(($printers | Measure-Object).Count) impressora(s)
-- Pastas Compartilhadas.............: $(($sharedFolders | Measure-Object).Count) pasta(s)
-- Programas Instalados..............: $(($allPrograms | Measure-Object).Count) programa(s)
-- Certificados......................: $(($certificates | Measure-Object).Count + ($machineCerts | Measure-Object).Count) certificado(s)
-- Ícones Área de Trabalho...........: $(if (Test-Path $desktopBackup) {"OK"} else {"Falhou"})
-- Papel de Parede...................: $(if ($wallpaperPath -and (Test-Path $wallpaperPath)) {"OK"} else {"Falhou"})
-- Favoritos e Documentos............: OK (ver pastas)
+# Lê senhas dos XML
+$xmlFiles = Get-ChildItem -Path $wifiExportPath -Filter "*.xml" -File
+foreach ($xmlFile in $xmlFiles) {
+    try {
+        [xml]$xml = Get-Content $xmlFile.FullName -Encoding UTF8
+        $name = $xml.WLANProfile.name
+        $pass = $xml.WLANProfile.MSM.security.sharedKey.keyMaterial
+        if ($name -and $pass) {
+            $wifiInfo += "Rede: $name`nSenha: $pass`n`n"
+        }
+    }
+    catch { }
+}
 
-Execute como Administrador para obter senhas WiFi completas.
-"@
+Add-Section "Perfis WiFi (Nomes e Senhas)" $wifiInfo
+Add-Section "Perfis WiFi Exportados" "Exportados: $exportCount`nPasta: $wifiExportPath"
 
-$report | Out-File "$backupFolder\00_relatorio_resumo.txt" -Encoding UTF8
+# === Softwares  Instalados ===
+Write-Host "Listando softwares..." -ForegroundColor Cyan
 
-Write-Log "Backup completo concluído!"
-Write-Log "=================================="
-Write-Log "Todos os arquivos foram salvos em: $backupFolder"
+$apps = @()
+$apps += Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" `
+    | Where-Object DisplayName | Select-Object DisplayName, DisplayVersion, Publisher
+$apps += Get-ItemProperty "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" `
+    | Where-Object DisplayName | Select-Object DisplayName, DisplayVersion, Publisher
 
-# Script de restauração básico (mantido)
-$restoreScript = @'
-# restaurar.ps1 - Script de restauração básico
-param(
-    [Parameter(Mandatory=$true)]
-    [string]$BackupFolder
+$apps = $apps | Sort-Object DisplayName -Unique
+$appsStr = $apps | Format-Table -AutoSize | Out-String
+Add-Section "Softwares Instalados" $appsStr
+
+# Lista de nomes aproximados suportados pelo Ninite (baseado na lista atual do site)
+$niniteSupported = @(
+    "7-Zip", "Adobe Acrobat", "AnyDesk", "Audacity", "Brave", "CCleaner", "Chrome", "Discord", "Dropbox",
+    "Everything", "FileZilla", "Firefox", "Foxit Reader", "GIMP", "Git", "Google Drive", "Greenshot",
+    "HandBrake", "Inkscape", "IrfanView", "Java", "KeePass", "Krita", "LibreOffice", "Malwarebytes",
+    "Notepad++", "OneDrive", "Paint.NET", "PuTTY", "Python", "qbittorrent", "ShareX", "Spotify",
+    "Steam", "SumatraPDF", "TeamViewer", "Thunderbird", "VLC", "VS Code", "WinDirStat", "WinSCP",
+    "Zoom"
+    # Adicione mais se souber de outros comuns no seu ambiente
 )
 
-Write-Host "Script de restauração" -ForegroundColor Green
-Write-Host "Local do backup: $BackupFolder" -ForegroundColor Yellow
+# Filtra apps instalados que batem (aproximado, case-insensitive)
+$appsForNinite = $apps | Where-Object {
+    $dn = $_.DisplayName -replace '\s*\(.*?\)|\s*-\s*.*$','' -replace '\s+$',''
+    $niniteSupported -contains $dn -or $niniteSupported -match [regex]::Escape($dn)
+} | ForEach-Object { $_.DisplayName -replace '\s','+' -replace '[^a-zA-Z0-9+]', '' } | Sort-Object -Unique
 
-Write-Host "`nUse os arquivos no backup para restaurar manualmente:" -ForegroundColor Cyan
-Write-Host "1. Programas     → 06_programas_instalados.csv"
-Write-Host "2. WiFi          → 03_wifi_detalhes.txt"
-Write-Host "3. Impressoras   → 04_impressoras.csv"
-Write-Host "4. Papel de parede → pasta wallpaper/"
-Write-Host "5. Certificados  → 07_certificados_*.csv"
-Write-Host "`nBackup completo em: $BackupFolder" -ForegroundColor Green
-'@
+$niniteAppsParam = $appsForNinite -join '&'
+$niniteUrl = if ($niniteAppsParam) { "https://ninite.com/$niniteAppsParam/ninite.exe" } else { "https://ninite.com/" }
 
-$restoreScript | Out-File "$backupFolder\restaurar.ps1" -Encoding UTF8
+# Pastas compartilhadas e Impressoras (mantido)
+Add-Section "Pastas Compartilhadas" (Get-SmbShare | Format-List | Out-String)
+Add-Section "Impressoras Instaladas" (Get-Printer | Format-List | Out-String)
 
-# Mensagem final
-Write-Host "`n==================================" -ForegroundColor Green
-Write-Host "BACKUP CONCLUÍDO COM SUCESSO!" -ForegroundColor Green
-Write-Host "==================================" -ForegroundColor Green
-Write-Host "Local: $backupFolder" -ForegroundColor Yellow
-Write-Host "Verifique também: $backupFolder\00_relatorio_resumo.txt" -ForegroundColor Cyan
-Write-Host "`nDica: Execute como Administrador para capturar senhas WiFi completas." -ForegroundColor Yellow
+# Final relatório
+Add-Content -Path $reportFile -Value "`n=== Relatório gerado em: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss') ===" -Encoding UTF8
+
+# === Gera restore.ps1 ===
+$restoreContent = @"
+# restore.ps1 - Restauração básica (hostname, IP estático se aplicável, Wi-Fi, Ninite)
+# Execute como ADMINISTRADOR
+
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host 'Execute como ADMINISTRADOR!' -ForegroundColor Red
+    pause
+    exit
+}
+
+# 1. Hostname
+Rename-Computer -NewName '$oldHostname' -Force -Restart:`$false
+Write-Host 'Hostname definido para: $oldHostname' -ForegroundColor Green
+
+# 2. Configurações de IP estático (somente se aplicável)
+$($netRestoreCommands -join "`n")
+
+# 3. Importa perfis Wi-Fi
+`$wifiPath = '$wifiExportPath'
+if (Test-Path `$wifiPath) {
+    Get-ChildItem -Path `$wifiPath -Filter '*.xml' | ForEach-Object {
+        netsh wlan add profile filename="`$(`$_.FullName)"
+        Write-Host "Importado: `$(`$_.BaseName)" -ForegroundColor Green
+    }
+} else {
+    Write-Host 'Pasta WiFiProfiles não encontrada em $wifiExportPath' -ForegroundColor Yellow
+}
+
+# 4. Abre Ninite com apps sugeridos (clique em "Get Your Ninite" para instalar)
+Start-Process '$niniteUrl'
+Write-Host 'Abrindo Ninite com apps detectados. Clique em "Get Your Ninite" e execute o download.' -ForegroundColor Cyan
+Write-Host 'Instale os programas desejados e reinicie se necessário.' -ForegroundColor Green
+
+Write-Host 'Restauração concluída!' -ForegroundColor Green
+pause
+"@
+
+Set-Content -Path $restoreFile -Value $restoreContent -Encoding UTF8
+
+# Final
+Write-Host ""
+Write-Host "Pronto!" -ForegroundColor Green
+Write-Host "Relatório:          $reportFile"
+Write-Host "Perfis Wi-Fi:       $wifiExportPath"
+Write-Host "Restore script:     $restoreFile"
+Write-Host "Após formatar → Execute restore.ps1 como admin."

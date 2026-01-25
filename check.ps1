@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-    Check-up HPTI Master v6.1 - Versão Estável
+    Check-up HPTI Master v7.0 - Versão Final Ajustada
 .DESCRIPTION
-    Correção de sintaxe na linha de log.
-    Garante execução sem erros de Parser.
+    - CoreTemp com delay maior para gerar log corretamente.
+    - Correção na leitura de Licença do Windows (Filtro por GUID).
+    - Office exibe a VERSÃO exata e status correto.
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -21,7 +22,7 @@ $7zipExe      = "$tempDir\7z.exe"
 $Password     = "0"
 
 # --- PREPARAÇÃO ---
-Write-Host "[*] Iniciando Diagnóstico HPTI v6.1..." -ForegroundColor Cyan
+Write-Host "[*] Iniciando Diagnóstico HPTI v7.0..." -ForegroundColor Cyan
 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
@@ -59,9 +60,7 @@ if (Test-Path $7zipExe) {
 $Resultados = New-Object System.Collections.Generic.List[PSCustomObject]
 
 function Add-Check ($ID, $Nome, $Res, $Stat, $Rec) {
-    # Garante que nada fique vazio
     if ([string]::IsNullOrWhiteSpace($Res)) { $Res = "Não Detectado" }
-    
     $Icone = switch($Stat) { "OK"{"✅"} "ALERTA"{"⚠️"} "CRÍTICO"{"❌"} default{"❓"} }
     
     $obj = [PSCustomObject]@{
@@ -74,31 +73,48 @@ function Add-Check ($ID, $Nome, $Res, $Stat, $Rec) {
     }
     $Resultados.Add($obj)
     
-    # CORREÇÃO AQUI: Usando ${Nome} para isolar dos dois pontos
+    # Exibe no console colorido
     Write-Host "[$Stat] ${Nome}: $Res" -ForegroundColor (if($Stat -eq "OK"){"Green"}else{"Yellow"})
 }
 
 Write-Host "`n--- EXECUTANDO 13 CHECAGENS ---" -ForegroundColor Yellow
 
-# 1. Temperatura Processador
+# 1. Temperatura Processador (Lógica Ajustada)
 $t1_Res = "N/A"; $t1_Stat = "ALERTA"; $t1_Rec = "Verificar sensores."
 try {
-    # Tenta CoreTemp
+    # Tenta CoreTemp com delay maior (Solicitação do Usuário)
     $ctPath = if ($ExtractedPaths.ContainsKey("CoreTemp")) { Join-Path $ExtractedPaths["CoreTemp"] "CoreTemp.exe" } else { $null }
     if ($ctPath -and (Test-Path $ctPath)) {
+        Write-Host "   -> Rodando CoreTemp (Aguarde 12s)..." -NoNewline -ForegroundColor Gray
         $p = Start-Process $ctPath -NoNewWindow -PassThru
-        Start-Sleep -Seconds 5
-        Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-        $log = Get-ChildItem $ExtractedPaths["CoreTemp"] -Filter "CT-Log*.csv" | Sort LastWriteTime -Descending | Select -First 1
+        
+        # AUMENTADO PARA GARANTIR LEITURA
+        Start-Sleep -Seconds 12 
+        
+        if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+        
+        # Busca log mais recente
+        $logDir = $ExtractedPaths["CoreTemp"]
+        $log = Get-ChildItem $logDir -Filter "CT-Log*.csv" | Sort-Object LastWriteTime -Descending | Select -First 1
+        
         if ($log) {
             $content = Get-Content $log.FullName | Select -Last 1
-            $val = [double](($content -split ",")[3]) / 1000
-            $t1_Res = "$([math]::Round($val,0)) °C"
-            $t1_Stat = if ($val -ge 85) { "CRÍTICO" } elseif ($val -ge 70) { "ALERTA" } else { "OK" }
-            $t1_Rec = if ($t1_Stat -eq "OK") { "Refrigeração OK." } else { "Limpeza + Pasta Térmica." }
-        }
+            # O formato do CoreTemp CSV tem a temp geralmente na coluna 3 ou 4 dependendo da versão, vamos tentar parser seguro
+            $parts = $content -split ","
+            if ($parts.Count -gt 2) {
+                $val = [double](($parts[3])) # Tenta pegar direto se não tiver offset
+                if ($val -gt 1000) { $val = $val / 1000 } # Ajuste se vier em raw
+                if ($val -lt 10) { $val = [double]$parts[2] } # Tenta coluna anterior se falhar
+                
+                $t1_Res = "$([math]::Round($val,0)) °C"
+                $t1_Stat = if ($val -ge 85) { "CRÍTICO" } elseif ($val -ge 70) { "ALERTA" } else { "OK" }
+                $t1_Rec = if ($t1_Stat -eq "OK") { "Refrigeração OK." } else { "Limpeza + Pasta Térmica." }
+                Write-Host " OK" -ForegroundColor Green
+            }
+        } else { Write-Host " Falha (Sem Log)" -ForegroundColor Red }
     }
-    # Fallback WMI
+    
+    # Fallback WMI se CoreTemp falhou
     if ($t1_Res -eq "N/A") {
         $wmi = Get-CimInstance -Namespace root/wmi -ClassName MsAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
         if ($wmi) {
@@ -108,7 +124,7 @@ try {
             $t1_Rec = if ($t1_Stat -eq "OK") { "Refrigeração OK." } else { "Limpeza + Pasta Térmica." }
         }
     }
-} catch {}
+} catch { $t1_Res = "Erro Coleta" }
 Add-Check 1 "Temperatura CPU" $t1_Res $t1_Stat $t1_Rec
 
 # 2. Saúde Disco (SMART)
@@ -150,23 +166,85 @@ try {
 } catch { $t3_Res = "Erro leitura" }
 Add-Check 3 "Espaço em Disco" $t3_Res $t3_Stat $t3_Rec
 
-# 4. Licenciamento
+# --- 4. Licenciamento Windows (Blindado v2) ---
 try {
-    $lic = (Get-CimInstance SoftwareLicensingProduct -Filter "PartialProductKey IS NOT NULL" | Where LicenseStatus -eq 1).Count
-    $hack = Get-ChildItem "C:\Program Files", "C:\Windows" -Filter "*KMS*", "*AutoPico*" -Recurse -ErrorAction SilentlyContinue | Select -First 1
-    if ($hack) { $t4_Stat="CRÍTICO"; $t4_Res="Pirataria Detectada"; $t4_Rec="Remover ativadores ilegais." }
-    elseif ($lic -gt 0) { $t4_Stat="OK"; $t4_Res="Ativado (Original)"; $t4_Rec="Licença válida." }
-    else { $t4_Stat="ALERTA"; $t4_Res="Não Ativado"; $t4_Rec="Adquirir licença." }
-} catch { $t4_Stat="ALERTA"; $t4_Res="Erro verificação" }
+    $t4_Stat = "ALERTA"
+    $t4_Res  = "Não Ativado"
+    $t4_Rec  = "Regularizar licença."
+
+    # 1. Busca Rastros de Pirataria (Arquivos comuns de ativadores)
+    $hack = Get-ChildItem "C:\Program Files", "C:\Windows" -Filter "*KMS*", "*AutoPico*", "*KMSAuto*" -Recurse -ErrorAction SilentlyContinue | Select -First 1
+    
+    if ($hack) {
+        $t4_Stat = "CRÍTICO"
+        $t4_Res  = "Pirataria Detectada"
+        $t4_Rec  = "Remover ativadores ilegais (Risco de Segurança)."
+    } 
+    else {
+        # 2. Tenta WMI (Método Rápido)
+        # Filtramos 'Name like Windows' para não pegar licenças do Office misturadas
+        $winLic = Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%' AND LicenseStatus = 1" -ErrorAction SilentlyContinue | Select -First 1
+        
+        if ($winLic) {
+            $t4_Stat = "OK"
+            $t4_Res  = "Ativado (Original)"
+            $t4_Rec  = "Licença válida."
+        } 
+        else {
+            # 3.  PLANO B: Comando Nativo SLMGR (Se o WMI falhar, este funciona)
+            # Executa o verificador oficial da Microsoft e lê a saída de texto
+            $slmgrOut = cmd /c "cscript //nologo %windir%\system32\slmgr.vbs /xpr" 2>&1 | Out-String
+            
+            if ($slmgrOut -match "permanently|definitivamente") {
+                $t4_Stat = "OK"
+                $t4_Res  = "Ativado (Permanente)"
+                $t4_Rec  = "Licença Vitalícia OK."
+            }
+            elseif ($slmgrOut -match "expire|vence") {
+                $t4_Stat = "ALERTA"
+                $t4_Res  = "Ativação Temporária"
+                $t4_Rec  = "Verificar prazo de expiração."
+            }
+            else {
+                # 4. Última esperança: Chave na BIOS (OEM)
+                $biosKey = (Get-CimInstance SoftwareLicensingService).OA3xOriginalProductKey
+                if ($biosKey) {
+                    $t4_Stat = "ALERTA"
+                    $t4_Res  = "Não Ativado (Chave BIOS: Sim)"
+                    $t4_Rec  = "Ativar usando a chave original da BIOS."
+                }
+            }
+        }
+    }
+} catch {
+    $t4_Stat = "ALERTA"
+    $t4_Res  = "Erro Leitura"
+    $t4_Rec  = "Verificar manualmente (slmgr /xpr)."
+}
 Add-Check 4 "Licenciamento Windows" $t4_Res $t4_Stat $t4_Rec
 
-# 5. Office
+# 5. Pacote Office (Com Nome da Versão)
 try {
-    $hasOffice = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where DisplayName -match "Microsoft (Office|365)"
-    $officeAct = (Get-CimInstance SoftwareLicensingProduct -Filter "Description like '%Office%'" | Where LicenseStatus -eq 1).Count -gt 0
-    if ($hasOffice -and $officeAct) { $t5_Stat="OK"; $t5_Res="Instalado/Ativado"; $t5_Rec="Pronto para uso." }
-    elseif ($hasOffice) { $t5_Stat="ALERTA"; $t5_Res="Instalado (Inativo)"; $t5_Rec="Ativar licença Office." }
-    else { $t5_Stat="ALERTA"; $t5_Res="Não instalado"; $t5_Rec="Ofertar pacote Office." }
+    # 1. Tenta pegar o nome da versão no Registro
+    $officeReg = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -match "Microsoft (Office|365|Word)" } | Select-Object -First 1
+    $officeName = if ($officeReg) { $officeReg.DisplayName } else { $null }
+
+    # 2. Verifica ativação (Procurando qualquer licença Office ativa)
+    $officeAct = Get-CimInstance SoftwareLicensingProduct -Filter "Description like '%Office%' AND PartialProductKey IS NOT NULL" | Where-Object LicenseStatus -eq 1
+    
+    if ($officeName) {
+        # Limpa o nome para ficar bonito (remove builds longas se tiver)
+        $cleanName = $officeName -replace "Microsoft ", "" -replace "Standard ", "" -replace "Professional Plus", "Pro Plus"
+        
+        if ($officeAct) { 
+            $t5_Stat="OK"; $t5_Res="$cleanName (Ativo)"; $t5_Rec="Pronto para uso." 
+        } else { 
+            # Às vezes WMI falha, vamos assumir Alerta se não achou licença explicita
+            $t5_Stat="ALERTA"; $t5_Res="$cleanName (Verificar Ativ.)"; $t5_Rec="Confirmar ativação." 
+        }
+    } else {
+        $t5_Stat="ALERTA"; $t5_Res="Não instalado"; $t5_Rec="Ofertar pacote Office."
+    }
 } catch { $t5_Stat="ALERTA"; $t5_Res="Erro"; $t5_Rec="Verificar manualmente." }
 Add-Check 5 "Pacote Office" $t5_Res $t5_Stat $t5_Rec
 
@@ -231,7 +309,6 @@ try {
             elseif ($val -ge 75) { $t11_Stat="ALERTA"; $t11_Rec="Limpeza recomendada." }
         }
     }
-    # Se falhar temperatura, mostra o nome da GPU para não ficar vazio
     if ($t11_Res -eq "N/A") {
         $gpuName = (Get-CimInstance Win32_VideoController).Name
         $t11_Res = "$gpuName (Sem Sensor)"

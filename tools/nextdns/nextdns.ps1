@@ -54,7 +54,7 @@ function Show-NextDNSMenu {
             
             Write-Host "`n[🚀] Executando: $($selecionada.Desc)..." -ForegroundColor $cor
             
-            # Montagem da URL usando a variável LOCAL
+            # Montagem da  URL usando a variável LOCAL
             $finalUrl = "https://$localBaseUrl/$($selecionada.Path)" 
             
             try {
