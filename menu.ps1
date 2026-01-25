@@ -42,7 +42,7 @@ function Show-MainMenu {
             "7" { Write-Host "`nIniciando limpeza..." -ForegroundColor Yellow; irm "$baseUrl/limp" | iex }
             "8" { Write-Host "`nIniciando ativador..." -ForegroundColor Cyan; irm "https://get.activated.win" | iex }
             "9" { Write-Host "`nConfigurando Wallpaper..." -ForegroundColor Magenta; irm "$baseUrl/wallpaper" | iex }
-            "10" { Write-Host "`nCarregando Menu NextDNS..." -ForegroundColor Yellow; irm "$baseUrl/nextdns" | iex }
+            "10" { Write-Host "`nCarregando Menu NextDNS..." -ForegroundColor Yellow; irm "$baseUrl/nextdns/nextdns" | iex }
             "Q" { Write-Host "`nEncerrando..." -ForegroundColor Green; break }
             Default { Write-Warning "Opção inválida!" ; Start-Sleep -Seconds 1 }
         }
