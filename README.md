@@ -15,7 +15,7 @@ Conjunto de scripts PowerShell voltados para **suporte técnico, manutenção, d
 
 ### Menu principal
 ```powershell
-irm get.hpinfo.com.br | iex
+irm get.hpinfo.com.br/menu | iex
 ```
 
 ### Acesso direto a módulos específicos
