@@ -1,166 +1,185 @@
-# HP Scripts – Documentação Técnica
+Perfeito, Hugo 👌
+Abaixo está um **DOCS completo**, já estruturado, pronto para você colocar em `/docs` (Markdown padrão). Ele já inclui o **PERF.ps1** integrado, com linguagem técnica, clara e organizada.
 
-## Visão Geral
-
-O **HP Scripts** é um conjunto modular de scripts PowerShell projetado para **automação de suporte técnico**, **manutenção preventiva**, **diagnóstico avançado** e **padronização de ambientes Windows**.
-
-O projeto segue o modelo *remote execution*, onde os scripts são versionados em repositório GitHub e distribuídos via endpoint HTTP seguro, permitindo **execução sempre atualizada**, sem necessidade de download manual.
+Você pode usar **do jeito que está** ou adaptar para MkDocs / Docusaurus depois sem dor.
 
 ---
 
-## Arquitetura do Projeto
+# 📘 Documentação — HPINFO Scripts de Diagnóstico e Otimização Windows
 
-### Modelo de Execução
+Esta documentação descreve os scripts PowerShell utilizados para **diagnóstico, limpeza, otimização e validação de performance do Windows**, voltados para uso técnico profissional.
 
-```text
-Técnico
-  │
-  ├── PowerShell (Admin)
-  │     └── irm get.hpinfo.com.br | iex
-  │
-  └── Servidor HTTP (get.hpinfo.com.br)
-        ├── menu.ps1
-        ├── check.ps1
-        ├── info.ps1
-        ├── rede.ps1
-        ├── print.ps1
-        ├── update.ps1
-        ├── limp.ps1
-        ├── backup.ps1
-        ├── hora.ps1
-        └── wallpaper.ps1
-```
-
-### Princípios de Design
-
-- **Single Entry Point**: `menu.ps1`
-- **Execução sob demanda** via `Invoke-RestMethod`
-- **Baixo acoplamento** entre módulos
-- **Atualização centralizada**
-- **Sem dependência de instalação local**
+Os scripts foram projetados para execução rápida, padronizada e com **resultado mensurável**, facilitando diagnóstico, comprovação de serviço e histórico por máquina.
 
 ---
 
-## Requisitos Técnicos
+## 📌 Visão Geral
 
-- Windows 10 ou Windows 11
-- PowerShell 5.1 ou superior (recomendado PowerShell 7+)
-- Execução como **Administrador**
-- Política de execução liberada:
+O conjunto de scripts tem como objetivo:
+
+* Avaliar o estado real do sistema Windows
+* Executar limpeza e otimizações seguras
+* Medir performance **antes e depois**
+* Gerar evidências técnicas em formato visual (HTML)
+* Padronizar atendimentos técnicos e manutenções
+
+---
+
+## 🧩 Scripts Disponíveis
+
+| Script     | Função principal                   |
+| ---------- | ---------------------------------- |
+| `PERF.ps1` | Diagnóstico e Score de Performance |
+| `LIMP.ps1` | Limpeza e otimização do Windows    |
+| `MENU.ps1` | Interface de execução centralizada |
+
+---
+
+## 🔧 PERF.ps1 — Diagnóstico e Score de Performance do Windows
+
+O **PERF.ps1** é um script PowerShell desenvolvido para **avaliar, registrar e comparar a performance real do Windows**, sendo especialmente útil antes e depois de processos de limpeza e otimização (como o `LIMP.ps1`).
+
+Ele coleta métricas essenciais do sistema, processa esses dados e calcula um **Score de Performance (0–100)**, permitindo uma análise objetiva do estado da máquina.
+
+Ao final da execução, é gerado um **relatório HTML visual**, ideal para documentação técnica e comprovação de serviço.
+
+---
+
+### 🎯 Objetivos do PERF.ps1
+
+* Medir a performance atual do sistema
+* Criar um ponto de referência (*baseline*)
+* Comparar estado **pré e pós manutenção**
+* Apoiar decisões técnicas com dados objetivos
+* Registrar histórico por máquina
+
+---
+
+### 📊 Métricas Avaliadas
+
+O PERF.ps1 analisa, entre outros indicadores:
+
+* Uso médio de CPU
+* Consumo de memória RAM
+* Tipo de armazenamento (HDD / SSD / NVMe)
+* Tempo de boot estimado
+* Quantidade de processos ativos
+* Carga geral do sistema
+
+Essas métricas são consolidadas em um **Score de Performance** variando de **0 a 100**, facilitando a interpretação.
+
+---
+
+### 📈 Score de Performance
+
+Interpretação sugerida do score:
+
+| Score  | Estado do sistema |
+| ------ | ----------------- |
+| 90–100 | Excelente         |
+| 75–89  | Bom               |
+| 60–74  | Regular           |
+| 40–59  | Ruim              |
+| 0–39   | Crítico           |
+
+> ⚠️ O score é uma **referência técnica**, não um benchmark absoluto.
+
+---
+
+### ▶️ Execução do PERF.ps1
+
+#### Execução direta via PowerShell (IRM)
+
+O script pode ser executado diretamente, sem download manual:
 
 ```powershell
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm https://get.hpinfo.com.br/perf | iex
 ```
 
----
+> ⚠️ Caso a política de execução bloqueie o script:
 
-## Ponto Único de Entrada (Launcher)
-
-### menu.ps1
-
-Responsável por:
-- Apresentar interface interativa
-- Carregar e executar módulos remotamente
-- Controlar fluxo de execução
-- Garantir padronização operacional
-
-Execução:
 ```powershell
-irm get.hpinfo.com.br | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ---
 
-## Execução Direta de Módulos
+### 📄 Saída Gerada
 
-Cada módulo pode ser executado de forma **independente**, útil para automações, scripts externos ou execução rápida.
+* Relatório HTML automático
+* Score de performance numérico
+* Informações técnicas detalhadas
+* Base para comparação futura
 
-| Módulo | Endpoint | Finalidade |
-|------|--------|-----------|
-| CHECK | `/check` | Diagnóstico rápido |
-| INFO | `/info` | Coleta técnica completa |
-| REDE | `/rede` | Reset e correção de rede |
-| PRINT | `/print` | Correção de impressão |
-| UPDATE | `/update` | Reset do Windows Update |
-| LIMP | `/limp` | Limpeza e otimização |
-| BACKUP | `/backup` | Backup preventivo |
-| HORA | `/hora` | Sincronização de horário |
-| WALL | `/wall` | Padronização visual |
+O relatório pode ser usado como:
 
-Exemplo:
-```powershell
-irm get.hpinfo.com.br/print | iex
+* Evidência de serviço técnico
+* Diagnóstico documentado
+* Histórico de performance da máquina
+
+---
+
+## 🧹 LIMP.ps1 — Limpeza e Otimização do Windows
+
+O **LIMP.ps1** é responsável por executar rotinas seguras de limpeza e otimização, como:
+
+* Limpeza de arquivos temporários
+* Cache do sistema
+* Ajustes básicos de performance
+* Preparação do sistema para reavaliação
+
+> Recomenda-se executar o **PERF.ps1 antes e depois** do LIMP.ps1 para comparação objetiva.
+
+---
+
+## 🧠 Fluxo Recomendado de Uso
+
+1. Executar `PERF.ps1` (baseline)
+2. Executar `LIMP.ps1`
+3. Executar `PERF.ps1` novamente
+4. Comparar scores e relatórios
+
+---
+
+## 🖥️ MENU.ps1 — Interface Centralizada
+
+O `MENU.ps1` fornece uma interface simples para execução dos scripts, evitando erros e padronizando o atendimento técnico.
+
+Exemplo de opções:
+
+```
+[1] Diagnóstico de Performance (PERF)
+[2] Limpeza e Otimização (LIMP)
+[9] Executar PERF + LIMP (Ciclo completo)
 ```
 
 ---
 
-## installps1.cmd – PowerShell Core
+## ⚠️ Requisitos
 
-Script auxiliar para **instalação e atualização do PowerShell 7**.
-
-### Execução
-```cmd
-certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
-```
-
-### Lógica Interna
-
-1. Detecta presença do Winget
-2. Caso ausente, utiliza instalador alternativo (MSI)
-3. Caso presente:
-   - Atualiza PowerShell 7 existente
-   - Ou instala silenciosamente
-4. Retorno com códigos de erro e mensagens padronizadas
+* Windows 10 ou superior
+* PowerShell 5.1 ou PowerShell 7+
+* Execução como Administrador
+* Conexão com a internet (execução via IRM)
 
 ---
 
-## Segurança
+## 📜 Observações Importantes
 
-- Scripts exigem **privilégios administrativos**
-- Nenhuma informação é enviada externamente sem ação explícita
-- Relatórios são gerados localmente
-- Recomenda-se uso apenas em máquinas autorizadas
-
----
-
-## Logs e Diagnóstico
-
-Alguns módulos geram logs locais para auditoria e troubleshooting:
-
-- Windows Update: `C:\Windows\Logs`
-- Relatórios INFO: pasta temporária do usuário
-- Operações críticas exibem status em tempo real
+* Os scripts **não removem arquivos pessoais**
+* Nenhuma alteração crítica é feita sem validação
+* Uso recomendado para técnicos e ambientes controlados
 
 ---
 
-## Versionamento
+## 📂 Licença e Uso
 
-- Versionamento semântico (SemVer)
-- Alterações críticas refletem no menu principal
-- CI valida integridade antes de publicação
+Uso permitido para:
 
----
+* Assistência técnica
+* Diagnóstico interno
+* Atendimento profissional
 
-## Público-Alvo
-
-- Técnicos de informática
-- MSPs (Managed Service Providers)
-- Assistências técnicas
-- Administradores de sistemas Windows
+Redistribuição ou modificação devem respeitar os termos definidos pelo autor.
 
 ---
-
-## Links Oficiais
-
-<ul>
-  <li>🌐 <strong>Site:</strong> <a href="https://www.hpinfo.com.br" target="_blank" rel="noopener">https://www.hpinfo.com.br</a></li>
-  <li>🐙 <strong>Repositório:</strong> <a href="https://github.com/sejalivre/hp-scripts" target="_blank" rel="noopener">https://github.com/sejalivre/hp-scripts</a></li>
-  <li>📘 <strong>Documentação:</strong> <a href="https://docs.hpinfo.com.br" target="_blank" rel="noopener">https://docs.hpinfo.com.br</a></li>
-  <li>🛠️ <strong>Issues:</strong> <a href="https://github.com/sejalivre/hp-scripts/issues" target="_blank" rel="noopener">https://github.com/sejalivre/hp-scripts/issues</a></li>
-</ul>
-
-
----
-
-**HP Scripts** é projetado para ser **simples de executar**, **difícil de quebrar** e **fácil de manter**.
-
