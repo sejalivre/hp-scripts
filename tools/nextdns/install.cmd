@@ -1,156 +1,142 @@
-@echo off
-setlocal EnableDelayedExpansion
-Title Instalador HPTI - NextDNS (Modo Oculto + Flush)
+<#
+.SYNOPSIS
+    Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
+    Versão 1.1 - Com seleção de ID Dinâmico
+#>
 
-:: ==========================================
-:: 1. VERIFICACAO DE ADMINISTRADOR
-:: ==========================================
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo.
-    echo =====================================================
-    echo  ERRO: Este script precisa ser executado como ADMIN.
-    echo  Clique com o botao direito e "Executar como Administrador".
-    echo =====================================================
-    echo.
-    pause
-    exit
+# --- VERIFICAÇÃO DE ADMINISTRADOR ---
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "Execute como ADMINISTRADOR!"
+    Start-Sleep -Seconds 3
+    Exit
+}
+
+# --- SOLICITAÇÃO DE ID DO CLIENTE ---
+Clear-Host
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "      CONFIGURAÇÃO NEXTDNS HPTI           " -ForegroundColor White
+Write-Host "==========================================" -ForegroundColor Cyan
+$NextDNS_ID = Read-Host "Digite o ID do Cliente NextDNS (ex: 3a495c)"
+
+if ([string]::IsNullOrWhiteSpace($NextDNS_ID)) {
+    Write-Error "O ID não pode ser vazio. Cancelando."
+    Start-Sleep -Seconds 3
+    Exit
+}
+Write-Host " -> ID Definido: $NextDNS_ID" -ForegroundColor Green
+Start-Sleep -Seconds 2
+
+# --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas para evitar 404) ---
+$repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+$dnsBase    = "$repoBase/nextdns"
+$tempDir    = "$env:TEMP\HP-Tools"
+$7zipExe    = "$tempDir\7z.exe"
+$nextDnsZip = "$tempDir\nextdns.7z"
+$extractDir = "$tempDir\nextdns_extracted"
+
+# 1. Garante que as pastas existem
+if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
+if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
+
+# 2. Baixa o motor 7-Zip (se não existir)
+if (-not (Test-Path $7zipExe)) {
+    Write-Host " -> Preparando motor de extração..." -ForegroundColor Gray
+    Invoke-WebRequest -Uri "$repoBase/7z.txe" -OutFile "$tempDir\7z.txe" -UseBasicParsing
+    Copy-Item -Path "$tempDir\7z.txe" -Destination $7zipExe -Force
+}
+
+# 3. Baixa o pacote NextDNS do seu repositório
+Write-Host " -> Baixando pacote NextDNS..." -ForegroundColor Yellow
+Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -ErrorAction Stop -UseBasicParsing
+
+# 4. Extração Silenciosa
+Write-Host " -> Extraindo ferramentas..." -ForegroundColor Yellow
+$argumentos = "x `"$nextDnsZip`" -o`"$extractDir`" -p`"0`" -y"
+Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
+
+# 5. Caminhos dos arquivos extraídos
+$InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
+$CertPath      = Join-Path $extractDir "NextDNS.cer"
+
+# --- EXECUÇÃO DA INSTALAÇÃO (COM ID DINÂMICO) ---
+if (Test-Path $InstallerPath) {
+    Write-Host " -> Instalando NextDNS para o ID: $NextDNS_ID..." -ForegroundColor Cyan
+    # Aqui usamos o ID digitado pelo usuário
+    Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
+    Write-Host "[OK] Executável instalado." -ForegroundColor Green
+} else {
+    Write-Error "ERRO: Instalador não encontrado na extração!"
+    return
+}
+
+# --- INSTALAÇÃO DO CERTIFICADO ---
+if (Test-Path $CertPath) {
+    Write-Host " -> Instalando certificado de bloqueio..." -ForegroundColor Yellow
+    Import-Certificate -FilePath $CertPath -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+    Write-Host "[OK] Certificado importado." -ForegroundColor Green
+}
+
+# --- OCULTAR DO PAINEL DE CONTROLE (SystemComponent) ---
+Write-Host " -> Ocultando do Painel de Controle..." -ForegroundColor Gray
+Start-Sleep -Seconds 5
+$uninstallPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
 )
+foreach ($path in $uninstallPaths) {
+    if (Test-Path $path) {
+        Get-ChildItem -Path $path | ForEach-Object {
+            $displayName = Get-ItemProperty -Path $_.PSPath -Name "DisplayName" -ErrorAction SilentlyContinue
+            if ($displayName.DisplayName -like "*NextDNS*") {
+                New-ItemProperty -Path $_.PSPath -Name "SystemComponent" -Value 1 -PropertyType DWORD -Force | Out-Null
+            }
+        }
+    }
+}
 
-:: ==========================================
-:: 2. CONFIGURACOES E VARIAVEIS
-:: ==========================================
-set "INSTALLER_NAME=NextDNSSetup-3.0.13.exe"
-set "NEXTDNS_ID=3a495c"
-set "INSTALLER_PATH=%~dp0%INSTALLER_NAME%"
-:: URL de IP Vinculado (Da sua imagem)
-set "LINK_IP_URL=https://link-ip.nextdns.io/3a495c/97a2d3980330d01a"
+# --- LIMPEZA E FINALIZAÇÃO DE REDE  ---
+Write-Host " -> Limpando Cache DNS e reiniciando navegadores..." -ForegroundColor Magenta
+ipconfig /flushdns | Out-Null
 
-:: DNS IPv4
-set "DNS1=45.90.28.122"
-set "DNS2=45.90.30.122"
-:: DNS IPv6
-set "DNS6_1=2a07:a8c0::3a:495c"
-set "DNS6_2=2a07:a8c1::3a:495c"
+$browsers = @("chrome", "msedge", "firefox", "brave", "opera")
+foreach ($b in $browsers) { Stop-Process -Name $b -Force -ErrorAction SilentlyContinue }
 
-:: ==========================================
-:: 3. INSTALACAO DO AGENTE
-:: ==========================================
-if exist "%INSTALLER_PATH%" (
-    echo [INFO] Iniciando instalacao silenciosa do NextDNS (ID: %NEXTDNS_ID%)...
-    start /wait "" "%INSTALLER_PATH%" /S /ID=%NEXTDNS_ID%
-    echo [OK] Instalacao concluida.
-) else (
-    echo [ERRO] O arquivo %INSTALLER_NAME% nao foi encontrado.
-    pause
-    exit
-)
+# --- AGENDAMENTO DA TAREFA DE REPARO ---
+Write-Host " -> Configurando tarefa agendada de reparo..." -ForegroundColor Cyan
+$HptiDir = "$env:ProgramFiles\HPTI"
+if (!(Test-Path $HptiDir)) { New-Item -ItemType Directory -Path $HptiDir -Force | Out-Null }
 
-:: ==========================================
-:: 4. AGUARDAR REGISTRO (CRUCIAL)
-:: ==========================================
-echo.
-echo [INFO] Aguardando 15 segundos para o Windows criar os registros...
-timeout /t 15 /nobreak >nul
+$DestScript = Join-Path $HptiDir "reparar_nextdns.ps1"
+# Baixa o script de reparo para a pasta permanente
+Invoke-WebRequest -Uri "$dnsBase/reparar_nextdns.ps1" -OutFile $DestScript -UseBasicParsing
 
-:: ==========================================
-:: 5. OCULTAR DO ADICIONAR/REMOVER PROGRAMAS
-:: ==========================================
-echo [INFO] Ocultando NextDNS do Painel de Controle...
-set "REG_PATH_1=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
-set "REG_PATH_2=HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
-call :OcultarNextDNS "%REG_PATH_1%"
-call :OcultarNextDNS "%REG_PATH_2%"
+# PATCH DINÂMICO: Atualiza o ID dentro do script de reparo baixado para o ID atual
+if (Test-Path $DestScript) {
+    (Get-Content $DestScript).Replace('3a495c', $NextDNS_ID) | Set-Content $DestScript
+}
 
-:: ==========================================
-:: 6. INSTALAR CERTIFICADO (OPCIONAL)
-:: ==========================================
-if exist "%~dp0NextDNS.cer" (
-    echo [INFO] Instalando certificado de bloqueio HPTI...
-    certutil -addstore -f "Root" "%~dp0NextDNS.cer" >nul
-)
+$TaskName = "HPTI_NextDNS_Reparo"
+$Action   = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
+$Trigger1 = New-ScheduledTaskTrigger -AtLogOn
+$Trigger2 = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 60) -RepetitionDuration (New-TimeSpan -Days 3650)
+$Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$Settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
-:: ==========================================
-:: 7. ATUALIZAR IP VINCULADO (NOVO)
-:: ==========================================
-echo.
-echo [INFO] Vinculando IP ao perfil NextDNS...
-curl "%LINK_IP_URL%" >nul 2>&1
+Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger @($Trigger1, $Trigger2) -Principal $Principal -Settings $Settings -Force | Out-Null
 
-:: ==========================================
-:: 8. CONFIGURACAO DE DNS (REDUNDANCIA)
-:: ==========================================
-echo [INFO] Configurando DNS nas placas de rede conectadas...
-REM for /f "tokens=3,*" %%i in ('netsh interface show interface ^| findstr "Conectad"') do (
-REM     set "IFACE_NAME=%%j"
-REM     echo    - Configurando interface: "!IFACE_NAME!"
-REM     netsh interface ip set dns name="!IFACE_NAME!" static %DNS1% validate=no >nul 2>&1
-REM     netsh interface ip add dns name="!IFACE_NAME!" %DNS2% index=2 validate=no >nul 2>&1
-REM     netsh interface ipv6 set dns name="!IFACE_NAME!" static %DNS6_1% validate=no >nul 2>&1
-REM     netsh interface ipv6 add dns name="!IFACE_NAME!" %DNS6_2% index=2 validate=no >nul 2>&1
-REM )
+# --- ATUALIZAR IP VINCULADO (DDNS) ---
+Write-Host " -> Atualizando IP vinculado no painel NextDNS..." -ForegroundColor Cyan
+try {
+    # Tenta atualizar usando o ID novo. 
+    # Nota: Se o Token (parte final da URL) for diferente para o novo cliente, isso pode falhar.
+    $DDNS_URL = "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a"
+    Invoke-WebRequest -Uri $DDNS_URL -UseBasicParsing | Out-Null
+    Write-Host "[OK] IP Vinculado ($NextDNS_ID)." -ForegroundColor Green
+} catch {
+    Write-Warning "Não foi possível atualizar o IP no painel (Verifique se o Token DDNS é compatível)."
+}
 
-:: ==========================================
-:: 8. GARANTIR REDE LIMPA (DHCP)
-:: ==========================================
-REM Em vez de chumbar IP, vamos deixar automatico para o Agente NextDNS assumir.
-REM Isso garante que o HOSTNAME apareca nos logs.
-
-echo [INFO] Definindo placas de rede para Automatico (DHCP)...
-for /f "tokens=3,*" %%i in ('netsh interface show interface ^| findstr "Conectad"') do (
-    set "IFACE_NAME=%%j"
-    echo    - Limpando DNS da interface: "!IFACE_NAME!"
-    netsh interface ip set dns name="!IFACE_NAME!" source=dhcp >nul 2>&1
-    netsh interface ipv6 set dns name="!IFACE_NAME!" source=dhcp >nul 2>&1
-)
-
-:: ==========================================
-:: 9. AUTOMACAO DE MANUTENCAO
-:: ==========================================
-echo.
-echo [AUTOMACAO] Configurando agendador de tarefas...
-
-:: 9.1 Cria a pasta fixa no C:
-if not exist "%ProgramFiles%\HPTI" mkdir "%ProgramFiles%\HPTI"
-
-:: 9.2 Copia o script de reparo
-copy /y "%~dp0reparar_nextdns.cmd" "%ProgramFiles%\HPTI\reparar_nextdns.cmd" >nul
-
-:: 9.3 Cria a Tarefa Agendada
-schtasks /create /tn "HPTI_NextDNS_Reparo" /tr "\"%ProgramFiles%\HPTI\reparar_nextdns.cmd\"" /sc HOURLY /mo 1 /ru SYSTEM /rl HIGHEST /f >nul 2>&1
-
-if %errorlevel% equ 0 (
-    echo [SUCESSO] Tarefa agendada criada.
-) else (
-    echo [ERRO] Falha ao criar tarefa agendada.
-)
-
-:: ==========================================
-:: 10. LIMPEZA FINAL
-:: ==========================================
-echo.
-echo [INFO] Limpando Cache DNS e Reiniciando Navegadores...
-ipconfig /flushdns
-
-taskkill /F /IM chrome.exe >nul 2>&1
-taskkill /F /IM msedge.exe >nul 2>&1
-taskkill /F /IM firefox.exe >nul 2>&1
-taskkill /F /IM opera.exe >nul 2>&1
-
-echo.
-echo [SUCESSO] Processo HPTI finalizado.
-echo.
-timeout /t 5
-exit
-
-:: ==========================================
-:: SUB-ROTINAS
-:: ==========================================
-:OcultarNextDNS
-for /f "tokens=*" %%a in ('reg query "%~1" 2^>nul') do (
-    reg query "%%a" /v DisplayName 2>nul | find "NextDNS" >nul
-    if !errorlevel! equ 0 (
-        reg add "%%a" /v SystemComponent /t REG_DWORD /d 1 /f >nul
-    )
-)
-goto :eof
+Write-Host "`n==========================================" -ForegroundColor Cyan
+Write-Host "   INSTALAÇÃO HPTI CONCLUÍDA COM SUCESSO!  " -ForegroundColor White -BackgroundColor DarkGreen
+Write-Host "==========================================" -ForegroundColor Cyan
+Start-Sleep -Seconds 5
