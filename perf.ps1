@@ -1,160 +1,155 @@
-# ==========================================
-# PERF.ps1 - Diagnóstico Profissional 
-# HP Scripts | https://www.hpinfo.com.br
-# ==========================================
+# ==========================================================
+# HP Scripts - PERF.ps1
+# Análise de Performance do Sistema
+# ==========================================================
 
-# -------------------------------
-# Admin Check 
-# -------------------------------
+param (
+    [switch]$AfterClean
+)
+
+# ---------------- ADMIN CHECK ----------------
 $IsAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsIdentity]::GetCurrent()
 ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $IsAdmin) {
-    Write-Host "[❌] Este script precisa ser executado como Administrador." -ForegroundColor Red
+    Write-Host "[❌] Execute como Administrador." -ForegroundColor Red
     Pause
     Exit 1
 }
 
+Write-Host "`n[🚀] Iniciando PERF..." -ForegroundColor Cyan
 
+# ---------------- PATHS ----------------
+$BaseDir   = "$env:ProgramData\HPInfo\PERF"
+$HistDir   = "$BaseDir\history"
+$ReportDir = "$BaseDir\reports"
 
-# -------------------------------
-# Paths
-# -------------------------------
-$basePath = "C:\ProgramData\HPInfo"
-$historyFile = "$basePath\perf-history.json"
-New-Item -ItemType Directory -Force -Path $basePath | Out-Null
+New-Item -ItemType Directory -Force -Path $HistDir, $ReportDir | Out-Null
 
-# -------------------------------
-# Functions
-# -------------------------------
-function Get-PerfSnapshot {
-    $os = Get-CimInstance Win32_OperatingSystem
-    $cpu  = (Get-Counter '\\Processor(_Total)\\% Processor Time').CounterSamples.CookedValue
-    $disk = (Get-Counter '\\PhysicalDisk(_Total)\\% Disk Time').CounterSamples.CookedValue
+$Computer = $env:COMPUTERNAME
+$Now      = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 
-    $memTotal = $os.TotalVisibleMemorySize
-    $memFree  = $os.FreePhysicalMemory
-    $ramUsed  = (($memTotal - $memFree) / $memTotal) * 100
+$JsonFile = "$HistDir\$Computer.json"
+$HtmlFile = "$ReportDir\PERF_$Computer_$Now.html"
 
-    [pscustomobject]@{
-        CPU  = [math]::Round($cpu,1)
-        RAM  = [math]::Round($ramUsed,1)
-        DISK = [math]::Round($disk,1)
-    }
+# ---------------- COLLECT METRICS ----------------
+
+# CPU
+$CpuUsage = (Get-CimInstance Win32_Processor |
+    Measure-Object LoadPercentage -Average
+).Average
+
+# Memory
+$OS = Get-CimInstance Win32_OperatingSystem
+$MemTotal = [math]::Round($OS.TotalVisibleMemorySize / 1MB, 1)
+$MemFree  = [math]::Round($OS.FreePhysicalMemory / 1MB, 1)
+$MemUsed  = [math]::Round((($MemTotal - $MemFree) / $MemTotal) * 100, 1)
+
+# Disk IO
+$DiskIO = (Get-Counter '\PhysicalDisk(_Total)\Disk Transfers/sec' -SampleInterval 1 -MaxSamples 2
+).CounterSamples[-1].CookedValue
+
+$DiskUsage = [math]::Min(100, [math]::Round(($DiskIO / 200) * 100, 1))
+
+# ---------------- SCORE ----------------
+$Score = [math]::Round(
+    100 -
+    ($CpuUsage * 0.4) -
+    ($MemUsed  * 0.3) -
+    ($DiskUsage * 0.3)
+)
+
+if ($Score -lt 0) { $Score = 0 }
+
+# ---------------- COLOR ----------------
+if ($Score -ge 75) {
+    $Color = "green"
+} elseif ($Score -ge 50) {
+    $Color = "orange"
+} else {
+    $Color = "red"
 }
 
-function Get-Score {
-    param($snap)
-    $s = 100
-    $s -= [math]::Min($snap.CPU,40)
-    $s -= [math]::Min($snap.RAM,30)
-    $s -= [math]::Min($snap.DISK,30)
-    if ($s -lt 0) { $s = 0 }
-    [math]::Round($s,0)
+# ---------------- SNAPSHOT ----------------
+$Snapshot = [PSCustomObject]@{
+    Date       = Get-Date
+    CPU        = $CpuUsage
+    Memory     = $MemUsed
+    Disk       = $DiskUsage
+    Score      = $Score
+    Mode       = if ($AfterClean) { "AFTER" } else { "BEFORE" }
 }
 
-function Get-ScoreColor {
-    param($score)
-    if ($score -ge 80) { "green" }
-    elseif ($score -ge 60) { "orange" }
-    else { "red" }
+# ---------------- HISTORY ----------------
+$History = @()
+if (Test-Path $JsonFile) {
+    $History = Get-Content $JsonFile | ConvertFrom-Json
 }
 
-# -------------------------------
-# BEFORE
-# -------------------------------
-$before = Get-PerfSnapshot
-$scoreBefore = Get-Score $before
-$colorBefore = Get-ScoreColor $scoreBefore
+$History += $Snapshot
+$History | ConvertTo-Json -Depth 5 | Set-Content $JsonFile
 
-# -------------------------------
-# LIMP integration
-# -------------------------------
-try { irm get.hpinfo.com.br/limp | iex } catch {}
+# ---------------- COMPARE ----------------
+$Before = $History | Where-Object { $_.Mode -eq "BEFORE" } | Select-Object -Last 1
+$After  = $History | Where-Object { $_.Mode -eq "AFTER"  } | Select-Object -Last 1
 
-Start-Sleep 5
-
-# -------------------------------
-# AFTER
-# -------------------------------
-$after = Get-PerfSnapshot
-$scoreAfter = Get-Score $after
-$colorAfter = Get-ScoreColor $scoreAfter
-
-# -------------------------------
-# History
-# -------------------------------
-$hostname = $env:COMPUTERNAME
-$entry = [pscustomobject]@{
-    Date = (Get-Date).ToString("yyyy-MM-dd HH:mm")
-    Before = $scoreBefore
-    After  = $scoreAfter
-}
-
-$history = @{}
-if (Test-Path $historyFile) {
-    $history = Get-Content $historyFile | ConvertFrom-Json
-}
-
-$history.$hostname += @($entry)
-$history | ConvertTo-Json -Depth 5 | Out-File $historyFile -Encoding UTF8
-
-# -------------------------------
-# HTML Report
-# -------------------------------
-$report = "$env:TEMP\PERF_Report_$hostname.html"
-
-$html = @"
+# ---------------- HTML ----------------
+$Html = @"
+<!DOCTYPE html>
 <html>
 <head>
-<title>Relatório de Performance</title>
+<meta charset="utf-8">
+<title>HP Info - Performance Report</title>
 <style>
-body { font-family:Segoe UI; }
-.score { font-size:26px; font-weight:bold; }
-.green{color:#2e7d32;} .orange{color:#f9a825;} .red{color:#c62828;}
-.bar { height:22px; background:#ddd; margin:5px 0; }
-.fill { height:100%; }
-@media print {
-  body { background:#fff; }
-}
+body { font-family: Segoe UI; background:#f4f4f4; padding:20px }
+.card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px #ccc }
+.bar { height:20px; border-radius:5px }
 </style>
 </head>
 <body>
 
-<h1>Relatório de Performance</h1>
-<b>Host:</b> $hostname<br>
-<b>Data:</b> $(Get-Date)
+<h1>HP Info - Performance Report</h1>
+<h3>Máquina: $Computer</h3>
+<p>Data: $(Get-Date)</p>
 
-<h2>Score</h2>
-<p class="score $colorBefore">Antes: $scoreBefore / 100</p>
-<p class="score $colorAfter">Depois: $scoreAfter / 100</p>
+<div class="card">
+<h2>Score Geral</h2>
+<div class="bar" style="width:$Score%; background:$Color"></div>
+<p><b>$Score / 100</b></p>
+</div>
 
-<h2>Gráfico Comparativo</h2>
-
-CPU
-<div class="bar"><div class="fill" style="width:$($after.CPU)%;background:#4caf50"></div></div>
-RAM
-<div class="bar"><div class="fill" style="width:$($after.RAM)%;background:#2196f3"></div></div>
-DISK
-<div class="bar"><div class="fill" style="width:$($after.DISK)%;background:#f44336"></div></div>
-
-<h2>Conclusão Técnica</h2>
+<div class="card">
+<h2>Métricas Atuais</h2>
 <ul>
-<li>Score abaixo de 60 indica gargalo crítico</li>
-<li>Disco alto sugere HD degradado</li>
-<li>RAM alta sugere upgrade</li>
+<li>CPU: $CpuUsage%</li>
+<li>Memória: $MemUsed%</li>
+<li>Disco: $DiskUsage%</li>
 </ul>
-
-<hr>
-HP Scripts – Diagnóstico Profissional
-
-</body>
-</html>
+</div>
 "@
 
-$html | Out-File $report -Encoding UTF8
-Start-Process $report
+if ($Before -and $After) {
+    $Html += @"
+<div class="card">
+<h2>Comparação Antes vs Depois</h2>
+<table border="1" cellpadding="5">
+<tr><th></th><th>Antes</th><th>Depois</th></tr>
+<tr><td>CPU</td><td>$($Before.CPU)%</td><td>$($After.CPU)%</td></tr>
+<tr><td>Memória</td><td>$($Before.Memory)%</td><td>$($After.Memory)%</td></tr>
+<tr><td>Disco</td><td>$($Before.Disk)%</td><td>$($After.Disk)%</td></tr>
+<tr><td>Score</td><td>$($Before.Score)</td><td>$($After.Score)</td></tr>
+</table>
+</div>
+"@
+}
 
-Write-Host "Relatório gerado com sucesso."
-Pause
+$Html += "</body></html>"
+
+$Html | Set-Content $HtmlFile -Encoding UTF8
+
+# ---------------- OUTPUT ----------------
+Write-Host "[✔] Score: $Score/100" -ForegroundColor Green
+Write-Host "[📄] Relatório gerado: $HtmlFile" -ForegroundColor Cyan
+
+Start-Process $HtmlFile
