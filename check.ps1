@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-    Check-up HPTI Master v7.3 - Fix de Compatibilidade (Final)
+    Check-up HPTI Master v7.4 - Verificação Aprimorada de Licenciamento
 .DESCRIPTION
+    - Verificação completa de licenciamento Windows com múltiplos métodos
+    - Mantém todas as 13 verificações originais
     - Corrige erro fatal do 'if' no PowerShell 5.1.
-    - Mantém Licenciamento Híbrido e CoreTemp ajustado.
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -21,7 +22,7 @@ $7zipExe      = "$tempDir\7z.exe"
 $Password     = "0"
 
 # --- PREPARAÇÃO ---
-Write-Host "[*] Iniciando Diagnóstico HPTI v7.3..." -ForegroundColor Cyan
+Write-Host "[*] Iniciando Diagnóstico HPTI v7.4..." -ForegroundColor Cyan
 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
@@ -160,33 +161,159 @@ try {
 } catch { $t3_Res = "Erro leitura" }
 Add-Check 3 "Espaço em Disco" $t3_Res $t3_Stat $t3_Rec
 
-# 4. Licenciamento Windows (Blindado)
+# 4. Licenciamento Windows - VERIFICAÇÃO APRIMORADA
+Write-Host "`n[4] Verificando Licenciamento Windows..." -ForegroundColor Cyan
 try {
-    $t4_Stat = "ALERTA"; $t4_Res = "Não Ativado"; $t4_Rec = "Regularizar licença."
-    $hack = Get-ChildItem "C:\Program Files", "C:\Windows" -Filter "*KMS*", "*AutoPico*", "*KMSAuto*" -Recurse -ErrorAction SilentlyContinue | Select -First 1
+    # Inicializa variáveis
+    $t4_Res = ""
+    $t4_Stat = "ALERTA"
+    $t4_Rec = "Verificar status da licença."
     
-    if ($hack) {
-        $t4_Stat = "CRÍTICO"; $t4_Res = "Pirataria Detectada"; $t4_Rec = "Remover ativadores ilegais."
-    } else {
-        $winLic = Get-CimInstance SoftwareLicensingProduct -Filter "Name like 'Windows%' AND LicenseStatus = 1" -ErrorAction SilentlyContinue | Select -First 1
-        if ($winLic) {
-            $t4_Stat = "OK"; $t4_Res = "Ativado (Original)"; $t4_Rec = "Licença válida."
-        } else {
-            $slmgrOut = cmd /c "cscript //nologo %windir%\system32\slmgr.vbs /xpr" 2>&1 | Out-String
-            if ($slmgrOut -match "permanently|definitivamente") {
-                $t4_Stat = "OK"; $t4_Res = "Ativado (Permanente)"; $t4_Rec = "Licença Vitalícia OK."
-            } elseif ($slmgrOut -match "expire|vence") {
-                $t4_Stat = "ALERTA"; $t4_Res = "Ativação Temporária"; $t4_Rec = "Verificar prazo de expiração."
-            } else {
-                $biosKey = (Get-CimInstance SoftwareLicensingService).OA3xOriginalProductKey
-                if ($biosKey) {
-                    $t4_Stat = "ALERTA"; $t4_Res = "Chave BIOS Detectada"; $t4_Rec = "Ativar usando chave da BIOS."
-                }
+    # MÉTODO 1: Verificação de Ativadores Ilegais
+    Write-Host "   -> Verificando ativadores ilegais..." -NoNewline -ForegroundColor DarkGray
+    $suspectPaths = @("C:\Program Files", "C:\Program Files (x86)", "C:\Windows", "$env:APPDATA", "$env:LOCALAPPDATA")
+    $suspectFiles = @("*KMS*", "*AutoPico*", "*KMSAuto*", "*KMSpico*", "*Microsoft Toolkit*")
+    
+    $hackFound = $false
+    $hackFiles = @()
+    
+    foreach ($path in $suspectPaths) {
+        if (Test-Path $path) {
+            foreach ($pattern in $suspectFiles) {
+                try {
+                    $files = Get-ChildItem -Path $path -Filter $pattern -Recurse -ErrorAction SilentlyContinue -Depth 1
+                    if ($files) {
+                        $hackFound = $true
+                        $hackFiles += $files | Select-Object -First 1
+                    }
+                } catch {}
             }
         }
     }
+    
+    if ($hackFound) {
+        $t4_Stat = "CRÍTICO"
+        $t4_Res = "Pirataria Detectada"
+        $t4_Rec = "Remover ativadores ilegais imediatamente."
+        Write-Host " [PIRATARIA]" -ForegroundColor Red
+    } else {
+        Write-Host " [OK]" -ForegroundColor Green
+        
+        # MÉTODO 2: Verificação via Registro Windows
+        Write-Host "   -> Verificando registro do Windows..." -NoNewline -ForegroundColor DarkGray
+        try {
+            # Verifica ativação no registro
+            $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
+            $activationStatus = Get-ItemProperty -Path $regPath -Name "KeyManagementServiceName" -ErrorAction SilentlyContinue
+            
+            if ($activationStatus -and $activationStatus.KeyManagementServiceName) {
+                $t4_Res = "Ativado via KMS"
+                $t4_Stat = "ALERTA"
+                $t4_Rec = "Licença corporativa (temporária)"
+                Write-Host " [KMS]" -ForegroundColor Yellow
+            } else {
+                # Verifica se está ativado
+                $regStatus = Get-ItemProperty -Path $regPath -Name "NotificationDisabled" -ErrorAction SilentlyContinue
+                $digitalProductId = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "DigitalProductId" -ErrorAction SilentlyContinue
+                
+                if ($digitalProductId -and $digitalProductId.DigitalProductId) {
+                    $t4_Res = "Ativado (Registro)"
+                    $t4_Stat = "OK"
+                    $t4_Rec = "Licença válida detectada"
+                    Write-Host " [ATIVADO]" -ForegroundColor Green
+                } else {
+                    Write-Host " [NÃO ATIVADO]" -ForegroundColor Yellow
+                }
+            }
+        } catch {
+            Write-Host " [ERRO REG]" -ForegroundColor Red
+        }
+        
+        # MÉTODO 3: Verificação via WMI Licensing (se ainda não tem resultado)
+        if ([string]::IsNullOrWhiteSpace($t4_Res) -or $t4_Res -eq "Ativado (Registro)") {
+            Write-Host "   -> Verificando via WMI..." -NoNewline -ForegroundColor DarkGray
+            try {
+                $license = Get-WmiObject -Class SoftwareLicensingProduct -Namespace "root\cimv2" -ErrorAction SilentlyContinue | 
+                           Where-Object { $_.Name -like "*Windows*" -and $_.LicenseStatus -eq 1 } | 
+                           Select-Object -First 1
+                
+                if ($license) {
+                    $licenseType = switch ($license.ProductKeyChannel) {
+                        "Retail" { "Retail" }
+                        "OEM" { "OEM" }
+                        "Volume" { "Volume" }
+                        default { "Original" }
+                    }
+                    
+                    if ($t4_Res -eq "Ativado (Registro)") {
+                        # Complementa informação existente
+                        $t4_Res = "$t4_Res - $licenseType"
+                    } else {
+                        $t4_Res = "Ativado ($licenseType)"
+                        $t4_Stat = "OK"
+                        $t4_Rec = "Status WMI: $($license.LicenseStatus)"
+                    }
+                    Write-Host " [$licenseType]" -ForegroundColor Green
+                } else {
+                    Write-Host " [N/D]" -ForegroundColor Yellow
+                }
+            } catch {
+                Write-Host " [ERRO WMI]" -ForegroundColor Red
+            }
+        }
+        
+        # MÉTODO 4: Verificação via SLMGR (como fallback)
+        if ([string]::IsNullOrWhiteSpace($t4_Res)) {
+            Write-Host "   -> Verificando via SLMGR..." -NoNewline -ForegroundColor DarkGray
+            try {
+                $output = cmd /c "cscript //nologo %windir%\system32\slmgr.vbs /dli" 2>&1
+                $outputString = $output -join "`n"
+                
+                if ($outputString -match "License Status:.*Licensed") {
+                    $t4_Res = "Ativado (SLMGR)"
+                    $t4_Stat = "OK"
+                    $t4_Rec = "Ativação confirmada via comando"
+                    Write-Host " [ATIVADO]" -ForegroundColor Green
+                } elseif ($outputString -match "error|não encontrado") {
+                    Write-Host " [COMANDO N/D]" -ForegroundColor Yellow
+                } else {
+                    Write-Host " [NÃO ATIVADO]" -ForegroundColor Red
+                }
+            } catch {
+                Write-Host " [ERRO]" -ForegroundColor Red
+            }
+        }
+        
+        # Se ainda não tem resultado, verifica chave BIOS
+        if ([string]::IsNullOrWhiteSpace($t4_Res)) {
+            Write-Host "   -> Verificando chave BIOS..." -NoNewline -ForegroundColor DarkGray
+            try {
+                $biosKey = (Get-CimInstance SoftwareLicensingService -ErrorAction SilentlyContinue).OA3xOriginalProductKey
+                if ($biosKey) {
+                    $t4_Res = "Chave BIOS Detectada"
+                    $t4_Stat = "ALERTA"
+                    $t4_Rec = "Ativar usando chave da BIOS"
+                    Write-Host " [CHAVE BIOS]" -ForegroundColor Yellow
+                } else {
+                    $t4_Res = "Não Ativado"
+                    $t4_Stat = "CRÍTICO"
+                    $t4_Rec = "Ativação necessária"
+                    Write-Host " [NÃO ATIVADO]" -ForegroundColor Red
+                }
+            } catch {
+                $t4_Res = "Erro na verificação"
+                $t4_Stat = "ALERTA"
+                $t4_Rec = "Verificar manualmente"
+                Write-Host " [ERRO]" -ForegroundColor Red
+            }
+        }
+    }
+    
 } catch {
-    $t4_Stat = "ALERTA"; $t4_Res = "Erro Leitura"; $t4_Rec = "Verificar manualmente."
+    $t4_Res = "Erro Leitura"
+    $t4_Stat = "ALERTA"
+    $t4_Rec = "Verificar manualmente."
+    Write-Host "   -> [ERRO GLOBAL]" -ForegroundColor Red
 }
 Add-Check 4 "Licenciamento Windows" $t4_Res $t4_Stat $t4_Rec
 
@@ -293,7 +420,7 @@ Add-Check 12 "Bateria" $t12_Res $t12_Stat $t12_Rec
 
 # 13. Windows Update
 try {
-    $searcher = (New-Object -ComObject Microsoft.Update.Session).CreateUpdateSearcher()
+    $searcher = (New-Object -ComObject Microsoft.Update.Searcher).CreateUpdateSearcher()
     $pend = ($searcher.Search("IsInstalled=0 and Type='Software'").Updates).Count
     if ($pend -gt 0) { $t13_Stat="ALERTA"; $t13_Rec="Fazer updates pendentes." }
     else { $t13_Stat="OK"; $t13_Rec="Sistema em dia." }
