@@ -248,9 +248,3 @@ MIT License — uso comercial permitido, sem garantias.
 📌 Projeto mantido por **HP Info – Tecnologia e Suporte Técnico**
 
 ---
-
-Se quiser, posso agora:
-
-* Gerar o **docs/index.md técnico**
-* Criar um **README reduzido para cliente**
-* Versionar badges automaticamente por tag Git
