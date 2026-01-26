@@ -4,14 +4,19 @@
 # ==========================================
 
 # -------------------------------
-# Admin Check
+# Admin Check 
 # -------------------------------
-if (-not ([Security.Principal.WindowsPrincipal]
+$IsAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsIdentity]::GetCurrent()
-).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "Execute como Administrador."
-    Pause; exit
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $IsAdmin) {
+    Write-Host "[❌] Este script precisa ser executado como Administrador." -ForegroundColor Red
+    Pause
+    Exit 1
 }
+
+
 
 # -------------------------------
 # Paths
