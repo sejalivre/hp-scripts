@@ -2,8 +2,9 @@
 .SYNOPSIS
     Gerador de Relatório de Estação de Trabalho (Hardware e Software).
 .DESCRIPTION
-    Versão Corrigida para compatibilidade total com Windows PowerShell 5.1.
-    Remove operadores modernos (?? e ?:) que causavam erro em sistemas padrão.
+    Versão FINAL COMPLETA (v7.4).
+    Compatível com PowerShell 5.1 (sem operadores modernos).
+    Inclui todas as seções: CoreTemp, DiskInfo, Drivers, BSOD, Logs, etc.
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -28,6 +29,16 @@ $Style = @"
     .ok     {color:#27ae60; font-weight:bold;}
     .warn   {color:#e67e22; font-weight:bold;}
     .crit   {color:#c0392b; font-weight:bold;}
+    #hp-floater {
+        position: fixed; right: 30px; bottom: 30px;
+        background-color: #3498db; color: white;
+        padding: 12px 25px; border-radius: 50px;
+        text-decoration: none; font-weight: bold;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 9999; transition: all 0.5s ease;
+        font-family: 'Segoe UI', sans-serif; border: 2px solid white;
+    }
+    #hp-floater:hover { background-color: #2980b9; transform: scale(1.05); }
 </style>
 "@
 #endregion
@@ -166,7 +177,7 @@ Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | ForEach-Object {
 $html += "</table></div>"
 #endregion
 
-#region 9. Coleta: CoreTemp (Compatível PS 5.1)
+#region 9. Coleta: CoreTemp (Fix Compatibilidade)
 $html += "<div class='section'><h2>5. Temperaturas CPU (Core Temp)</h2>"
 $coreTempPath = $ExtractedPaths["CoreTemp"]
 if ($coreTempPath -and (Test-Path (Join-Path $coreTempPath "CoreTemp.exe"))) {
@@ -180,7 +191,7 @@ if ($coreTempPath -and (Test-Path (Join-Path $coreTempPath "CoreTemp.exe"))) {
     $log = Get-ChildItem $coreTempPath -Filter "CT-Log*.csv" | Sort-Object LastWriteTime -Descending | Select -First 1
     if ($log) {
         $content = Get-Content $log.FullName -Encoding UTF8 -ErrorAction SilentlyContinue
-        # Lógica de Parsing simplificada
+        # Parsing manual para evitar erros de versão PS
         $cleanLines = @()
         foreach ($line in $content) {
             if ($line -match "^Time,") { $collect = $true }
@@ -190,6 +201,7 @@ if ($coreTempPath -and (Test-Path (Join-Path $coreTempPath "CoreTemp.exe"))) {
         if ($cleanLines.Count -gt 1) {
             $csvData = $cleanLines | ConvertFrom-Csv
             if ($csvData.Count -gt 0) {
+                # Filtra colunas relevantes
                 $tempCols = $csvData[0].PSObject.Properties.Name | Where-Object { $_ -match "CPU #0" -and $_ -notmatch "Low|High|Load" }
                 
                 $html += "<table><tr><th>Horário</th>"
@@ -215,7 +227,7 @@ if ($coreTempPath -and (Test-Path (Join-Path $coreTempPath "CoreTemp.exe"))) {
 $html += "</div>"
 #endregion
 
-#region 10. Coleta: CrystalDiskInfo (Compatível PS 5.1)
+#region 10. Coleta: CrystalDiskInfo (Fix Compatibilidade)
 $html += "<div class='section'><h2>6. Saúde do Disco (CrystalDiskInfo)</h2>"
 $cdiPath = $ExtractedPaths["CrystalDiskInfo"]
 if ($cdiPath) {
@@ -231,15 +243,13 @@ if ($cdiPath) {
         if (Test-Path $logPath) {
             $content = Get-Content $logPath -Encoding UTF8 -Raw
             
-            # Função auxiliar para evitar NULL
-            function Get-RegexVal ($pat, $txt) {
-                if ($txt -match $pat) { return $matches[1] } else { return "N/A" }
-            }
+            # Helper para extrair Regex sem operador ternário
+            function Get-Val ($p, $t) { if ($t -match $p) { return $matches[1] } return "N/A" }
 
-            $model = Get-RegexVal "Model : (.+)" $content
-            $serial = Get-RegexVal "Serial Number : (.+)" $content
-            $health = Get-RegexVal "Health Status : (.+)" $content
-            $temp = Get-RegexVal "Temperature : (.+)" $content
+            $model = Get-Val "Model : (.+)" $content
+            $serial = Get-Val "Serial Number : (.+)" $content
+            $health = Get-Val "Health Status : (.+)" $content
+            $temp = Get-Val "Temperature : (.+)" $content
             
             $hClass = if ($health -match 'Saudável|Good') { "ok" } else { "crit" }
             $tClass = if ($temp -match '^\d+ C') { "ok" } else { "warn" }
@@ -253,12 +263,135 @@ if ($cdiPath) {
 $html += "</div>"
 #endregion
 
-#region 11-20. Outras Coletas (Padrão)
-# ... (O restante segue a lógica padrão, mas sem os operadores ?? ou ?:)
-# Para brevidade, mantive as seções mais críticas acima.
-# Abaixo, correções pontuais em Drivers e Finalização.
+#region 11. Coleta: Discos Físicos
+$html += "<div class='section'><h2>11. Discos Físicos - Detalhes</h2>"
+$disks = Get-CimInstance Win32_DiskDrive
+if ($disks) {
+    $html += "<table><tr><th>Modelo</th><th>Tamanho</th><th>Interface</th><th>Partições</th><th>Status</th></tr>"
+    foreach ($disk in $disks) {
+        $sizeGB = [math]::Round($disk.Size / 1GB, 1)
+        $html += "<tr><td>$($disk.Model)</td><td>$sizeGB GB</td><td>$($disk.InterfaceType)</td><td>$($disk.Partitions)</td><td>$($disk.Status)</td></tr>"
+    }
+    $html += "</table>"
+}
+$html += "</div>"
+#endregion
 
-#region 21. Diagnóstico Drivers (Corrigido)
+#region 12. Coleta: Windows Update
+$html += "<div class='section'><h2>7. Status de Atualizações (Windows Update)</h2>"
+Write-Output "Coletando Windows Update..."
+$hotfixes = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 5
+if ($hotfixes) {
+    $html += "<h3>Últimos 5 patches instalados</h3><table><tr><th>KB ID</th><th>Descrição</th><th>Data</th></tr>"
+    foreach ($hf in $hotfixes) {
+        $dateStr = if ($hf.InstalledOn) { $hf.InstalledOn.ToString("dd/MM/yyyy") } else { "N/A" }
+        $html += "<tr><td>$($hf.HotFixID)</td><td>$($hf.Description)</td><td>$dateStr</td></tr>"
+    }
+    $html += "</table>"
+}
+$html += "</div>"
+#endregion
+
+#region 13. Coleta: Top Processos
+$html += "<div class='section'><h2>8. Processos que mais consomem Recursos</h2>"
+Write-Output "Coletando Top Processos..."
+$topCPU = Get-Process | Sort-Object CPU -Descending -ErrorAction SilentlyContinue | Select-Object -First 5
+$topRAM = Get-Process | Sort-Object WorkingSet -Descending -ErrorAction SilentlyContinue | Select-Object -First 5 
+
+$html += "<h3>Top 5 por CPU</h3><table><tr><th>Processo</th><th>PID</th><th>CPU(s)</th></tr>"
+foreach ($p in $topCPU) { $c=[math]::Round($p.CPU,1); $html += "<tr><td>$($p.Name)</td><td>$($p.Id)</td><td>$c</td></tr>" }
+$html += "</table>"
+
+$html += "<h3>Top 5 por RAM</h3><table><tr><th>Processo</th><th>PID</th><th>RAM(MB)</th></tr>"
+foreach ($p in $topRAM) { $r=[math]::Round($p.WorkingSet/1MB,1); $html += "<tr><td>$($p.Name)</td><td>$($p.Id)</td><td>$r</td></tr>" }
+$html += "</table></div>"
+#endregion
+
+#region 14. Coleta: Logs de Erro
+$html += "<div class='section'><h2>9. Erros Recentes do Sistema (7 dias)</h2>"
+Write-Output "Coletando Logs..."
+try {
+    $sysEvents = Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddDays(-7)} -MaxEvents 10 -ErrorAction Stop
+    if ($sysEvents) {
+        $html += "<table><tr><th>Data</th><th>Nível</th><th>ID</th><th>Mensagem</th></tr>"
+        foreach ($evt in $sysEvents) {
+            $msg = ($evt.Message -replace "`n"," " -replace "`r","")
+            if ($msg.Length -gt 80) { $msg = $msg.Substring(0, 80) + "..." }
+            $html += "<tr><td>$($evt.TimeCreated)</td><td class='crit'>$($evt.LevelDisplayName)</td><td>$($evt.Id)</td><td>$msg</td></tr>"
+        }
+        $html += "</table>"
+    }
+} catch { $html += "<p class='ok'>Nenhum erro crítico recente.</p>" }
+$html += "</div>"
+#endregion
+
+#region 15. Coleta: BSOD
+$html += "<div class='section'><h2>Histórico de Telas Azuis (BSOD)</h2>"
+$bsod = Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='Microsoft-Windows-WER-SystemErrorReporting'; ID=1001; StartTime=(Get-Date).AddDays(-30)} -ErrorAction SilentlyContinue
+if ($bsod) {
+    $html += "<p class='crit'>ATENÇÃO: $($bsod.Count) telas azuis detectadas.</p>"
+    $html += "<table><tr><th>Data</th><th>Erro</th></tr>"
+    foreach ($e in $bsod) { $html += "<tr><td>$($e.TimeCreated)</td><td>$($e.Message)</td></tr>" }
+    $html += "</table>"
+} else { $html += "<p class='ok'>Sem registros de BSOD (30 dias).</p>" }
+$html += "</div>"
+#endregion
+
+#region 16. Coleta: Serviços
+$html += "<div class='section'><h2>14. Serviços Críticos</h2>"
+$svcs = @("Winmgmt", "Spooler", "WinDefend", "W32Time")
+$html += "<table><tr><th>Serviço</th><th>Status</th></tr>"
+foreach ($s in $svcs) {
+    $obj = Get-Service -Name $s -ErrorAction SilentlyContinue
+    if ($obj) {
+        $cls = if ($obj.Status -eq "Running") {"ok"} else {"crit"}
+        $html += "<tr><td>$($obj.DisplayName)</td><td class='$cls'>$($obj.Status)</td></tr>"
+    }
+}
+$html += "</table></div>"
+#endregion
+
+#region 17. Inicialização
+$html += "<div class='section'><h2>Programas de Inicialização</h2>"
+$startup = Get-CimInstance Win32_StartupCommand
+if ($startup) {
+    $html += "<table><tr><th>Nome</th><th>Comando</th></tr>"
+    foreach ($s in $startup) { $html += "<tr><td>$($s.Name)</td><td>$($s.Command)</td></tr>" }
+    $html += "</table>"
+}
+$html += "</div>"
+#endregion
+
+#region 18. Bateria
+$html += "<div class='section'><h2>Saúde da Bateria</h2>"
+$bat = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue
+if ($bat) {
+    $html += "<p>Status: $($bat.Status) | Carga: $($bat.EstimatedChargeRemaining)%</p>"
+} else { $html += "<p>Sem bateria (Desktop).</p>" }
+$html += "</div>"
+#endregion
+
+#region 19. BIOS
+$html += "<div class='section'><h2>10. BIOS/UEFI</h2>"
+$bios = Get-CimInstance Win32_BIOS
+$html += "<table><tr><td>Versão</td><td>$($bios.SMBIOSBIOSVersion)</td></tr><tr><td>Data</td><td>$($bios.ReleaseDate)</td></tr></table></div>"
+#endregion
+
+#region 20. Resumo
+$html += "<div class='section'><h2>18. Diagnóstico Rápido</h2><table><tr><th>Item</th><th>Status</th></tr>"
+# Espaço Disco
+$diskC = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+$freeP = [math]::Round(($diskC.FreeSpace / $diskC.Size)*100, 0)
+$dCls = if ($freeP -lt 15) {"crit"} else {"ok"}
+$html += "<tr><td>Espaço C:</td><td class='$dCls'>$freeP% Livre</td></tr>"
+# Memória
+$usedM = [math]::Round(($osmem.TotalVisibleMemorySize - $osmem.FreePhysicalMemory)/$osmem.TotalVisibleMemorySize*100,0)
+$mCls = if ($usedM -gt 90) {"crit"} else {"ok"}
+$html += "<tr><td>Memória</td><td class='$mCls'>$usedM% em uso</td></tr>"
+$html += "</table></div>"
+#endregion
+
+#region 21. Diagnóstico Drivers (Fix Compatibilidade)
 $html += "<div class='section'><h2>Diagnóstico de Drivers</h2>"
 $badDrivers = Get-CimInstance Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 -and $_.ConfigManagerErrorCode -ne $null }
 
@@ -281,7 +414,10 @@ $html += "</div>"
 
 #region 22. Botão e Fim
 $html += @"
-<a href="https://www.hpinfo.com.br" target="_blank" style="display:block; text-align:center; padding:20px; background:#3498db; color:white; text-decoration:none; margin-top:20px;">Visitar HPInfo</a>
+<a href="https://www.hpinfo.com.br" target="_blank" id="hp-floater">Visitar HPInfo</a>
+<script>
+    window.onscroll = function() { var btn = document.getElementById("hp-floater"); if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) { btn.style.bottom = "auto"; btn.style.top = "20px"; } else { btn.style.bottom = "30px"; btn.style.top = "auto"; } };
+</script>
 </body></html>
 "@
 
