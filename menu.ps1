@@ -11,6 +11,7 @@ $baseUrl = "get.hpinfo.com.br"
 # 1. Definição das Ferramentas
 $ferramentas = @(
     @{ ID = "CHECK"   ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
+	@{ ID = "PERF"    ; Desc = "Análise e Score de Performance"        ; Path = "perf"  ; Color = "Gray" }
     @{ ID = "INFO"    ; Desc = "Coleta de Dados (Hardware/OS)"       ; Path = "info"  ; Color = "Yellow" }
     @{ ID = "REDE"    ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
     @{ ID = "PRINT"   ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
