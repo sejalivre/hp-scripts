@@ -1,122 +1,102 @@
-# ==========================================================
-# HP Scripts - LIMP.ps1
-# Limpeza Profunda e Otimização de Cache
+# limp.ps1 - Limpeza Profunda e Otimização de Cache
 # Executar como Administrador
-# ==========================================================
 
 $ErrorActionPreference = "SilentlyContinue"
 
-# ---------------- PERF (ANTES) ----------------
+# ===============================
+# PERF - ANTES DA LIMPEZA
+# ===============================
+$env:HPINFO_PERF_STAGE = "BEFORE"
 irm https://get.hpinfo.com.br/perf | iex
 
 Write-Host "`n=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
-# ---------------- FUNÇÕES ----------------
-function Remove-Safe {
-    param($Path)
-    if (Test-Path $Path) {
-        Remove-Item -Path $Path -Recurse -Force -ErrorAction SilentlyContinue
-    }
-}
-
-# ---------------- 1. ENCERRAR PROCESSOS ----------------
+# 1. Encerrar processos comuns
 Write-Host "Encerrando processos ativos..." -ForegroundColor Yellow
 $processos = @(
     "winword","excel","powerpnt","outlook",
     "chrome","msedge","firefox","brave",
     "acrord32","explorer"
 )
-
 foreach ($p in $processos) {
-    Stop-Process -Name $p -Force -ErrorAction SilentlyContinue
+    Get-Process -Name $p -ErrorAction SilentlyContinue | Stop-Process -Force
 }
-
 Start-Sleep -Seconds 2
 
-# ---------------- ESPAÇO ANTES ----------------
+# Espaço antes
 $espacoAntes = (Get-PSDrive C).Free
 
-# ---------------- 2. TEMP / PREFETCH ----------------
+# 2. Limpeza de temporários
 Write-Host "Limpando arquivos temporários e Prefetch..." -ForegroundColor Yellow
-
 $pastasLimpar = @(
     "$env:TEMP\*",
     "C:\Windows\Temp\*",
     "C:\Windows\Prefetch\*",
+    "$env:LOCALAPPDATA\Microsoft\Windows\Explorer\thumbcache_*.db",
     "$env:APPDATA\Microsoft\Windows\Recent\*",
     "C:\Windows\Logs\*"
 )
 
 foreach ($caminho in $pastasLimpar) {
-    Remove-Safe $caminho
+    if (Test-Path $caminho) {
+        Remove-Item $caminho -Recurse -Force
+    }
 }
 
-# Thumbcache (tratamento especial)
-$ThumbPath = "$env:LOCALAPPDATA\Microsoft\Windows\Explorer"
-if (Test-Path $ThumbPath) {
-    Get-ChildItem $ThumbPath -Filter "thumbcache_*.db" -ErrorAction SilentlyContinue |
-        Remove-Item -Force -ErrorAction SilentlyContinue
-}
-
-# ---------------- 3. WINDOWS UPDATE ----------------
+# 3. Windows Update
 Write-Host "Limpando cache do Windows Update..." -ForegroundColor Yellow
-
-$servicos = @("wuauserv", "bits", "cryptsvc")
-
+$servicos = "wuauserv","bits","cryptsvc"
 foreach ($s in $servicos) {
-    Stop-Service $s -Force -ErrorAction SilentlyContinue
+    Get-Service $s -ErrorAction SilentlyContinue | Where-Object {$_.Status -ne "Stopped"} | Stop-Service -Force
 }
 
-$updateFolders = @(
-    "C:\Windows\SoftwareDistribution",
-    "C:\Windows\System32\catroot2"
-)
-
+$updateFolders = "C:\Windows\SoftwareDistribution","C:\Windows\System32\catroot2"
 foreach ($folder in $updateFolders) {
-    Remove-Safe "$folder\*"
+    if (Test-Path $folder) {
+        Remove-Item "$folder\*" -Recurse -Force
+    }
 }
 
 foreach ($s in $servicos) {
-    Start-Service $s -ErrorAction SilentlyContinue
+    Get-Service $s -ErrorAction SilentlyContinue | Start-Service
 }
 
-# ---------------- 4. CACHE DE NAVEGADORES ----------------
+# 4. Cache de navegadores
 Write-Host "Limpando cache de navegadores..." -ForegroundColor Yellow
-
 $browserCaches = @(
     "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\*",
     "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\*",
     "$env:LOCALAPPDATA\Mozilla\Firefox\Profiles\*\cache2\*"
 )
-
 foreach ($path in $browserCaches) {
-    Remove-Safe $path
+    if (Test-Path $path) {
+        Remove-Item $path -Recurse -Force
+    }
 }
 
-# ---------------- 5. LIXEIRA / DELIVERY OPT ----------------
+# 5.  Lixeira e Delivery Optimization
 Write-Host "Limpando lixeira e otimização de entrega..." -ForegroundColor Yellow
-
 Clear-RecycleBin -Confirm:$false -ErrorAction SilentlyContinue
-Remove-Safe "C:\Windows\SoftwareDistribution\DeliveryOptimization\*"
 
-# ---------------- ESPAÇO DEPOIS ----------------
+$doPath = "C:\Windows\SoftwareDistribution\DeliveryOptimization"
+if (Test-Path $doPath) {
+    Remove-Item "$doPath\*" -Recurse -Force
+}
+
+# 6. Estatísticas finais
 $espacoDepois = (Get-PSDrive C).Free
 $totalLimpoMB = [math]::Round(($espacoDepois - $espacoAntes) / 1MB, 2)
 
-# ---------------- RESULTADO  ----------------
 Write-Host "`n=======================================" -ForegroundColor Cyan
 Write-Host "LIMPEZA CONCLUÍDA!" -ForegroundColor Green
-
-if ($totalLimpoMB -gt 0) {
-    Write-Host "Espaço recuperado: $totalLimpoMB MB" -ForegroundColor White
-} else {
-    Write-Host "O sistema já estava limpo." -ForegroundColor White
-}
-
+Write-Host "Espaço recuperado: $totalLimpoMB MB" -ForegroundColor White
 Write-Host "=======================================" -ForegroundColor Cyan
 
-# ---------------- PERF (DEPOIS) ----------------
-irm https://get.hpinfo.com.br/perf | iex -AfterClean
+# ===============================
+# PERF - DEPOIS DA LIMPEZA
+# ===============================
+$env:HPINFO_PERF_STAGE = "AFTER"
+irm https://get.hpinfo.com.br/perf | iex
 
-# ---------------- EXPLORER ----------------
+# Restaurar Explorer
 Start-Process explorer.exe
