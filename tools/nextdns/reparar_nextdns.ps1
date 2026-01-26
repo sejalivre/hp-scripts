@@ -1,7 +1,27 @@
 # reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
-# Versão Consolidada: Baseada no fluxo do install.ps1
+# Versão 1.2 - Suporte a ID Dinâmico e Correção Automática
 
 Write-Host "--- INICIANDO VERIFICAÇÃO DE SAÚDE HPTI ---" -ForegroundColor Cyan
+
+# --- 0. DEFINIÇÃO DE CLIENTE (CONFIGURÁVEL) ---
+# O instalador HPTI substituirá este valor automaticamente.
+$NextDNS_ID = "3a495c" 
+
+# Lógica Inteligente: Detecta se o ID ainda é o padrão "3a495c"
+# Usamos concatenação ("3a"+"495c") para que o instalador NÃO substitua esta linha ao rodar o patch.
+$DefaultCheck = "3a" + "495c"
+
+if ($NextDNS_ID -eq $DefaultCheck) {
+    # Se estamos rodando manualmente e o ID é padrão, pergunta o ID correto
+    $HostInvocation = $MyInvocation.Host
+    if ($HostInvocation.UI.RawUI.ForegroundColor -ne $null) {
+        Write-Host "MODO MANUAL DETECTADO" -ForegroundColor Yellow
+        $InputID = Read-Host "Digite o ID do Cliente NextDNS (Enter para manter $NextDNS_ID)"
+        if (-not [string]::IsNullOrWhiteSpace($InputID)) {
+            $NextDNS_ID = $InputID
+        }
+    }
+}
 
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas) ---
 $repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
@@ -16,7 +36,7 @@ $svc = Get-Service -Name "NextDNS" -ErrorAction SilentlyContinue
 if ($null -eq $svc) {
     Write-Warning "[ALERTA] Serviço não encontrado. Iniciando reinstalação via Web..."
     
-    # Garante pastas [cite: 66]
+    # Garante pastas
     if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
     if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
 
@@ -27,19 +47,19 @@ if ($null -eq $svc) {
         Copy-Item -Path "$tempDir\7z.txe" -Destination $7zipExe -Force
     }
 
-    # Baixa e Extrai o pacote NextDNS (Caminho absoluto para evitar 404) [cite: 68]
+    # Baixa e Extrai o pacote NextDNS
     Write-Host " -> Baixando e Extraindo pacote de reparo..." -ForegroundColor Yellow
     Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -UseBasicParsing -ErrorAction Stop
     
-    # Extração silenciosa [cite: 69]
+    # Extração silenciosa
     $argumentos = "x `"$nextDnsZip`" -o`"$extractDir`" -p`"0`" -y"
     Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
 
-    # Executa a instalação silenciosa [cite: 70]
+    # Executa a instalação silenciosa COM O ID CORRETO
     $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
     if (Test-Path $InstallerPath) {
-        Write-Host " -> Restaurando serviço NextDNS..." -ForegroundColor Cyan
-        Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=3a495c" -Wait
+        Write-Host " -> Restaurando serviço NextDNS (ID: $NextDNS_ID)..." -ForegroundColor Cyan
+        Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
     }
 } elseif ($svc.Status -ne "Running") {
     Write-Host " -> Iniciando serviço NextDNS parado..." -ForegroundColor Yellow
@@ -56,6 +76,7 @@ foreach ($nic in $adapters) {
 # --- 3. RE-APLICAÇÃO DO CERTIFICADO ---
 $CertPath = Join-Path $extractDir "NextDNS.cer"
 if (-not (Test-Path $CertPath)) {
+    # Tenta baixar se não existir localmente
     Invoke-WebRequest -Uri "$dnsBase/NextDNS.cer" -OutFile $CertPath -UseBasicParsing -ErrorAction SilentlyContinue
 }
 if (Test-Path $CertPath) {
@@ -82,9 +103,13 @@ foreach ($path in $uninstallPaths) {
 
 # --- 5. SINCRONIZAÇÃO E FLUSH ---
 try {
-    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/3a495c/97a2d3980330d01a" -UseBasicParsing | Out-Null
-    Write-Host " -> IP vinculado com sucesso." -ForegroundColor Green
-} catch {}
+    # URL de vínculo IP atualizada para usar a variável do ID
+    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a" -UseBasicParsing | Out-Null
+    Write-Host " -> IP vinculado com sucesso ($NextDNS_ID)." -ForegroundColor Green
+} catch {
+    Write-Warning "Falha ao vincular IP (Verifique conexão)."
+}
 ipconfig /flushdns | Out-Null
 
 Write-Host "--- VERIFICAÇÃO CONCLUÍDA ---" -ForegroundColor Green
+Start-Sleep -Seconds 2
