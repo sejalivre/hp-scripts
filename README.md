@@ -195,6 +195,34 @@ Este script exige que você defina uma pasta de destino para salvar os dados.
 .\update.ps1
 ```
 
+🔧 PERF.ps1 — Diagnóstico e Score de Performance do Windows
+
+O PERF.ps1 é um script PowerShell projetado para avaliar, registrar e comparar a performance real do Windows, antes e depois de processos de otimização e limpeza (como o limp.ps1).
+
+Ele coleta métricas essenciais do sistema, calcula um Score de Performance (0–100) e gera um relatório HTML visual, ideal para diagnóstico técnico, comprovação de serviço e histórico por máquina.
+
+▶️ Como usar (execução rápida)
+
+O PERF.ps1 pode ser executado diretamente da internet, sem necessidade de download manual, utilizando o PowerShell como Administrador:
+
+irm https://get.hpinfo.com.br/perf | iex
+
+
+Esse método permite:
+
+Execução imediata em qualquer máquina
+
+Sempre utilizar a versão mais atual do script
+
+Integração automática com outros módulos do projeto (como o limp.ps1)
+
+💡 Uso em conjunto com limpeza
+
+Quando executado antes e depois do limp.ps1, o PERF identifica automaticamente o cenário e gera a comparação Antes vs Depois, destacando os ganhos reais de performance no relatório HTML.
+
+
+
+
 ---
 
 ## ⚠️ Requisitos
@@ -204,6 +232,8 @@ Este script exige que você defina uma pasta de destino para salvar os dados.
 ```powershell
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
+
+
 
 ---
 

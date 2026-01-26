@@ -1,0 +1,51 @@
+site_name: HP Scripts – Automação e Suporte Técnico
+site_description: Kit profissional de scripts PowerShell para suporte técnico Windows
+site_author: HP Info – Tecnologia e Suporte Técnico
+site_url: https://docs.hpinfo.com.br
+
+repo_name: sejalivre/hp-scripts
+repo_url: https://github.com/sejalivre/hp-scripts
+
+theme:
+  name: material
+  language: pt-BR
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+
+nav:
+  - Início: index.md
+  - Começando:
+      - Acesso Rápido: quickstart.md
+      - Requisitos: requisitos.md
+      - Segurança e Avisos: seguranca.md
+  - Scripts:
+      - Menu Principal: scripts/menu.md
+      - Check: scripts/check.md
+      - Info: scripts/info.md
+      - Rede: scripts/rede.md
+      - Print: scripts/print.md
+      - Update: scripts/update.md
+      - Hora: scripts/hora.md
+      - Backup: scripts/backup.md
+      - Limpeza (LIMP): scripts/limp.md
+      - Performance (PERF): scripts/perf.md
+      - Wallpaper: scripts/wall.md
+      - NextDNS: scripts/nextdns.md
+  - Utilitários:
+      - PowerShell 7: utilitarios/installps1.md
+  - Projeto:
+      - Licença: licenca.md
+      - Changelog: changelog.md
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
