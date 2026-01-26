@@ -1,10 +1,9 @@
 <#
 .SYNOPSIS
-    Check-up HPTI Master v7.1 - Versão Estável
+    Check-up HPTI Master v7.2 - Fix de Compatibilidade
 .DESCRIPTION
-    - Correção de erro de sintaxe (Parser).
-    - Licenciamento Híbrido (WMI + SLMGR).
-    - CoreTemp com delay ajustado.
+    - Remove a sintaxe '(if...)' que trava o PowerShell 5.1.
+    - Mantém Licenciamento Híbrido e CoreTemp ajustado.
 #>
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -22,7 +21,7 @@ $7zipExe      = "$tempDir\7z.exe"
 $Password     = "0"
 
 # --- PREPARAÇÃO ---
-Write-Host "[*] Iniciando Diagnóstico HPTI v7.1..." -ForegroundColor Cyan
+Write-Host "[*] Iniciando Diagnóstico HPTI v7.2..." -ForegroundColor Cyan
 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
@@ -73,8 +72,10 @@ function Add-Check ($ID, $Nome, $Res, $Stat, $Rec) {
     }
     $Resultados.Add($obj)
     
-    # Exibe no console colorido
-    Write-Host "[$Stat] ${Nome}: $Res" -ForegroundColor (if($Stat -eq "OK"){"Green"}else{"Yellow"})
+    # --- CORREÇÃO DE COMPATIBILIDADE AQUI ---
+    # Separamos a lógica de cor para funcionar no PS 5.1
+    $CorConsole = if ($Stat -eq "OK") { "Green" } else { "Yellow" }
+    Write-Host "[$Stat] ${Nome}: $Res" -ForegroundColor $CorConsole
 }
 
 Write-Host "`n--- EXECUTANDO 13 CHECAGENS ---" -ForegroundColor Yellow
