@@ -1,250 +1,240 @@
-Claro 👍
-Segue o **Markdown puro**, **sem bloco de código**, pronto para colar direto no `README.md` do GitHub.
-
----
-
 [![Qualidade do Código](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
 [![Documentação](https://img.shields.io/badge/docs-online-blue)](https://docs.hpinfo.com.br)
-![PowerShell](https://img.shields.io/badge/PowerShell-7%2B-blue?logo=powershell)
-![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-blue?logo=windows)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Version](https://img.shields.io/badge/Version-1.0.0-orange)
 
-# 🧰 HP Scripts – Kit de Automação e Suporte Técnico Windows
+# HP-Scripts (Automação e Gerenciamento)
 
-Conjunto de scripts PowerShell voltados para **suporte técnico, manutenção, diagnóstico e padronização de sistemas Windows**.
-Ideal para técnicos de informática, assistências técnicas e ambientes corporativos.
+Coleção de scripts PowerShell voltados para inventário de hardware, manutenção de rede, backups e solução de problemas.
+
+**Documentação Completa:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
 
 ---
 
-## 🚀 Acesso Rápido (One-liner)
+Aqui está uma versão bem formatada em Markdown + HTML que fica bonita no README do GitHub (mantendo compatibilidade total com o render do GitHub):
 
-### Menu principal
+```markdown
+# HP-Scripts - Kit de Automação e Manutenção para Windows
+
+Coleção de scripts PowerShell para automação de TI, manutenção, diagnóstico e configuração de sistemas Windows.
+
+<p align="center">
+  <img src="https://img.shields.io/badge/PowerShell-7+-blue?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell 7+"/>
+  <img src="https://img.shields.io/badge/Windows-7/8/10/11-success?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 7+"/>
+  <img src="https://img.shields.io/github/license/sejalivre/hp-scripts?style=for-the-badge" alt="MIT License"/>
+</p>
+
+## 🚀 Instalação Rápida (execução direta – sem baixar nada)
 
 ```powershell
-irm get.hpinfo.com.br/menu | iex
-```
-
-### Acesso direto a módulos específicos
-
-```powershell
+# Diagnóstico completo do sistema
 irm get.hpinfo.com.br/info | iex
-```
 
----
-
-## 📋 Estrutura do Menu
-
-0. **Menu.ps1** – Launcher principal
-1. **[CHECK  ]** Verificações Rápidas e Integridade
-2. **[INFO   ]** Coleta de Dados (Hardware / SO)
-3. **[REDE   ]** Reparo de Rede e Conectividade
-4. **[PRINT  ]** Módulo de Impressão
-5. **[UPDATE ]** Atualizações do Sistema
-6. **[BACKUP ]** Rotina de Backup de Usuário
-7. **[HORA   ]** Sincronização de Horário
-8. **[LIMP   ]** Limpeza de Arquivos Temporários
-9. **[PERF   ]** Diagnóstico e Score de Performance
-10. **[ATIV   ]** Ativação do Windows (get.activated.win)
-11. **[WALL   ]** Configuração de Wallpaper Padrão
-12. **[NEXTDNS]** Gerenciamento do NextDNS
-
----
-
-## 🧠 Descrição dos Scripts
-
-> 🔔 **Acesso direto:** todos os módulos podem ser executados individualmente via `Invoke-RestMethod (irm)`.
-
----
-
-### **menu.ps1**
-
-Launcher principal do pacote (**hub de automação**).
-
-```powershell
+# Menu completo de ferramentas
 irm get.hpinfo.com.br/menu | iex
+
+# Reparos rápidos
+irm get.hpinfo.com.br/net   | iex    # Rede
+irm get.hpinfo.com.br/print | iex    # Impressão
+irm get.hpinfo.com.br/update| iex    # Atualizações
+irm get.hpinfo.com.br/limp  | iex    # Limpeza
 ```
 
-* Menu interativo no PowerShell
-* Centralização de todos os módulos
-* Execução remota sempre atualizada
+### Instalar PowerShell 7 (recomendado)
 
----
-
-### **net.ps1**
-
-```powershell
-irm get.hpinfo.com.br/rede | iex
+```cmd
+irm get.hpinfo.com.br/installps1.cmd | cmd
 ```
 
-Reset e correção completa de rede.
-
-* Reset de IP, DNS e Winsock
-* Correção pós-update
-* Reativação de serviços essenciais
-
----
-
-### **print.ps1**
-
-```powershell
-irm get.hpinfo.com.br/print | iex
-```
-
-Correção completa do sistema de impressão.
-
-* Limpeza de spooler
-* Correção de filas travadas
-* Ajustes de compatibilidade
-
----
-
-### **update.ps1**
-
-```powershell
-irm get.hpinfo.com.br/update | iex
-```
-
-Gerenciamento avançado do Windows Update.
-
-* Limpeza de cache
-* Reset de serviços
-* Geração de logs
-
----
-
-### **wallpaper.ps1**
-
-```powershell
-irm get.hpinfo.com.br/wall | iex
-```
-
-Padronização visual do sistema sem logout.
-
----
-
-### **info.ps1**
-
-```powershell
-irm get.hpinfo.com.br/info | iex
-```
-
-Relatório técnico completo em HTML com diagnóstico detalhado de hardware, sistema e erros.
-
----
-
-### **limp.ps1**
-
-```powershell
-irm get.hpinfo.com.br/limp | iex
-```
-
-Limpeza profunda e otimização do Windows.
-
-* Temporários e cache
-* Windows Update
-* Navegadores
-* Lixeira
-* Exibição de espaço recuperado
-
----
-
-### **perf.ps1**
-
-```powershell
-irm get.hpinfo.com.br/perf | iex
-```
-
-Diagnóstico avançado e **Score de Performance do Windows**.
-
-* Score automático (0–100)
-* Cores por desempenho (verde / amarelo / vermelho)
-* Gráfico visual
-* Relatório HTML pronto para impressão
-* Histórico por máquina
-* Comparação **Antes vs Depois** (integrado ao `limp.ps1`)
-
-**Fluxo recomendado:**
-
-```
-PERF (Antes) → LIMP → PERF (Depois)
-```
-
----
-
-### **check.ps1**
-
-```powershell
-irm get.hpinfo.com.br/check | iex
-```
-
-Verificação rápida de integridade do sistema.
-
----
-
-### **hora.ps1**
-
-```powershell
-irm get.hpinfo.com.br/hora | iex
-```
-
-Correção e sincronização de data e hora.
-
----
-
-### **backup.ps1**
-
-```powershell
-irm get.hpinfo.com.br/backup | iex
-```
-
-Backup automatizado de dados do usuário.
-
----
-
-### **installps1.cmd**
-
-Instalador / atualizador do PowerShell 7.
+ou
 
 ```cmd
 certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && install.cmd
 ```
 
+## ⚠️ Liberar execução de scripts (quando necessário)
+
+```powershell
+# Opção mais segura (recomendada)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Ou (apenas para esta sessão)
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+```
+
+## 📋 Menu Principal – O que você encontra dentro
+
+| #  | Opção                        | Descrição Principal                                                                 |
+|----|------------------------------|--------------------------------------------------------------------------------------|
+| 1  | 📊 INFO                      | Relatório HTML completo (hardware, software, saúde de disco, CPU, RAM, BSODs...)    |
+| 2  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
+| 3  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
+| 4  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
+| 5  | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
+| 6  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
+| 7  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
+| 8  | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
+| 9  | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
+| 10 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
+
+## Scripts que você pode chamar diretamente
+
+```powershell
+irm get.hpinfo.com.br/wallpaper | iex
+irm get.hpinfo.com.br/hora      | iex
+irm get.hpinfo.com.br/backup    | iex
+# etc.
+```
+
+## Ferramentas e utilitários integrados
+
+- CoreTemp  
+- CrystalDiskInfo  
+- 7-Zip (extração)  
+- Módulo PSWindowsUpdate  
+- Ferramentas de diagnóstico de rede  
+- NextDNS CLI + certificado
+
+## Requisitos mínimos
+
+- Windows 7 / 8 / 10 / 11  
+- PowerShell 5.1 (7+ recomendado)  
+- Direitos de administrador  
+- Internet (para baixar ferramentas e atualizações)
+
+## Características principais
+
+- Execução direta via URL (sem clonar repositório)  
+- Relatórios visuais em HTML com gráficos  
+- Manutenção automática via tarefas agendadas  
+- Logging detalhado de todas as ações  
+- Compatível com ambientes corporativos e domésticos
+
+## Estrutura resumida
+
+```
+hp-scripts/
+├── main-scripts/       ← menu.ps1, info.ps1, net.ps1, limp.ps1...
+├── tools/              ← nextdns, 7z.exe, helpers...
+└── docs/
+```
+
+## 🤝 Como contribuir
+
+1. Faça fork  
+2. Crie sua branch (`git checkout -b feature/nova-funcionalidade`)  
+3. Commit (`git commit -m 'Adiciona suporte a ...'`)  
+4. Push (`git push origin feature/nova-funcionalidade`)  
+5. Abra Pull Request
+
+## 📞 Suporte e contato
+
+🌐 **Site**: [www.hpinfo.com.br](https://www.hpinfo.com.br)  
+🐙 **Repositório**: [github.com/sejalivre/hp-scripts](https://github.com/sejalivre/hp-scripts)  
+🛠️ **Issues**: [Abrir issue](https://github.com/sejalivre/hp-scripts/issues)
+
+## ⚖️ Licença
+
+[MIT License](LICENSE)
+
 ---
 
-## ✅ Requisitos
+**Aviso importante**: Use os scripts por sua conta e risco. Faça backup antes de executar limpezas ou reparos importantes.
+```
 
-* Windows 10 ou 11
-* PowerShell como Administrador
+Essa versão:
 
+- Tem badges bonitinhos no topo  
+- Tabela clara com as opções do menu  
+- Blocos de código bem destacados  
+- Ícones emoji para melhorar a leitura  
+- Estrutura limpa e hierárquica  
+- Mantém todas as informações importantes do original
+
+Se quiser deixar ainda mais visual (com imagens ou GIF demonstrativo), posso sugerir onde colocar e como nomear os arquivos.
+
+Espero que goste! 🚀
+
+```powershell
+irm get.hpinfo.com.br/menu | iex
+```
+
+*Isso baixará e executará o orquestrador que gerencia todas as ferramentas abaixo.*
+
+---
+
+## 📂 Catálogo de Scripts
+
+| Script | Função | Descrição |
+| :--- | :--- | :--- |
+| **`menu.ps1`** | **Launcher** | Menu interativo para baixar e rodar as ferramentas sob demanda. |
+| **`info.ps1`** | **Inventário** | Gera relatório HTML com dados de CPU, RAM, S.M.A.R.T, Drivers e CoreTemp. |
+| **`backup.ps1`** | **Backup** | Salva Wi-Fi, Impressoras, Atalhos e Documentos antes da formatação. |
+| **`net.ps1`** | **Rede** | Reseta pilha TCP/IP, limpa cache DNS e renova configurações. |
+| **`print.ps1`** | **Impressão** | Reinicia Spooler, limpa fila travada e ajusta registros RPC. |
+| **`update.ps1`** | **Updates** | Repara o Windows Update e instala patches pendentes. |
+
+---
+
+## 🛠️ Execução Manual (Download)
+
+Se você clonou o repositório (`git clone`), use os comandos abaixo:
+
+### 1. Backup e Migração
+Este script exige que você defina uma pasta de destino para salvar os dados.
+
+```powershell
+.\backup.ps1 -Destino "C:\Backups"
+```
+
+### 2. Inventário
+```powershell
+.\info.ps1
+```
+
+### 3. Updates do Windows
+```powershell
+.\update.ps1
+```
+
+🔧 PERF.ps1 — Diagnóstico e Score de Performance do Windows
+
+O PERF.ps1 é um script PowerShell projetado para avaliar, registrar e comparar a performance real do Windows, antes e depois de processos de otimização e limpeza (como o limp.ps1).
+
+Ele coleta métricas essenciais do sistema, calcula um Score de Performance (0–100) e gera um relatório HTML visual, ideal para diagnóstico técnico, comprovação de serviço e histórico por máquina.
+
+▶️ Como usar (execução rápida)
+
+O PERF.ps1 pode ser executado diretamente da internet, sem necessidade de download manual, utilizando o PowerShell como Administrador:
+
+irm https://get.hpinfo.com.br/perf | iex
+
+
+Esse método permite:
+
+Execução imediata em qualquer máquina
+
+Sempre utilizar a versão mais atual do script
+
+Integração automática com outros módulos do projeto (como o limp.ps1)
+
+💡 Uso em conjunto com limpeza
+
+Quando executado antes e depois do limp.ps1, o PERF identifica automaticamente o cenário e gera a comparação Antes vs Depois, destacando os ganhos reais de performance no relatório HTML.
+
+
+
+
+---
+
+## ⚠️ Requisitos
+* Windows 10 ou 11.
+* PowerShell executando como **Administrador**.
+* Política de execução liberada:
 ```powershell
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
----
 
-## 🔐 Security & Disclaimer
-
-Scripts administrativos avançados.
-Execute apenas em máquinas autorizadas e com backup prévio.
-Uso por sua conta e risco.
 
 ---
 
-## 📄 Licença
-
-MIT License — uso comercial permitido, sem garantias.
-
----
-
-## 🔗 Links Importantes
-
-🌐 Site: [https://www.hpinfo.com.br](https://www.hpinfo.com.br)
-🐙 Repositório: [https://github.com/sejalivre/hp-scripts](https://github.com/sejalivre/hp-scripts)
-🛠️ Issues: [https://github.com/sejalivre/hp-scripts/issues](https://github.com/sejalivre/hp-scripts/issues)
-
----
-
-📌 Projeto mantido por **HP Info – Tecnologia e Suporte Técnico**
-
----
+Uma iniciativa [HP Info](https://hpinfo.com.br).
