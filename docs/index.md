@@ -152,10 +152,11 @@ Alguns módulos geram logs locais para auditoria e troubleshooting:
 
 ## Links Oficiais
 
-- 🌐 Site: https://www.hpinfo.com.br
-- 🐙 Repositório: https://github.com/sejalivre/hp-scripts
-- 📘 Documentação: https://docs.hpinfo.com.br
-- 🛠️ Issues: https://github.com/sejalivre/hp-scripts/issues
+- 🌐 **Site:** [https://www.hpinfo.com.br](https://www.hpinfo.com.br)
+- 🐙 **Repositório:** [https://github.com/sejalivre/hp-scripts](https://github.com/sejalivre/hp-scripts)
+- 📘 **Documentação:** [https://docs.hpinfo.com.br](https://docs.hpinfo.com.br)
+- 🛠️ **Issues:** [https://github.com/sejalivre/hp-scripts/issues](https://github.com/sejalivre/hp-scripts/issues)
+
 
 ---
 
