@@ -51,7 +51,7 @@ Launcher principal do pacote (**hub de automação**).
 
 **Execução direta:**
 ```powershell
-irm get.hpinfo.com.br | iex
+irm get.hpinfo.com.br/menu | iex
 ```
 
 - Exibe um **menu interativo** no PowerShell
