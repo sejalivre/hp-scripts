@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
     Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
+    Versão 1.1 - Com seleção de ID Dinâmico
 #>
 
 # --- VERIFICAÇÃO DE ADMINISTRADOR ---
@@ -9,6 +10,21 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Start-Sleep -Seconds 3
     Exit
 }
+
+# --- SOLICITAÇÃO DE ID DO CLIENTE ---
+Clear-Host
+Write-Host "==========================================" -ForegroundColor Cyan
+Write-Host "      CONFIGURAÇÃO NEXTDNS HPTI           " -ForegroundColor White
+Write-Host "==========================================" -ForegroundColor Cyan
+$NextDNS_ID = Read-Host "Digite o ID do Cliente NextDNS (ex: 3a495c)"
+
+if ([string]::IsNullOrWhiteSpace($NextDNS_ID)) {
+    Write-Error "O ID não pode ser vazio. Cancelando."
+    Start-Sleep -Seconds 3
+    Exit
+}
+Write-Host " -> ID Definido: $NextDNS_ID" -ForegroundColor Green
+Start-Sleep -Seconds 2
 
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas para evitar 404) ---
 $repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
@@ -42,10 +58,11 @@ Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
 $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
 $CertPath      = Join-Path $extractDir "NextDNS.cer"
 
-# --- EXECUÇÃO DA INSTALAÇÃO ---
+# --- EXECUÇÃO DA INSTALAÇÃO (COM ID DINÂMICO) ---
 if (Test-Path $InstallerPath) {
-    Write-Host " -> Instalando NextDNS Silenciosamente..." -ForegroundColor Cyan
-    Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=3a495c" -Wait
+    Write-Host " -> Instalando NextDNS para o ID: $NextDNS_ID..." -ForegroundColor Cyan
+    # Aqui usamos o ID digitado pelo usuário
+    Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
     Write-Host "[OK] Executável instalado." -ForegroundColor Green
 } else {
     Write-Error "ERRO: Instalador não encontrado na extração!"
@@ -93,6 +110,11 @@ $DestScript = Join-Path $HptiDir "reparar_nextdns.ps1"
 # Baixa o script de reparo para a pasta permanente
 Invoke-WebRequest -Uri "$dnsBase/reparar_nextdns.ps1" -OutFile $DestScript -UseBasicParsing
 
+# PATCH DINÂMICO: Atualiza o ID dentro do script de reparo baixado para o ID atual
+if (Test-Path $DestScript) {
+    (Get-Content $DestScript).Replace('3a495c', $NextDNS_ID) | Set-Content $DestScript
+}
+
 $TaskName = "HPTI_NextDNS_Reparo"
 $Action   = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
 $Trigger1 = New-ScheduledTaskTrigger -AtLogOn
@@ -105,10 +127,13 @@ Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger @($Trigger1,
 # --- ATUALIZAR IP VINCULADO (DDNS) ---
 Write-Host " -> Atualizando IP vinculado no painel NextDNS..." -ForegroundColor Cyan
 try {
-    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/3a495c/97a2d3980330d01a" -UseBasicParsing | Out-Null
-    Write-Host "[OK] IP Vinculado." -ForegroundColor Green
+    # Tenta atualizar usando o ID novo. 
+    # Nota: Se o Token (parte final da URL) for diferente para o novo cliente, isso pode falhar.
+    $DDNS_URL = "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a"
+    Invoke-WebRequest -Uri $DDNS_URL -UseBasicParsing | Out-Null
+    Write-Host "[OK] IP Vinculado ($NextDNS_ID)." -ForegroundColor Green
 } catch {
-    Write-Warning "Não foi possível atualizar o IP no painel."
+    Write-Warning "Não foi possível atualizar o IP no painel (Verifique se o Token DDNS é compatível)."
 }
 
 Write-Host "`n==========================================" -ForegroundColor Cyan
