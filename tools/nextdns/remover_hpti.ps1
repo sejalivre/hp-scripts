@@ -23,7 +23,8 @@ $TaskName = "HPTI_NextDNS_Reparo"
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
     Write-Host " -> Tarefa agendada removida." -ForegroundColor Green
-} else {
+}
+else {
     Write-Host " -> Nenhuma tarefa agendada encontrada." -ForegroundColor Gray
 }
 
@@ -37,7 +38,8 @@ if (Test-Path $Uninstaller) {
     Write-Host " -> Desinstalador encontrado. Executando..." -ForegroundColor Gray
     Start-Process -FilePath $Uninstaller -ArgumentList "/S", "/REMOVE" -Wait
     Write-Host " -> Desinstalação concluída." -ForegroundColor Green
-} else {
+}
+else {
     # SE NÃO ACHAR O DESINSTALADOR, FAZ REMOÇÃO FORÇADA DO SERVIÇO
     Write-Warning " -> Desinstalador oficial não encontrado. Forçando remoção manual do serviço..."
     
@@ -55,6 +57,13 @@ if (Test-Path $Uninstaller) {
 Write-Host "`n3. Limpando pastas HPTI..." -ForegroundColor Yellow
 $HptiDir = "$env:ProgramFiles\HPTI"
 if (Test-Path $HptiDir) {
+    # Remove arquivo de configuração também
+    $ConfigFile = "$HptiDir\config.txt"
+    if (Test-Path $ConfigFile) {
+        Remove-Item -Path $ConfigFile -Force -ErrorAction SilentlyContinue
+        Write-Host " -> Arquivo de configuração removido." -ForegroundColor Gray
+    }
+    
     Remove-Item -Path $HptiDir -Recurse -Force
     Write-Host " -> Pasta HPTI removida." -ForegroundColor Green
 }
@@ -74,7 +83,8 @@ try {
         Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ServerAddresses $GoogleDNS -ErrorAction SilentlyContinue
         Write-Host " -> Interface '$($nic.Name)' definida para Google DNS." -ForegroundColor Gray
     }
-} catch {
+}
+catch {
     Write-Error "Erro ao definir DNS."
 }
 

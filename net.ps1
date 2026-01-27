@@ -59,13 +59,13 @@ try {
     Write-Output "`nAplicando ajustes de registro..."
 
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Csc\Parameters" `
-                     -Name "FormatDatabase" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        -Name "FormatDatabase" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
 
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" `
-                     -Name "LimitBlankPasswordUse" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+        -Name "LimitBlankPasswordUse" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
 
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" `
-                     -Name "LocalAccountTokenFilterPolicy" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        -Name "LocalAccountTokenFilterPolicy" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
 
     # USO DE WRITE-OUTPUT
     Write-Output "→ Registros atualizados"
@@ -79,15 +79,28 @@ try {
     netsh winsock reset | Out-Null
     netsh advfirewall reset | Out-Null
 
-    # Limpeza do cache DNS (equivalente a ipconfig /flushdns)
-    Clear-DnsClientCache -ErrorAction Stop
-    # USO DE WRITE-OUTPUT
-    Write-Output "→ Cache DNS limpo com sucesso"
+    # Limpeza do cache DNS
+    if ($PSVersionTable.PSVersion.Major -ge 3) {
+        Clear-DnsClientCache -ErrorAction Stop
+        # USO DE WRITE-OUTPUT
+        Write-Output "→ Cache DNS limpo com sucesso"
+    }
+    else {
+        # Fallback para PowerShell 2.0
+        $result = ipconfig /flushdns
+        if ($LASTEXITCODE -eq 0) {
+            Write-Output "→ Cache DNS limpo com sucesso"
+        }
+        else {
+            Write-Warning "Falha ao limpar cache DNS"
+        }
+    }
 
     # USO DE WRITE-OUTPUT
     Write-Output "[OK] Reset concluído"
 
-} catch {
+}
+catch {
     # USO DE WRITE-WARNING PARA ERROS
     Write-Warning "`n[ERRO] $($_.Exception.Message)"
 }

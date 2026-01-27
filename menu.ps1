@@ -41,14 +41,13 @@ $baseUrl = "get.hpinfo.com.br"
 # 1. Definição das Ferramentas
 $ferramentas = @(
     @{ ID = "CHECK"   ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
-    @{ ID = "PERF"    ; Desc = "Análise e Score de Performance"        ; Path = "perf"  ; Color = "Gray" }
-    @{ ID = "INFO"    ; Desc = "Coleta de Dados (Hardware/OS)"       ; Path = "info"  ; Color = "Yellow" }
+    @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
+    @{ ID = "LIMP"    ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
+    @{ ID = "UPDATE"  ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
+    @{ ID = "HORA"    ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
     @{ ID = "REDE"    ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
     @{ ID = "PRINT"   ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
-    @{ ID = "UPDATE"  ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
     @{ ID = "BACKUP"  ; Desc = "Rotina de Backup de Usuário"         ; Path = "backup"; Color = "Yellow" }
-    @{ ID = "HORA"    ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
-    @{ ID = "LIMP"    ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
     @{ ID = "ATIV"    ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
     @{ ID = "WALL"    ; Desc = "Configurar Wallpaper Padrão"         ; Path = "wallpaper" ; Color = "Magenta" }
     @{ ID = "NEXTDNS" ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" }
@@ -88,37 +87,65 @@ function Show-MainMenu {
             
             Write-Host "`n[🚀] Iniciando $($selecionada.ID)..." -ForegroundColor $cor
             
-            # Montagem da URL
-            $finalUrl = if ($selecionada.External) { 
-                $selecionada.Path 
-            }
-            else { 
-                "https://$baseUrl/$($selecionada.Path)" 
-            }
-            
-            try {
-                # --- CORREÇÃO AQUI ---
-                # Em vez de 'irm | iex', baixamos para um arquivo temporário e executamos.
-                $TempScript = "$env:TEMP\HPTI_Exec_$($selecionada.ID).ps1"
+            # Verificar se é um arquivo .cmd (batch)
+            if ($selecionada.IsCmd) {
+                # Para arquivos .cmd, baixar e executar via cmd.exe
+                $finalUrl = "https://$baseUrl/$($selecionada.Path)"
+                $TempCmd = "$env:TEMP\HPTI_Exec_$($selecionada.ID).cmd"
                 
-                Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
-                
-                if (Test-Path $TempScript) {
-                    # Executa o arquivo baixado
-                    & $TempScript
+                try {
+                    Write-Host "[INFO] Baixando instalador..." -ForegroundColor Gray
+                    Invoke-WebRequest -Uri $finalUrl -OutFile $TempCmd -UseBasicParsing
                     
-                    # Remove após execução para manter limpo
-                    Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
+                    if (Test-Path $TempCmd) {
+                        Write-Host "[INFO] Executando instalador..." -ForegroundColor Gray
+                        # Executar o .cmd e aguardar conclusão
+                        Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$TempCmd`"" -Wait -NoNewWindow
+                        
+                        # Remove após execução
+                        Remove-Item $TempCmd -Force -ErrorAction SilentlyContinue
+                    }
+                    else {
+                        throw "Arquivo não foi baixado corretamente."
+                    }
                 }
-                else {
-                    throw "Arquivo não foi baixado corretamente."
+                catch {
+                    Write-Host "`n[❌] ERRO: Falha ao executar instalador." -ForegroundColor Red
+                    Write-Host "URL: $finalUrl" -ForegroundColor Gray
+                    Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
                 }
-                # ---------------------
             }
-            catch {
-                Write-Host "`n[❌] ERRO: Falha na execução remota." -ForegroundColor Red
-                Write-Host "URL: $finalUrl" -ForegroundColor Gray
-                Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+            else {
+                # Montagem da URL para scripts PowerShell
+                $finalUrl = if ($selecionada.External) { 
+                    $selecionada.Path 
+                }
+                else { 
+                    "https://$baseUrl/$($selecionada.Path)" 
+                }
+                
+                try {
+                    # Em vez de 'irm | iex', baixamos para um arquivo temporário e executamos.
+                    $TempScript = "$env:TEMP\HPTI_Exec_$($selecionada.ID).ps1"
+                    
+                    Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
+                    
+                    if (Test-Path $TempScript) {
+                        # Executa o arquivo baixado
+                        & $TempScript
+                        
+                        # Remove após execução para manter limpo
+                        Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
+                    }
+                    else {
+                        throw "Arquivo não foi baixado corretamente."
+                    }
+                }
+                catch {
+                    Write-Host "`n[❌] ERRO: Falha na execução remota." -ForegroundColor Red
+                    Write-Host "URL: $finalUrl" -ForegroundColor Gray
+                    Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                }
             }
         }
         else {

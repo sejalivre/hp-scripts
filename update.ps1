@@ -32,7 +32,8 @@ function Clear-WindowsUpdateCache {
         foreach ($s in $servicos) { Start-Service $s -ErrorAction SilentlyContinue }
         Write-Log "Cache limpo e serviços reiniciados."
         return $true
-    } catch {
+    }
+    catch {
         Write-Log "Erro no cache: $($_.Exception.Message)"
         return $false
     }
@@ -42,12 +43,38 @@ function Install-PSWindowsUpdateModule {
     Write-Log "Verificando modulo PSWindowsUpdate..."
     if (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {
         try {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-            Install-Module PSWindowsUpdate -Force -Confirm:$false -AllowClobber
+            # Habilitar TLS 1.2 se disponível
+            try {
+                $protocols = [Net.ServicePointManager]::SecurityProtocol
+                if ($protocols -notmatch 'Tls12') {
+                    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                    Write-Log "TLS 1.2 habilitado"
+                }
+            }
+            catch {
+                Write-Log "AVISO: Não foi possível habilitar TLS 1.2"
+            }
+            
+            # Detectar e configurar proxy se necessário
+            $proxySettings = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -ErrorAction SilentlyContinue
+            if ($proxySettings -and $proxySettings.ProxyEnable -eq 1) {
+                $proxy = $proxySettings.ProxyServer
+                Write-Log "Proxy detectado: $proxy"
+                [System.Net.WebRequest]::DefaultWebProxy = New-Object System.Net.WebProxy($proxy, $true)
+                [System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials
+            }
+            
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop
+            Install-Module PSWindowsUpdate -Force -Confirm:$false -AllowClobber -ErrorAction Stop
+            Write-Log "Módulo PSWindowsUpdate instalado com sucesso"
             return $true
-        } catch { return $false }
+        }
+        catch {
+            Write-Log "ERRO ao instalar módulo: $($_.Exception.Message)"
+            return $false
+        }
     }
+    Write-Log "Módulo PSWindowsUpdate já está instalado"
     return $true
 }
 
@@ -60,11 +87,36 @@ function Main {
         return
     }
 
+    # Verificar espaço em disco
+    $drive = Get-PSDrive C
+    $freeGB = [math]::Round($drive.Free / 1GB, 2)
+    Write-Log "Espaço livre em C: $freeGB GB"
+    
+    if ($freeGB -lt 10) {
+        Write-Log "AVISO: Espaço em disco baixo! Recomenda-se pelo menos 10GB livres."
+        Write-Host "Espaço livre: $freeGB GB. Continuar? (S/N): " -NoNewline -ForegroundColor Yellow
+        $response = Read-Host
+        if ($response -ne 'S' -and $response -ne 's') {
+            Write-Log "Operação cancelada pelo usuário"
+            return
+        }
+    }
+
     Clear-WindowsUpdateCache
+    
     if (Install-PSWindowsUpdateModule) {
-        Import-Module PSWindowsUpdate
-        Write-Log "Buscando atualizacoes..."
-        Get-WindowsUpdate -Install -AcceptAll -AutoReboot
+        try {
+            Import-Module PSWindowsUpdate -ErrorAction Stop
+            Write-Log "Buscando atualizacoes..."
+            Get-WindowsUpdate -Install -AcceptAll -IgnoreReboot
+            Write-Log "Atualizações instaladas. Reinicie o computador quando possível."
+        }
+        catch {
+            Write-Log "ERRO ao executar atualizações: $($_.Exception.Message)"
+        }
+    }
+    else {
+        Write-Log "Não foi possível instalar o módulo PSWindowsUpdate"
     }
     
     Write-Log "=== FIM DO PROCESSO ==="

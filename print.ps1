@@ -26,13 +26,13 @@ try {
     Write-Output "`nAplicando ajustes de registro para maior compatibilidade..."
 
     $regChanges = @(
-        @{ Path = "HKLM:\SYSTEM\CurrentControlSet\Policies\Microsoft\FeatureManagement\Overrides"; Name = "713073804";  Value = 0; Type = "DWord" }
+        @{ Path = "HKLM:\SYSTEM\CurrentControlSet\Policies\Microsoft\FeatureManagement\Overrides"; Name = "713073804"; Value = 0; Type = "DWord" }
         @{ Path = "HKLM:\SYSTEM\CurrentControlSet\Policies\Microsoft\FeatureManagement\Overrides"; Name = "1921033356"; Value = 0; Type = "DWord" }
         @{ Path = "HKLM:\SYSTEM\CurrentControlSet\Policies\Microsoft\FeatureManagement\Overrides"; Name = "3598754956"; Value = 0; Type = "DWord" }
 
         @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"; Name = "RestrictDriverInstallationToAdministrators"; Value = 0; Type = "DWord" }
-        @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"; Name = "UpdatePromptSettings";               Value = 0; Type = "DWord" }
-        @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"; Name = "NoWarningNoElevationOnInstall";     Value = 0; Type = "DWord" }
+        @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"; Name = "UpdatePromptSettings"; Value = 0; Type = "DWord" }
+        @{ Path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers\PointAndPrint"; Name = "NoWarningNoElevationOnInstall"; Value = 0; Type = "DWord" }
 
         @{ Path = "HKLM:\SYSTEM\CurrentControlSet\Control\Print"; Name = "RpcAuthnLevelPrivacyEnabled"; Value = 0; Type = "DWord" }
     )
@@ -41,7 +41,7 @@ try {
         $path = $reg.Path
         $name = $reg.Name
         $value = $reg.Value
-        $type  = $reg.Type
+        $type = $reg.Type
 
         if (-not (Test-Path $path)) {
             New-Item -Path $path -Force | Out-Null
@@ -63,7 +63,8 @@ try {
     if ($status.Status -eq 'Running') {
         # USO DE WRITE-OUTPUT PARA SUCESSO
         Write-Output "`n[OK] Spooler reiniciado com sucesso!"
-    } else {
+    }
+    else {
         # USO DE WRITE-WARNING PARA STATUS IRREGULAR
         Write-Warning "`n[!] Spooler iniciado mas não está rodando normalmente (Status: $($status.Status))"
     }
@@ -71,14 +72,22 @@ try {
     # 5. Listar impressoras instaladas
     # USO DE WRITE-OUTPUT
     Write-Output "`n=== IMPRESSORAS INSTALADAS ==="
-    Get-Printer | Format-Table Name, DriverName, PortName -AutoSize
+    
+    if ($PSVersionTable.PSVersion.Major -ge 3) {
+        Get-Printer | Format-Table Name, DriverName, PortName -AutoSize
+    }
+    else {
+        # Fallback para PowerShell 2.0 usando WMI
+        Get-WmiObject Win32_Printer | Format-Table Name, DriverName, PortName -AutoSize
+    }
 
     # 6. Abrir a pasta clássica "Dispositivos e Impressoras" (legacy view)
     # USO DE WRITE-OUTPUT
     Write-Output "`nAbrindo a pasta clássica 'Dispositivos e Impressoras'..."
     Start-Process "explorer.exe" "shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}"
 
-} catch {
+}
+catch {
     # USO DE WRITE-WARNING PARA ERRO GERAL
     Write-Warning "`n[ERRO] Ocorreu um erro: $($_.Exception.Message)"
 }

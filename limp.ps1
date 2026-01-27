@@ -1,22 +1,42 @@
 # limp.ps1 - Limpeza Profunda e Otimização de Cache
 # Executar como Administrador
+# Requer: PowerShell 3.0+ (Windows 8+)
+
+# Verifica versão do PowerShell
+$requiredVersion = 3
+if ($PSVersionTable.PSVersion.Major -lt $requiredVersion) {
+    Write-Host "ERRO: Este script requer PowerShell $requiredVersion.0 ou superior!" -ForegroundColor Red
+    Write-Host "Versão atual: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    pause
+    exit
+}
 
 $ErrorActionPreference = "SilentlyContinue"
 
 # ===============================
 # PERF - ANTES DA LIMPEZA
 # ===============================
-$env:HPINFO_PERF_STAGE = "BEFORE"
-irm https://get.hpinfo.com.br/perf | iex
+try {
+    if (Test-Connection -ComputerName "get.hpinfo.com.br" -Count 1 -Quiet -ErrorAction SilentlyContinue) {
+        $env:HPINFO_PERF_STAGE = "BEFORE"
+        irm https://get.hpinfo.com.br/perf | iex
+    }
+    else {
+        Write-Host "Aviso: Não foi possível conectar ao servidor de performance" -ForegroundColor Yellow
+    }
+}
+catch {
+    Write-Host "Aviso: Erro ao executar verificação de performance: $($_.Exception.Message)" -ForegroundColor Yellow
+}
 
 Write-Host "`n=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
 # 1. Encerrar processos comuns
 Write-Host "Encerrando processos ativos..." -ForegroundColor Yellow
 $processos = @(
-    "winword","excel","powerpnt","outlook",
-    "chrome","msedge","firefox","brave",
-    "acrord32","explorer"
+    "winword", "excel", "powerpnt", "outlook",
+    "chrome", "msedge", "firefox", "brave",
+    "acrord32", "explorer"
 )
 foreach ($p in $processos) {
     Get-Process -Name $p -ErrorAction SilentlyContinue | Stop-Process -Force
@@ -45,12 +65,12 @@ foreach ($caminho in $pastasLimpar) {
 
 # 3. Windows Update
 Write-Host "Limpando cache do Windows Update..." -ForegroundColor Yellow
-$servicos = "wuauserv","bits","cryptsvc"
+$servicos = "wuauserv", "bits", "cryptsvc"
 foreach ($s in $servicos) {
-    Get-Service $s -ErrorAction SilentlyContinue | Where-Object {$_.Status -ne "Stopped"} | Stop-Service -Force
+    Get-Service $s -ErrorAction SilentlyContinue | Where-Object { $_.Status -ne "Stopped" } | Stop-Service -Force
 }
 
-$updateFolders = "C:\Windows\SoftwareDistribution","C:\Windows\System32\catroot2"
+$updateFolders = "C:\Windows\SoftwareDistribution", "C:\Windows\System32\catroot2"
 foreach ($folder in $updateFolders) {
     if (Test-Path $folder) {
         Remove-Item "$folder\*" -Recurse -Force
@@ -76,7 +96,24 @@ foreach ($path in $browserCaches) {
 
 # 5.  Lixeira e Delivery Optimization
 Write-Host "Limpando lixeira e otimização de entrega..." -ForegroundColor Yellow
-Clear-RecycleBin -Confirm:$false -ErrorAction SilentlyContinue
+
+# Clear-RecycleBin só existe no PowerShell 5.0+
+if ($PSVersionTable.PSVersion.Major -ge 5) {
+    Clear-RecycleBin -Confirm:$false -ErrorAction SilentlyContinue
+}
+else {
+    # Fallback para versões antigas usando COM
+    try {
+        $shell = New-Object -ComObject Shell.Application
+        $recycleBin = $shell.NameSpace(10)
+        $recycleBin.Items() | ForEach-Object { 
+            Remove-Item $_.Path -Recurse -Force -ErrorAction SilentlyContinue 
+        }
+    }
+    catch {
+        Write-Host "Aviso: Não foi possível limpar a lixeira" -ForegroundColor Yellow
+    }
+}
 
 $doPath = "C:\Windows\SoftwareDistribution\DeliveryOptimization"
 if (Test-Path $doPath) {
@@ -95,8 +132,15 @@ Write-Host "=======================================" -ForegroundColor Cyan
 # ===============================
 # PERF - DEPOIS DA LIMPEZA
 # ===============================
-$env:HPINFO_PERF_STAGE = "AFTER"
-irm https://get.hpinfo.com.br/perf | iex
+try {
+    if (Test-Connection -ComputerName "get.hpinfo.com.br" -Count 1 -Quiet -ErrorAction SilentlyContinue) {
+        $env:HPINFO_PERF_STAGE = "AFTER"
+        irm https://get.hpinfo.com.br/perf | iex
+    }
+}
+catch {
+    Write-Host "Aviso: Erro ao executar verificação de performance final" -ForegroundColor Yellow
+}
 
 # Restaurar Explorer
 Start-Process explorer.exe

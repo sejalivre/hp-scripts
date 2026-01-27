@@ -1,6 +1,8 @@
 <#
 .SYNOPSIS
     Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
+.DESCRIPTION
+    Versão 2.0 - Suporte a ID Dinâmico com Persistência
 #>
 
 # --- VERIFICAÇÃO DE ADMINISTRADOR ---
@@ -10,11 +12,73 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
     Exit
 }
 
+Write-Host "===========================================================" -ForegroundColor Cyan
+Write-Host "       INSTALADOR NEXTDNS - HP-INFO (HPTI)                " -ForegroundColor White -BackgroundColor DarkBlue
+Write-Host "===========================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# --- CONFIGURAÇÃO DO ID NEXTDNS ---
+$HptiDir = "$env:ProgramFiles\HPTI"
+$ConfigFile = "$HptiDir\config.txt"
+$NextDNS_ID = ""
+
+# Tenta ler ID do arquivo de configuração existente
+if (Test-Path $ConfigFile) {
+    $NextDNS_ID = Get-Content $ConfigFile -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($NextDNS_ID) {
+        Write-Host "[INFO] ID encontrado no arquivo de configuração: $NextDNS_ID" -ForegroundColor Green
+        $confirma = Read-Host "Deseja usar este ID? (S/N, Enter=Sim)"
+        if ($confirma -and $confirma -notmatch '^[sS]?$') {
+            $NextDNS_ID = ""
+        }
+    }
+}
+
+# Se não tem ID válido, solicita ao técnico
+if (-not $NextDNS_ID) {
+    Write-Host ""
+    Write-Host "===========================================================" -ForegroundColor Yellow
+    Write-Host " CONFIGURAÇÃO DO ID NEXTDNS                               " -ForegroundColor Yellow
+    Write-Host "===========================================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "O ID NextDNS é necessário para configurar o bloqueio." -ForegroundColor Gray
+    Write-Host "Você pode encontrar seu ID em: https://my.nextdns.io" -ForegroundColor Gray
+    Write-Host "Exemplo de ID: abc123 (6 caracteres)" -ForegroundColor Gray
+    Write-Host ""
+    
+    do {
+        $NextDNS_ID = Read-Host "Digite o ID do NextDNS"
+        
+        # Validação básica: 6 caracteres alfanuméricos
+        if ($NextDNS_ID -match '^[a-zA-Z0-9]{6}$') {
+            Write-Host "[OK] ID válido: $NextDNS_ID" -ForegroundColor Green
+            break
+        }
+        else {
+            Write-Warning "ID inválido! Deve conter exatamente 6 caracteres alfanuméricos."
+            Write-Host "Tente novamente ou pressione Ctrl+C para cancelar." -ForegroundColor Gray
+        }
+    } while ($true)
+    
+    # Salva o ID no arquivo de configuração
+    if (-not (Test-Path $HptiDir)) { 
+        New-Item -ItemType Directory -Path $HptiDir -Force | Out-Null 
+    }
+    $NextDNS_ID | Out-File -FilePath $ConfigFile -Encoding ASCII -Force
+    Write-Host "[OK] ID salvo em: $ConfigFile" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "===========================================================" -ForegroundColor Cyan
+Write-Host " Iniciando instalação com ID: $NextDNS_ID" -ForegroundColor White
+Write-Host "===========================================================" -ForegroundColor Cyan
+Write-Host ""
+
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas para evitar 404) ---
-$repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
-$dnsBase    = "$repoBase/nextdns"
-$tempDir    = "$env:TEMP\HP-Tools"
-$7zipExe    = "$tempDir\7z.exe"
+$repoBase = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+$dnsBase = "$repoBase/nextdns"
+$tempDir = "$env:TEMP\HP-Tools"
+$7zipExe = "$tempDir\7z.exe"
 $nextDnsZip = "$tempDir\nextdns.7z"
 $extractDir = "$tempDir\nextdns_extracted"
 
@@ -40,14 +104,15 @@ Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
 
 # 5. Caminhos dos arquivos extraídos
 $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
-$CertPath      = Join-Path $extractDir "NextDNS.cer"
+$CertPath = Join-Path $extractDir "NextDNS.cer"
 
 # --- EXECUÇÃO DA INSTALAÇÃO ---
 if (Test-Path $InstallerPath) {
-    Write-Host " -> Instalando NextDNS Silenciosamente..." -ForegroundColor Cyan
-    Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=3a495c" -Wait
-    Write-Host "[OK] Executável instalado." -ForegroundColor Green
-} else {
+    Write-Host " -> Instalando NextDNS Silenciosamente com ID: $NextDNS_ID..." -ForegroundColor Cyan
+    Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
+    Write-Host "[OK] Executável instalado com sucesso." -ForegroundColor Green
+}
+else {
     Write-Error "ERRO: Instalador não encontrado na extração!"
     return
 }
@@ -94,21 +159,23 @@ $DestScript = Join-Path $HptiDir "reparar_nextdns.ps1"
 Invoke-WebRequest -Uri "$dnsBase/reparar_nextdns.ps1" -OutFile $DestScript -UseBasicParsing
 
 $TaskName = "HPTI_NextDNS_Reparo"
-$Action   = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
+$Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
 $Trigger1 = New-ScheduledTaskTrigger -AtLogOn
 $Trigger2 = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 60) -RepetitionDuration (New-TimeSpan -Days 3650)
 $Principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$Settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
 
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger @($Trigger1, $Trigger2) -Principal $Principal -Settings $Settings -Force | Out-Null
 
 # --- ATUALIZAR IP VINCULADO (DDNS) ---
 Write-Host " -> Atualizando IP vinculado no painel NextDNS..." -ForegroundColor Cyan
 try {
-    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/3a495c/97a2d3980330d01a" -UseBasicParsing | Out-Null
-    Write-Host "[OK] IP Vinculado." -ForegroundColor Green
-} catch {
-    Write-Warning "Não foi possível atualizar o IP no painel."
+    Invoke-WebRequest -Uri "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a" -UseBasicParsing | Out-Null
+    Write-Host "[OK] IP vinculado com sucesso (ID: $NextDNS_ID)." -ForegroundColor Green
+}
+catch {
+    Write-Warning "Não foi possível atualizar o IP no painel. Verifique sua conexão."
+    Write-Host "Erro: $($_.Exception.Message)" -ForegroundColor DarkGray
 }
 
 Write-Host "`n==========================================" -ForegroundColor Cyan
