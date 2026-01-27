@@ -1,8 +1,7 @@
 <#
 .SYNOPSIS
     Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
-.DESCRIPTION
-    Versão 2.0 - Suporte a ID Dinâmico com Persistência
+    Versão 1.1 - Com seleção de ID Dinâmico
 #>
 
 # --- VERIFICAÇÃO DE ADMINISTRADOR ---
@@ -106,7 +105,7 @@ Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
 $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
 $CertPath = Join-Path $extractDir "NextDNS.cer"
 
-# --- EXECUÇÃO DA INSTALAÇÃO ---
+# --- EXECUÇÃO DA INSTALAÇÃO (COM ID DINÂMICO) ---
 if (Test-Path $InstallerPath) {
     Write-Host " -> Instalando NextDNS Silenciosamente com ID: $NextDNS_ID..." -ForegroundColor Cyan
     Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
@@ -157,6 +156,11 @@ if (!(Test-Path $HptiDir)) { New-Item -ItemType Directory -Path $HptiDir -Force 
 $DestScript = Join-Path $HptiDir "reparar_nextdns.ps1"
 # Baixa o script de reparo para a pasta permanente
 Invoke-WebRequest -Uri "$dnsBase/reparar_nextdns.ps1" -OutFile $DestScript -UseBasicParsing
+
+# PATCH DINÂMICO: Atualiza o ID dentro do script de reparo baixado para o ID atual
+if (Test-Path $DestScript) {
+    (Get-Content $DestScript).Replace('3a495c', $NextDNS_ID) | Set-Content $DestScript
+}
 
 $TaskName = "HPTI_NextDNS_Reparo"
 $Action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$DestScript`""
