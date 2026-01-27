@@ -2,8 +2,38 @@
 .SYNOPSIS
     Launcher Principal HP-Scripts - Hub de Automação Profissional.
 .DESCRIPTION
-    Versão 1.4 - Execução via arquivo temporário (Corrige erro "The term 'if' is not recognized").
+    Versão 1.5 - Compatibilidade com Windows 10 antigo (1507+).
+.NOTES
+    Requer PowerShell 3.0+ (incluído em todas as versões do Windows 10)
 #>
+
+# ============================================================
+# BLOCO DE COMPATIBILIDADE - Windows 10 Antigo
+# ============================================================
+
+# Verificação de Versão do PowerShell
+if ($PSVersionTable.PSVersion.Major -lt 3) {
+    Write-Host "[ERRO] Este script requer PowerShell 3.0 ou superior." -ForegroundColor Red
+    Write-Host "Versão detectada: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    Write-Host "Atualize o PowerShell antes de continuar." -ForegroundColor Gray
+    Read-Host "Pressione ENTER para sair"
+    exit 1
+}
+
+# Configuração de TLS 1.2 (Essencial para HTTPS em Windows 10 1507/1511)
+try {
+    # Método primário (PowerShell 5.0+)
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+}
+catch {
+    try {
+        # Fallback para versões antigas
+        [System.Net.ServicePointManager]::SecurityProtocol = 'Tls12'
+    }
+    catch {
+        Write-Warning "Não foi possível forçar TLS 1.2. Conexões HTTPS podem falhar."
+    }
+}
 
 # Configuração de Origem 
 $baseUrl = "get.hpinfo.com.br"
@@ -11,7 +41,7 @@ $baseUrl = "get.hpinfo.com.br"
 # 1. Definição das Ferramentas
 $ferramentas = @(
     @{ ID = "CHECK"   ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
-	@{ ID = "PERF"    ; Desc = "Análise e Score de Performance"        ; Path = "perf"  ; Color = "Gray" }
+    @{ ID = "PERF"    ; Desc = "Análise e Score de Performance"        ; Path = "perf"  ; Color = "Gray" }
     @{ ID = "INFO"    ; Desc = "Coleta de Dados (Hardware/OS)"       ; Path = "info"  ; Color = "Yellow" }
     @{ ID = "REDE"    ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
     @{ ID = "PRINT"   ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
@@ -61,7 +91,8 @@ function Show-MainMenu {
             # Montagem da URL
             $finalUrl = if ($selecionada.External) { 
                 $selecionada.Path 
-            } else { 
+            }
+            else { 
                 "https://$baseUrl/$($selecionada.Path)" 
             }
             
@@ -69,9 +100,6 @@ function Show-MainMenu {
                 # --- CORREÇÃO AQUI ---
                 # Em vez de 'irm | iex', baixamos para um arquivo temporário e executamos.
                 $TempScript = "$env:TEMP\HPTI_Exec_$($selecionada.ID).ps1"
-                
-                # Força protocolo TLS 1.2 para evitar erros de conexão
-                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
                 
                 Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
                 
@@ -81,11 +109,13 @@ function Show-MainMenu {
                     
                     # Remove após execução para manter limpo
                     Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
-                } else {
+                }
+                else {
                     throw "Arquivo não foi baixado corretamente."
                 }
                 # ---------------------
-            } catch {
+            }
+            catch {
                 Write-Host "`n[❌] ERRO: Falha na execução remota." -ForegroundColor Red
                 Write-Host "URL: $finalUrl" -ForegroundColor Gray
                 Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
@@ -97,7 +127,19 @@ function Show-MainMenu {
         }
         
         Write-Host "`nPressione qualquer tecla para voltar..." -ForegroundColor Gray
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        
+        # Compatibilidade: ReadKey() não funciona em ISE ou sessões remotas
+        if ($Host.Name -eq 'ConsoleHost' -and $Host.UI.RawUI) {
+            try {
+                $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            }
+            catch {
+                Read-Host "Pressione ENTER para continuar"
+            }
+        }
+        else {
+            Read-Host "Pressione ENTER para continuar"
+        }
 
     } while ($true)
 }
