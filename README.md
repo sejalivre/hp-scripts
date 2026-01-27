@@ -64,16 +64,17 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 | #  | Opção                        | Descrição Principal                                                                 |
 |----|------------------------------|--------------------------------------------------------------------------------------|
-| 1  | 📊 INFO                      | Relatório HTML completo (hardware, software, saúde de disco, CPU, RAM, BSODs...)    |
-| 2  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
-| 3  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
+| 1  | 📊 CHECK                     | Verificações rápidas de integridade do sistema                                      |
+| 2  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
+| 3  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
 | 4  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
-| 5  | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
-| 6  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
-| 7  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
-| 8  | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
-| 9  | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
-| 10 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
+| 5  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
+| 6  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
+| 7  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
+| 8  | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
+| 9  | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
+| 10 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
+| 11 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
 
 ## Scripts que você pode chamar diretamente
 
@@ -83,6 +84,77 @@ irm get.hpinfo.com.br/hora      | iex
 irm get.hpinfo.com.br/backup    | iex
 # etc.
 ```
+
+---
+
+## 🛡️ NextDNS - Bloqueio e Filtragem de Conteúdo
+
+O módulo NextDNS fornece instalação e gerenciamento completo do NextDNS com configuração personalizada por técnico/cliente.
+
+### Instalação Rápida
+
+```powershell
+# Menu completo de gerenciamento
+irm get.hpinfo.com.br/tools/nextdns/nextdns | iex
+
+# Ou instalação direta
+irm get.hpinfo.com.br/tools/nextdns/install | iex
+```
+
+### Características Principais
+
+✅ **Configuração por ID**: Cada instalação usa um ID NextDNS específico  
+✅ **Auto-Recuperação**: Tarefa agendada verifica e repara automaticamente a cada hora  
+✅ **Persistência**: ID salvo em arquivo de configuração para reinstalações  
+✅ **Bloqueio HTTPS**: Certificado instalado para bloquear sites em HTTPS  
+✅ **Modo Stealth**: Oculto do Painel de Controle para evitar remoção acidental  
+✅ **DDNS Integrado**: Vincula IP automaticamente ao painel NextDNS  
+
+### Scripts Disponíveis
+
+| Script | Função | Uso |
+|--------|--------|-----|
+| **install.ps1** | Instalação completa com configuração de ID | `irm get.hpinfo.com.br/tools/nextdns/install \| iex` |
+| **reparar_nextdns.ps1** | Auto-reparo (roda automaticamente) | `irm get.hpinfo.com.br/tools/nextdns/reparar_nextdns \| iex` |
+| **nextdns.ps1** | Menu interativo de gerenciamento | `irm get.hpinfo.com.br/tools/nextdns/nextdns \| iex` |
+| **dns_padrão.ps1** | Restaurar DNS para DHCP | `irm get.hpinfo.com.br/tools/nextdns/dns_padrão \| iex` |
+| **remover_hpti.ps1** | Desinstalação completa | `irm get.hpinfo.com.br/tools/nextdns/remover_hpti \| iex` |
+
+### Como Obter seu ID NextDNS
+
+1. Acesse [my.nextdns.io](https://my.nextdns.io)
+2. Faça login na sua conta
+3. O ID aparece na URL: `https://my.nextdns.io/abc123/setup`
+4. Seu ID é `abc123` (sempre 6 caracteres alfanuméricos)
+
+### Verificar se está Funcionando
+
+```powershell
+# Verificar serviço
+Get-Service -Name "NextDNS"
+
+# Testar bloqueio (se você bloqueou facebook.com)
+nslookup facebook.com
+```
+
+### Solução de Problemas
+
+**NextDNS não está bloqueando?**
+
+```powershell
+# 1. Verifique o ID configurado
+Get-Content "C:\Program Files\HPTI\config.txt"
+
+# 2. Execute o reparo
+irm get.hpinfo.com.br/tools/nextdns/reparar_nextdns | iex
+
+# 3. Se necessário, reinstale
+irm get.hpinfo.com.br/tools/nextdns/install | iex
+```
+
+📖 **Documentação Completa**: [tools/nextdns/README.md](tools/nextdns/README.md)
+
+---
 
 ## Ferramentas e utilitários integrados
 

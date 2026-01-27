@@ -23,20 +23,18 @@ nav:
       - Acesso Rápido: quickstart.md
       - Requisitos: requisitos.md
       - Segurança e Avisos: seguranca.md
-  - Scripts:
+  - Scripts Principais:
       - Menu Principal: scripts/menu.md
-      - Check: scripts/check.md
-      - Info: scripts/info.md
-      - Rede: scripts/rede.md
-      - Print: scripts/print.md
-      - Update: scripts/update.md
-      - Hora: scripts/hora.md
+      - Check (Diagnóstico): scripts/check.md
       - Backup: scripts/backup.md
       - Limpeza (LIMP): scripts/limp.md
-      - Performance (PERF): scripts/perf.md
+      - Update: scripts/update.md
+      - Hora (NTP): scripts/hora.md
+      - Rede: scripts/rede.md
+      - Print (Impressão): scripts/print.md
       - Wallpaper: scripts/wall.md
+  - Ferramentas:
       - NextDNS: scripts/nextdns.md
-  - Utilitários:
       - PowerShell 7: utilitarios/installps1.md
   - Projeto:
       - Licença: licenca.md

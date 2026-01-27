@@ -1,33 +1,38 @@
 # reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
-# Versão 1.2 - Suporte a ID Dinâmico e Correção Automática
+# Versão 2.0 - Leitura de ID via Arquivo de Configuração
 
 Write-Host "--- INICIANDO VERIFICAÇÃO DE SAÚDE HPTI ---" -ForegroundColor Cyan
 
-# --- 0. DEFINIÇÃO DE CLIENTE (CONFIGURÁVEL) ---
-# O instalador HPTI substituirá este valor automaticamente.
-$NextDNS_ID = "3a495c" 
+# --- LEITURA DO ID NEXTDNS DO ARQUIVO DE CONFIGURAÇÃO ---
+$HptiDir = "$env:ProgramFiles\HPTI"
+$ConfigFile = "$HptiDir\config.txt"
+$NextDNS_ID = ""
 
-# Lógica Inteligente: Detecta se o ID ainda é o padrão "3a495c"
-# Usamos concatenação ("3a"+"495c") para que o instalador NÃO substitua esta linha ao rodar o patch.
-$DefaultCheck = "3a" + "495c"
-
-if ($NextDNS_ID -eq $DefaultCheck) {
-    # Se estamos rodando manualmente e o ID é padrão, pergunta o ID correto
-    $HostInvocation = $MyInvocation.Host
-    if ($HostInvocation.UI.RawUI.ForegroundColor -ne $null) {
-        Write-Host "MODO MANUAL DETECTADO" -ForegroundColor Yellow
-        $InputID = Read-Host "Digite o ID do Cliente NextDNS (Enter para manter $NextDNS_ID)"
-        if (-not [string]::IsNullOrWhiteSpace($InputID)) {
-            $NextDNS_ID = $InputID
-        }
+# Tenta ler o ID do arquivo de configuração
+if (Test-Path $ConfigFile) {
+    $NextDNS_ID = Get-Content $ConfigFile -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($NextDNS_ID -and $NextDNS_ID -match '^[a-zA-Z0-9]{6}$') {
+        Write-Host " -> ID NextDNS carregado: $NextDNS_ID" -ForegroundColor Green
+    }
+    else {
+        Write-Warning "ID no arquivo de configuração é inválido!"
+        $NextDNS_ID = ""
     }
 }
 
+# Fallback: Se não conseguiu ler do arquivo, usa ID padrão e avisa
+if (-not $NextDNS_ID) {
+    Write-Warning "Arquivo de configuração não encontrado ou ID inválido!"
+    Write-Warning "Execute o instalador novamente para configurar o ID correto."
+    Write-Host "Usando ID padrão temporário (bloqueio pode não funcionar)..." -ForegroundColor Yellow
+    $NextDNS_ID = "3a495c"  # ID padrão apenas como fallback
+}
+
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas) ---
-$repoBase   = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
-$dnsBase    = "$repoBase/nextdns"
-$tempDir    = "$env:TEMP\HP-Tools"
-$7zipExe    = "$tempDir\7z.exe"
+$repoBase = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+$dnsBase = "$repoBase/nextdns"
+$tempDir = "$env:TEMP\HP-Tools"
+$7zipExe = "$tempDir\7z.exe"
 $nextDnsZip = "$tempDir\nextdns.7z"
 $extractDir = "$tempDir\nextdns_extracted"
 
@@ -61,7 +66,8 @@ if ($null -eq $svc) {
         Write-Host " -> Restaurando serviço NextDNS (ID: $NextDNS_ID)..." -ForegroundColor Cyan
         Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
     }
-} elseif ($svc.Status -ne "Running") {
+}
+elseif ($svc.Status -ne "Running") {
     Write-Host " -> Iniciando serviço NextDNS parado..." -ForegroundColor Yellow
     Start-Service -Name "NextDNS"
 }
@@ -106,7 +112,8 @@ try {
     # URL de vínculo IP atualizada para usar a variável do ID
     Invoke-WebRequest -Uri "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a" -UseBasicParsing | Out-Null
     Write-Host " -> IP vinculado com sucesso ($NextDNS_ID)." -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Warning "Falha ao vincular IP (Verifique conexão)."
 }
 ipconfig /flushdns | Out-Null

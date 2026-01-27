@@ -1,19 +1,40 @@
 # ==============================================================================
 # SCRIPT: hora.ps1
 # DESCRIÇÃO: Configura sincronização de horário e cria tarefa agendada de reparo.
+# REQUER: PowerShell 3.0+ (Windows 8+)
 # ==============================================================================
 
-# 1. Verifica se o script está rodando com privilégios de administrador 
+# Verifica versão do PowerShell
+$requiredVersion = 3
+if ($PSVersionTable.PSVersion.Major -lt $requiredVersion) {
+    Write-Warning "Este script requer PowerShell $requiredVersion.0 ou superior!"
+    Write-Warning "Versão atual: $($PSVersionTable.PSVersion)"
+    Write-Warning "Baixe o Windows Management Framework 5.1 em:"
+    Write-Warning "https://www.microsoft.com/download/details.aspx?id=54616"
+    pause
+    exit
+}
+
+# Verifica se o script está rodando com privilégios de administrador 
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = [Security.Principal.WindowsPrincipal]$identity
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warning "Este script precisa ser executado como Administrador."
     Write-Warning "Por favor, abra o PowerShell como Administrador e tente novamente."
+    pause
     exit
 }
 
 try {
     Write-Host "1. Configurando e sincronizando horário inicial..." -ForegroundColor Cyan
+
+    # Verificar se o serviço w32time existe
+    $w32timeService = Get-Service -Name w32time -ErrorAction SilentlyContinue
+    if (-not $w32timeService) {
+        Write-Host "ERRO: Serviço w32time não encontrado!" -ForegroundColor Red
+        pause
+        exit
+    }
 
     # Garante que o serviço esteja limpo e rodando no momento da instalação [Sua Sugestão]
     Set-Service -Name w32time -StartupType Automatic
@@ -82,8 +103,17 @@ try {
         for ($i=1; $i -le $maxRetries; $i++) {
             Log-Message "Tentativa $i de $maxRetries..."
             
-            # Verifica se há internet antes de tentar
-            if (Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet) {
+            # Verifica se há internet antes de tentar (testa múltiplos servidores)
+            $hasInternet = $false
+            foreach ($testHost in @("8.8.8.8", "1.1.1.1", "208.67.222.222")) {
+                if (Test-Connection -ComputerName $testHost -Count 1 -Quiet -ErrorAction SilentlyContinue) {
+                    $hasInternet = $true
+                    Log-Message "Conectividade confirmada via $testHost"
+                    break
+                }
+            }
+            
+            if ($hasInternet) {
                 $result = w32tm /resync /rediscover 2>&1
                 if ($LASTEXITCODE -eq 0) {
                     Log-Message "Sucesso: $result"
