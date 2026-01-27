@@ -13,22 +13,6 @@ if ($PSVersionTable.PSVersion.Major -lt $requiredVersion) {
 
 $ErrorActionPreference = "SilentlyContinue"
 
-# ===============================
-# PERF - ANTES DA LIMPEZA
-# ===============================
-try {
-    if (Test-Connection -ComputerName "get.hpinfo.com.br" -Count 1 -Quiet -ErrorAction SilentlyContinue) {
-        $env:HPINFO_PERF_STAGE = "BEFORE"
-        irm https://get.hpinfo.com.br/perf | iex
-    }
-    else {
-        Write-Host "Aviso: Não foi possível conectar ao servidor de performance" -ForegroundColor Yellow
-    }
-}
-catch {
-    Write-Host "Aviso: Erro ao executar verificação de performance: $($_.Exception.Message)" -ForegroundColor Yellow
-}
-
 Write-Host "`n=== INICIANDO LIMPEZA PROFUNDA ===" -ForegroundColor Cyan
 
 # 1. Encerrar processos comuns
@@ -128,19 +112,6 @@ Write-Host "`n=======================================" -ForegroundColor Cyan
 Write-Host "LIMPEZA CONCLUÍDA!" -ForegroundColor Green
 Write-Host "Espaço recuperado: $totalLimpoMB MB" -ForegroundColor White
 Write-Host "=======================================" -ForegroundColor Cyan
-
-# ===============================
-# PERF - DEPOIS DA LIMPEZA
-# ===============================
-try {
-    if (Test-Connection -ComputerName "get.hpinfo.com.br" -Count 1 -Quiet -ErrorAction SilentlyContinue) {
-        $env:HPINFO_PERF_STAGE = "AFTER"
-        irm https://get.hpinfo.com.br/perf | iex
-    }
-}
-catch {
-    Write-Host "Aviso: Erro ao executar verificação de performance final" -ForegroundColor Yellow
-}
 
 # Restaurar Explorer
 Start-Process explorer.exe

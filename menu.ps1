@@ -125,21 +125,11 @@ function Show-MainMenu {
                 }
                 
                 try {
-                    # Em vez de 'irm | iex', baixamos para um arquivo temporário e executamos.
-                    $TempScript = "$env:TEMP\HPTI_Exec_$($selecionada.ID).ps1"
+                    # Baixar e executar o script
+                    $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
                     
-                    Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
-                    
-                    if (Test-Path $TempScript) {
-                        # Executa o arquivo baixado
-                        & $TempScript
-                        
-                        # Remove após execução para manter limpo
-                        Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
-                    }
-                    else {
-                        throw "Arquivo não foi baixado corretamente."
-                    }
+                    # Executar o conteúdo diretamente
+                    Invoke-Expression $scriptContent
                 }
                 catch {
                     Write-Host "`n[❌] ERRO: Falha na execução remota." -ForegroundColor Red
