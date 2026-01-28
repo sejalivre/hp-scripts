@@ -43,6 +43,7 @@ $ferramentas = @(
     @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
     @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "sfc"   ; Color = "Red" }
     @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
+    @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "winforge" ; Color = "Magenta" }
     @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
     @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
     @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
