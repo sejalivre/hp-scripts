@@ -40,17 +40,18 @@ $baseUrl = "get.hpinfo.com.br"
 
 # 1. Definição das Ferramentas
 $ferramentas = @(
-    @{ ID = "CHECK"   ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
+    @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
+    @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "sfc"   ; Color = "Red" }
     @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
-    @{ ID = "LIMP"    ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
-    @{ ID = "UPDATE"  ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
-    @{ ID = "HORA"    ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
-    @{ ID = "REDE"    ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
-    @{ ID = "PRINT"   ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
-    @{ ID = "BACKUP"  ; Desc = "Rotina de Backup de Usuário"         ; Path = "backup"; Color = "Yellow" }
-    @{ ID = "ATIV"    ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
-    @{ ID = "WALL"    ; Desc = "Configurar Wallpaper Padrão"         ; Path = "wallpaper" ; Color = "Magenta" }
-    @{ ID = "NEXTDNS" ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" }
+    @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
+    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
+    @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
+    @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
+    @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
+    @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "backup"; Color = "Yellow" }
+    @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
+    @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "wallpaper" ; Color = "Magenta" }
+    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" }
 )
 
 function Show-MainMenu {

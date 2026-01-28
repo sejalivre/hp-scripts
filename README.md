@@ -32,6 +32,7 @@ irm get.hpinfo.com.br/info | iex
 irm get.hpinfo.com.br/menu | iex
 
 # Reparos rápidos
+irm get.hpinfo.com.br/sfc   | iex    # Diagnóstico e Reparação Completa
 irm get.hpinfo.com.br/net   | iex    # Rede
 irm get.hpinfo.com.br/print | iex    # Impressão
 irm get.hpinfo.com.br/update| iex    # Atualizações
@@ -65,16 +66,17 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | #  | Opção                        | Descrição Principal                                                                 |
 |----|------------------------------|--------------------------------------------------------------------------------------|
 | 1  | 📊 CHECK                     | Verificações rápidas de integridade do sistema                                      |
-| 2  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
-| 3  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
-| 4  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
-| 5  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
-| 6  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
-| 7  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
-| 8  | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
-| 9  | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
-| 10 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
-| 11 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
+| 2  | 🔧 SFC                       | Diagnóstico e reparação completa do Windows (DISM, SFC, memória, processos)         |
+| 3  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
+| 4  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
+| 5  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
+| 6  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
+| 7  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
+| 8  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
+| 9  | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
+| 10 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
+| 11 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
+| 12 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
 
 ## Scripts que você pode chamar diretamente
 
