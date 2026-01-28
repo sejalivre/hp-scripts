@@ -1,4 +1,3 @@
-```markdown
 [![Qualidade do Código](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
 [![Documentação](https://img.shields.io/badge/docs-online-blue)](https://docs.hpinfo.com.br)
 
@@ -215,20 +214,6 @@ hp-scripts/
 ---
 
 **Aviso importante**: Use os scripts por sua conta e risco. Faça backup antes de executar limpezas ou reparos importantes.
-```
-
-Essa versão:
-
-- Tem badges bonitinhos no topo  
-- Tabela clara com as opções do menu  
-- Blocos de código bem destacados  
-- Ícones emoji para melhorar a leitura  
-- Estrutura limpa e hierárquica  
-- Mantém todas as informações importantes do original
-
-Se quiser deixar ainda mais visual (com imagens ou GIF demonstrativo), posso sugerir onde colocar e como nomear os arquivos.
-
-Espero que goste! 🚀
 
 ```powershell
 irm get.hpinfo.com.br/menu | iex
