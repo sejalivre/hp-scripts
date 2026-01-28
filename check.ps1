@@ -54,8 +54,10 @@ if ([string]::IsNullOrWhiteSpace($OSNumber)) {
 
 # --- CONFIGURAÇÕES ---
 $ComputerName = $env:COMPUTERNAME
-$ReportHTML = "$env:TEMP\\Checkup_HPinfo_Final.html"
-$ReportPDF = "$env:USERPROFILE\\Desktop\\Relatorio_HPinfo_$ComputerName.pdf"
+$HPTIReportsDir = "C:\Program Files\HPTI\Reports"
+if (-not (Test-Path $HPTIReportsDir)) { New-Item -Path $HPTIReportsDir -ItemType Directory -Force | Out-Null }
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$ReportHTML = "$HPTIReportsDir\checkup_${ComputerName}_$timestamp.html"
 $WhatsAppLink = "https://wa.me/556235121468?text=Ola%20HPinfo,%20segue%20o%20relatorio%20do%20PC%20$ComputerName%20-%20OS:%20$OSNumber"
 
 $repoBase = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
@@ -1259,29 +1261,8 @@ $html = @"
 "@
 
 $html | Out-File $ReportHTML -Encoding UTF8
-Write-Host "[OK] Relatório HTML Gerado." -ForegroundColor Green
+Write-Host "[OK] Relatório HTML Gerado em: $ReportHTML" -ForegroundColor Green
 
-
-$edge = (Get-ChildItem "C:\Program Files*\Microsoft\Edge\Application\msedge.exe" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
-if ($edge -and (Test-Path $edge)) {
-    try {
-        Write-Host "[*] Gerando PDF com Edge..." -ForegroundColor Cyan
-        Start-Process $edge -ArgumentList "--headless --disable-gpu --print-to-pdf=`"$ReportPDF`" `"$ReportHTML`"" -Wait -ErrorAction Stop
-        if (Test-Path $ReportPDF) {
-            Write-Host "[OK] PDF gerado com sucesso." -ForegroundColor Green
-            Invoke-Item $ReportPDF
-        }
-        else {
-            Write-Warning "PDF não foi gerado. Abrindo HTML..."
-            Invoke-Item $ReportHTML
-        }
-    }
-    catch {
-        Write-Warning "Erro ao gerar PDF: $($_.Exception.Message)"
-        Invoke-Item $ReportHTML
-    }
-}
-else {
-    Write-Host "[!] Edge não encontrado. Abrindo relatório HTML..." -ForegroundColor Yellow
-    Invoke-Item $ReportHTML
-}
+# Abrir relatório automaticamente
+Write-Host "[*] Abrindo relatório..." -ForegroundColor Cyan
+Invoke-Item $ReportHTML

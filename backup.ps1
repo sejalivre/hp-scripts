@@ -22,7 +22,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 }
 
 # Pastas de destino
-$basePath = "C:\Intel"
+$basePath = "C:\Program Files\HPTI\Backups"
 $reportFile = Join-Path $basePath "RelatorioSistema.txt"
 $wifiExportPath = Join-Path $basePath "WiFiProfiles"
 $restoreFile = Join-Path $basePath "restore.ps1"

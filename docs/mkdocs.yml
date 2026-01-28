@@ -26,6 +26,7 @@ nav:
   - Scripts Principais:
       - Menu Principal: scripts/menu.md
       - Check (Diagnóstico): scripts/check.md
+      - SFC (Reparação Completa): scripts/sfc.md
       - Backup: scripts/backup.md
       - Limpeza (LIMP): scripts/limp.md
       - Update: scripts/update.md
