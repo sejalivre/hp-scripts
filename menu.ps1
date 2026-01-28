@@ -53,6 +53,7 @@ $ferramentas = @(
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
     @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "wallpaper" ; Color = "Magenta" }
     @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" }
+    @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; Color = "Green" ; IsLocal = $true }
 )
 
 function Show-MainMenu {
@@ -115,6 +116,16 @@ function Show-MainMenu {
                     Write-Host "`n[❌] ERRO: Falha ao executar instalador." -ForegroundColor Red
                     Write-Host "URL: $finalUrl" -ForegroundColor Gray
                     Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                }
+            }
+            elseif ($selecionada.IsLocal) {
+                # Para scripts locais
+                $scriptPath = Join-Path $PSScriptRoot $selecionada.Path
+                if (Test-Path $scriptPath) {
+                    & $scriptPath
+                }
+                else {
+                    Write-Host "`n[❌] ERRO: Script local não encontrado: $($selecionada.Path)" -ForegroundColor Red
                 }
             }
             else {
