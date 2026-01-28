@@ -62,11 +62,11 @@ function Show-MainMenu {
         Write-Host "      Suporte: docs.hpinfo.com.br | v1.4                  " -ForegroundColor Gray
         Write-Host "==========================================================" -ForegroundColor Cyan
         
-        # 2. Renderização Dinâmica do Menu
+        # 2. Renderização Dinâmica do Menu  
         for ($i = 0; $i -lt $ferramentas.Count; $i++) {
             $n = $i + 1
             $item = $ferramentas[$i]
-            Write-Host ("{0,2}. [{1,-7}] {2}" -f $n, $item.ID, $item.Desc)
+            Write-Host ("{0,2}. [{1,-11}] {2}" -f $n, $item.ID, $item.Desc)
         }
 
         Write-Host "----------------------------------------------------------"
