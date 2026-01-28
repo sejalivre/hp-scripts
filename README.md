@@ -1,3 +1,4 @@
+```markdown
 [![Qualidade do Código](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
 [![Documentação](https://img.shields.io/badge/docs-online-blue)](https://docs.hpinfo.com.br)
 
@@ -11,7 +12,7 @@ Coleção de scripts PowerShell voltados para inventário de hardware, manutenç
 
 Aqui está uma versão bem formatada em Markdown + HTML que fica bonita no README do GitHub (mantendo compatibilidade total com o render do GitHub):
 
-```markdown
+
 # HP-Scripts - Kit de Automação e Manutenção para Windows
 
 Coleção de scripts PowerShell para automação de TI, manutenção, diagnóstico e configuração de sistemas Windows.
