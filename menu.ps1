@@ -148,7 +148,7 @@ function Show-MainMenu {
             elseif ($selecionada.IsLocalScript) {
                 # Para scripts PowerShell locais (dentro de ./scripts/)
                 if ($IsLocalExecution) {
-                    # Modo local: executar arquivo do disco
+                    # Modo local: executar arquivo do disco 
                     $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
                     if (Test-Path $scriptPath) {
                         & $scriptPath
