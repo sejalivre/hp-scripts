@@ -7,6 +7,8 @@
     Requer PowerShell 5.1+ (Windows 10/11)
 #>
 
+param([switch]$PortableMode)
+
 # ============================================================
 # REQUISITOS DE SISTEMA
 # ============================================================
@@ -48,7 +50,7 @@ if ([string]::IsNullOrEmpty($ScriptRoot)) {
 }
 
 # Verificar se estamos executando de um repositório local (com scripts/)
-if (Test-Path (Join-Path $ScriptRoot "scripts")) {
+if ($PortableMode -and (Test-Path (Join-Path $ScriptRoot "scripts"))) {
     $IsLocalExecution = $true
     Write-Host "[INFO] Modo: Execução Local (repositório detectado)" -ForegroundColor DarkGray
 }
@@ -75,8 +77,8 @@ $ferramentas = @(
     @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "scripts/backup"; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
     @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "scripts/wallpaper" ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns.ps1" ; Color = "Yellow" ; IsLocal = $true }
-    @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; Color = "Green" ; IsLocal = $true }
+    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" ; IsLocal = $true }
+    @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools" ; Color = "Green" ; IsLocal = $true }
 )
 
 function Show-MainMenu {
@@ -174,7 +176,7 @@ function Show-MainMenu {
                 # Para scripts locais (como menu_tools.ps1)
                 if ($IsLocalExecution) {
                     # Modo local: executar arquivo do disco
-                    $scriptPath = Join-Path $ScriptRoot $selecionada.Path
+                    $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
                     if (Test-Path $scriptPath) {
                         & $scriptPath
                     }
@@ -184,7 +186,7 @@ function Show-MainMenu {
                 }
                 else {
                     # Modo remoto: baixar e executar
-                    $finalUrl = "https://$baseUrl/$($selecionada.Path)"
+                    $finalUrl = "https://$baseUrl/$($selecionada.Path).ps1"
                     try {
                         Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
                         $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
