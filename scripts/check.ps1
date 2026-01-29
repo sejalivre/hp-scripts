@@ -44,7 +44,7 @@ $ToolsDir = Join-Path $PortableRoot "tools"
 $tempDir = "$env:TEMP\HP-Tools"
 $7zipExe = "$tempDir\7z.exe"
 $Password = "0"
-$BaseUrl = "http://get.hpinfo.com.br/tools"
+$BaseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
 
 # --- PREPARAÇÃO --- 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
