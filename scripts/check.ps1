@@ -200,28 +200,68 @@ Add-Check 1 "Temperatura CPU" $t1_Res $t1_Stat $t1_Rec
 # 2. Saúde Disco (SMART)
 $t2_Res = "Desconhecido"; $t2_Stat = "ALERTA"; $t2_Rec = "Verificar manualmente."
 try {
-    $cdiPath = if ($ExtractedPaths.ContainsKey("CrystalDiskInfo")) { Join-Path $ExtractedPaths["CrystalDiskInfo"] "DiskInfo64.exe" } else { $null }
+    # Define caminho prioritário e secundário
+    $cdiDefault = "$env:TEMP\HP-Tools\CrystalDiskInfo\DiskInfo64.exe"
+    $cdiPath = if (Test-Path $cdiDefault) { $cdiDefault } 
+    elseif ($ExtractedPaths.ContainsKey("CrystalDiskInfo")) { Join-Path $ExtractedPaths["CrystalDiskInfo"] "DiskInfo64.exe" } 
+    else { $null }
+
+    $smartResults = @()
+    $usedMethod = "N/A"
+
+    # Tenta rodar CrystalDiskInfo
     if ($cdiPath -and (Test-Path $cdiPath)) {
+        Write-Host "   -> Rodando CrystalDiskInfo..." -NoNewline -ForegroundColor Gray
         Start-Process $cdiPath -ArgumentList "/CopyExit" -Wait
-        $logCDI = Join-Path $ExtractedPaths["CrystalDiskInfo"] "DiskInfo.txt"
+        $logCDI = Join-Path (Split-Path $cdiPath) "DiskInfo.txt"
+        
         if (Test-Path $logCDI) {
-            $txt = Get-Content $logCDI -Raw
-            if ($txt -match "Health Status : (.*)") {
-                $statusReal = $matches[1].Trim()
-                $t2_Res = $statusReal
-                if ($statusReal -match "Good|Saudável") { $t2_Stat = "OK"; $t2_Rec = "Disco Saudável." } 
-                else { $t2_Stat = "CRÍTICO"; $t2_Rec = "Risco de perda de dados. Trocar disco." }
+            $txt = Get-Content $logCDI
+            # Procura todas as linhas de status
+            $matchesHealth = $txt | Select-String "Health Status : (.*)"
+            
+            if ($matchesHealth) {
+                $usedMethod = "SMART (CDI)"
+                $count = 1
+                foreach ($match in $matchesHealth) {
+                    $st = $match.Matches.Groups[1].Value.Trim()
+                    $checkStat = if ($st -match "Good|Saudável") { "OK" } else { "CRÍTICO" }
+                    $smartResults += @{ Disk = "D$count"; Status = $st; Check = $checkStat }
+                    $count++
+                }
             }
         }
     }
-    if ($t2_Res -eq "Desconhecido") {
-        $disk = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue | Select-Object -First 1
-        $t2_Res = $disk.Status
-        if ($disk.Status -eq "OK") { $t2_Stat = "OK"; $t2_Rec = "Status WMI OK." } else { $t2_Stat = "CRÍTICO"; $t2_Rec = "Erro detectado." }
+
+    # Se não conseguiu pelo CDI, usa WMI para evey drive
+    if ($smartResults.Count -eq 0) {
+        $usedMethod = "WMI (Básico)"
+        $disks = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue
+        $count = 1
+        foreach ($d in $disks) {
+            $st = $d.Status
+            $checkStat = if ($st -eq "OK") { "OK" } else { "CRÍTICO" }
+            $smartResults += @{ Disk = "D$count"; Status = $st; Check = $checkStat }
+            $count++
+        }
+    }
+
+    # Consolida Resultados
+    if ($smartResults.Count -gt 0) {
+        $finalStatus = "OK"
+        $resText = @()
+        foreach ($r in $smartResults) {
+            $resText += "$($r.Disk): $($r.Status)"
+            if ($r.Check -ne "OK") { $finalStatus = "CRÍTICO" }
+        }
+        
+        $t2_Res = "$($resText -join ' | ') [$usedMethod]"
+        $t2_Stat = $finalStatus
+        $t2_Rec = if ($t2_Stat -eq "OK") { "Discos Saudáveis." } else { "Risco de falha! Backup urgente." }
     }
 }
 catch {}
-Add-Check 2 "Saúde Física (SMART)" $t2_Res $t2_Stat $t2_Rec
+Add-Check 2 "Saúde Disco (SMART)" $t2_Res $t2_Stat $t2_Rec
 
 # 3. Espaço Livre
 $t3_Res = ""; $t3_Stat = "OK"; $t3_Rec = "Espaço suficiente."
