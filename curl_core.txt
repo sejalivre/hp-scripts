@@ -1,0 +1,41 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+  0    14    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/1.1 301 Moved Permanently
+Date: Thu, 29 Jan 2026 19:28:04 GMT
+Connection: keep-alive
+Location: https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools/CoreTemp.7z.ps1
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=zwV7qFG15vaT2obWj6qH6HYWR44j%2BPZGZMdC2sWbbhIEOPA5RsfFV6lkFLpw%2FasHXByaJRokbRqZNOJjgC0YQbB7y6FZ0RZFol3jottO5k8hIoVyy6F6lMwFQxP6"}]}
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Server: cloudflare
+CF-RAY: 9c5b216c291cf1e5-GRU
+alt-svc: h3=":443"; ma=86400
+
+HTTP/1.1 404 Not Found
+Connection: keep-alive
+Content-Length: 14
+Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+Strict-Transport-Security: max-age=31536000
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-XSS-Protection: 1; mode=block
+Content-Type: text/plain; charset=utf-8
+X-GitHub-Request-Id: 3C5C:14649F:103FE:1D36E:697BB49A
+Accept-Ranges: bytes
+Date: Thu, 29 Jan 2026 19:28:04 GMT
+Via: 1.1 varnish
+X-Served-By: cache-gru-sbgr1930066-GRU
+X-Cache: HIT
+X-Cache-Hits: 1
+X-Timer: S1769714885.590161,VS0,VE1
+Vary: Authorization,Accept-Encoding
+Access-Control-Allow-Origin: *
+Cross-Origin-Resource-Policy: cross-origin
+X-Fastly-Request-ID: ebceef686c88a5aae0c7c4f09a21dcc5a605bdab
+Expires: Thu, 29 Jan 2026 19:33:04 GMT
+Source-Age: 41
+

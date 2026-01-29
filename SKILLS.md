@@ -1,6 +1,7 @@
 # AI Knowledge & Skills: HP-Scripts
 
 Este documento serve como a **Fonte da Verdade** para agentes de IA que auxiliam no desenvolvimento, manutenção e expansão do repositório `hp-scripts`. Ele consolida a filosofia do projeto, diretrizes técnicas e um mapa detalhado das capacidades (skills) disponíveis.
+Responda em portugues do brasil
 
 ## 🎯 Visão Geral e Contexto
 **HP-Scripts** é um kit de ferramentas "tudo-em-um" para automação, manutenção e diagnóstico de sistemas Windows (10 e 11).
