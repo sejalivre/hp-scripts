@@ -42,6 +42,6 @@ if not exist "%~dp0menu.ps1" (
     exit /b 1
 )
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0menu.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0menu.ps1" -PortableMode
 
 pause
