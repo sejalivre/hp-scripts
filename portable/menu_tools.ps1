@@ -15,7 +15,7 @@ $Host.UI.RawUI.WindowTitle = "HP Scripts - Menu de Ferramentas"
 
 # Caminho base do script
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ToolsPath = Join-Path $ScriptPath "tools"
+$ToolsPath = Join-Path (Split-Path -Parent $ScriptPath) "tools"  # Usa ../tools/ da raiz
 $TempPath = Join-Path $env:TEMP "hsati"
 $7zExe = Join-Path $ToolsPath "7z.exe"
 $7zTxe = Join-Path $ToolsPath "7z.txe"
@@ -106,7 +106,7 @@ function Show-DiagnosticoMenu {
     Write-Host "  ══════════════════  DIAGNÓSTICO DE HARDWARE  ══════════════════" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [1] CPU-Z              - Informações detalhadas do processador" -ForegroundColor White
-    Write-Host "  [2] AIDA64             - Diagnóstico completo do sistema" -ForegroundColor White
+    Write-Host "  [2] ad                 - Diagnóstico completo do sistema" -ForegroundColor White
     Write-Host "  [3] Core Temp          - Monitor de temperatura da CPU" -ForegroundColor White
     Write-Host "  [4] CrystalDiskInfo    - Saúde do disco rígido/SSD" -ForegroundColor White
     Write-Host "  [5] SSD Life           - Vida útil de SSDs" -ForegroundColor White
@@ -119,7 +119,7 @@ function Show-DiagnosticoMenu {
     $choice = Read-Host "  Escolha uma opção"
     switch ($choice) {
         "1" { Start-Tool "cpuz_All.7z" "cpuz_All.exe" }
-        "2" { Start-Tool "Aida64.7z" "aida64.exe" }
+        "2" { Start-Tool "ad.7z" "ad.exe" }
         "3" { Start-Tool "CoreTemp.7z" "Core Temp.exe" }
         "4" { Start-Tool "CrystalDiskInfo.7z" "DiskInfo64.exe" }
         "5" { Start-Tool "ssdlife.7z" "SSDLife.exe" }

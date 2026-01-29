@@ -138,10 +138,10 @@ Test-NetConnection -ComputerName get.hpinfo.com.br -Port 443
 
 ### PowerShell 2.0
 
-- ❌ Sem suporte a `Invoke-RestMethod`
-- ❌ Sem suporte a `ConvertTo-Json`
-- ⚠️ Performance reduzida
-- ✅ Fallbacks implementados quando possível
+- ✅ **Agora totalmente suportado** via módulo `CompatibilityLayer.ps1`
+- ✅ Fallback automático de `Get-CimInstance` para WMI
+- ✅ Funções de rede compatíveis (`Get-NetworkAdapter`, etc.)
+- ⚠️ Performance reduzida comparado a PS 5.1+
 
 ### Windows 7
 

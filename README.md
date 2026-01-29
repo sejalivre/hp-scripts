@@ -1,43 +1,37 @@
 [![Qualidade do Código](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/sejalivre/hp-scripts/actions/workflows/ci.yml)
 [![Documentação](https://img.shields.io/badge/docs-online-blue)](https://docs.hpinfo.com.br)
 
-# HP-Scripts (Automação e Gerenciamento)
-
-Coleção de scripts PowerShell voltados para inventário de hardware, manutenção de rede, backups e solução de problemas.
-
-**Documentação Completa:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
-
----
-
-Aqui está uma versão bem formatada em Markdown + HTML que fica bonita no README do GitHub (mantendo compatibilidade total com o render do GitHub):
-
-
-# HP-Scripts - Kit de Automação e Manutenção para Windows
+# HP-Scripts – Kit de Automação e Manutenção para Windows
 
 Coleção de scripts PowerShell para automação de TI, manutenção, diagnóstico e configuração de sistemas Windows.
 
+**Documentação Completa:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
+
 <p align="center">
-  <img src="https://img.shields.io/badge/PowerShell-7+-blue?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell 7+"/>
+  <img src="https://img.shields.io/badge/PowerShell-2.0+-blue?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell 2.0+"/>
   <img src="https://img.shields.io/badge/Windows-7/8/10/11-success?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 7+"/>
   <img src="https://img.shields.io/github/license/sejalivre/hp-scripts?style=for-the-badge" alt="MIT License"/>
 </p>
 
+---
+
 ## 🚀 Instalação Rápida (execução direta – sem baixar nada)
 
 ```powershell
-# Diagnóstico completo do sistema
-irm get.hpinfo.com.br/info | iex
-
 # Menu completo de ferramentas
 irm get.hpinfo.com.br/menu | iex
 
-# Reparos rápidos
-irm get.hpinfo.com.br/sfc      | iex    # Diagnóstico e Reparação Completa
-irm get.hpinfo.com.br/winforge | iex    # Instalação de Apps + Otimizações
-irm get.hpinfo.com.br/net      | iex    # Rede
-irm get.hpinfo.com.br/print    | iex    # Impressão
-irm get.hpinfo.com.br/update   | iex    # Atualizações
-irm get.hpinfo.com.br/limp     | iex    # Limpeza
+# Ou execute scripts individuais diretamente
+irm get.hpinfo.com.br/scripts/check    | iex    # Diagnóstico rápido
+irm get.hpinfo.com.br/scripts/sfc      | iex    # Diagnóstico e Reparação Completa
+irm get.hpinfo.com.br/scripts/winforge | iex    # Instalação de Apps + Otimizações
+irm get.hpinfo.com.br/scripts/net      | iex    # Rede
+irm get.hpinfo.com.br/scripts/print    | iex    # Impressão
+irm get.hpinfo.com.br/scripts/update   | iex    # Atualizações
+irm get.hpinfo.com.br/scripts/limp     | iex    # Limpeza
+irm get.hpinfo.com.br/scripts/backup   | iex    # Backup
+irm get.hpinfo.com.br/scripts/hora     | iex    # Sincronização de horário
+irm get.hpinfo.com.br/scripts/wallpaper| iex    # Wallpaper corporativo
 ```
 
 ### Instalar PowerShell 7 (recomendado)
@@ -83,10 +77,16 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 ## Scripts que você pode chamar diretamente
 
 ```powershell
-irm get.hpinfo.com.br/wallpaper | iex
-irm get.hpinfo.com.br/hora      | iex
-irm get.hpinfo.com.br/backup    | iex
-# etc.
+irm get.hpinfo.com.br/scripts/check    | iex
+irm get.hpinfo.com.br/scripts/backup   | iex
+irm get.hpinfo.com.br/scripts/sfc      | iex
+irm get.hpinfo.com.br/scripts/limp     | iex
+irm get.hpinfo.com.br/scripts/update   | iex
+irm get.hpinfo.com.br/scripts/hora     | iex
+irm get.hpinfo.com.br/scripts/net      | iex
+irm get.hpinfo.com.br/scripts/print    | iex
+irm get.hpinfo.com.br/scripts/wallpaper| iex
+irm get.hpinfo.com.br/scripts/winforge | iex
 ```
 
 ---
@@ -171,8 +171,8 @@ irm get.hpinfo.com.br/tools/nextdns/install | iex
 
 ## Requisitos mínimos
 
-- Windows 7 / 8 / 10 / 11  
-- PowerShell 5.1 (7+ recomendado)  
+- **Windows 7 / 8 / 10 / 11**  
+- **PowerShell 2.0+** (incluído desde Windows 7) - **PowerShell 7+ recomendado**  
 - Direitos de administrador  
 - Internet (para baixar ferramentas e atualizações)
 
@@ -184,13 +184,40 @@ irm get.hpinfo.com.br/tools/nextdns/install | iex
 - Logging detalhado de todas as ações  
 - Compatível com ambientes corporativos e domésticos
 
-## Estrutura resumida
+## 📂 Estrutura do Projeto
 
 ```
 hp-scripts/
-├── main-scripts/       ← menu.ps1, info.ps1, net.ps1, limp.ps1...
-├── tools/              ← nextdns, 7z.exe, helpers...
-└── docs/
+├── scripts/                # Scripts principais
+│   ├── check.ps1           # Diagnóstico rápido de integridade
+│   ├── sfc.ps1             # Diagnóstico e reparação completa
+│   ├── backup.ps1          # Backup de configurações
+│   ├── limp.ps1            # Limpeza de arquivos temporários
+│   ├── update.ps1          # Atualizações do Windows
+│   ├── hora.ps1            # Sincronização de horário (NTP)
+│   ├── net.ps1             # Reset de rede e conectividade
+│   ├── print.ps1           # Reparo de impressão
+│   ├── wallpaper.ps1       # Configuração de wallpaper
+│   ├── winforge.ps1        # Instalação e otimização
+│   └── CompatibilityLayer.ps1  # Camada de compatibilidade PS 2.0+
+├── tools/                  # Ferramentas portáteis
+│   ├── nextdns/            # Módulo NextDNS
+│   │   ├── install.ps1
+│   │   ├── nextdns.ps1
+│   │   ├── reparar_nextdns.ps1
+│   │   ├── dns_padrão.ps1
+│   │   └── remover_hpti.ps1
+│   └── *.7z                # Ferramentas compactadas (7z, CoreTemp, etc.)
+├── portable/               # Versão offline para pendrive
+│   ├── INICIAR.cmd         # Launcher executável
+│   ├── menu.ps1            # Menu portable
+│   └── menu_tools.ps1      # Menu de ferramentas portable
+├── docs/                   # Documentação MkDocs
+├── .github/workflows/      # Pipeline CI/CD
+│   └── ci.yml              # Verificação de qualidade
+├── installps1.cmd          # Instalador PowerShell 7+
+├── menu.ps1                # Menu principal (v1.5)
+└── menu_tools.ps1          # Menu de ferramentas
 ```
 
 ## 🤝 Como contribuir
@@ -225,14 +252,18 @@ irm get.hpinfo.com.br/menu | iex
 
 ## 📂 Catálogo de Scripts
 
-| Script | Função | Descrição |
-| :--- | :--- | :--- |
-| **`menu.ps1`** | **Launcher** | Menu interativo para baixar e rodar as ferramentas sob demanda. |
-| **`info.ps1`** | **Inventário** | Gera relatório HTML com dados de CPU, RAM, S.M.A.R.T, Drivers e CoreTemp. |
-| **`backup.ps1`** | **Backup** | Salva Wi-Fi, Impressoras, Atalhos e Documentos antes da formatação. |
-| **`net.ps1`** | **Rede** | Reseta pilha TCP/IP, limpa cache DNS e renova configurações. |
-| **`print.ps1`** | **Impressão** | Reinicia Spooler, limpa fila travada e ajusta registros RPC. |
-| **`update.ps1`** | **Updates** | Repara o Windows Update e instala patches pendentes. |
+| Script | Descrição |
+|--------|-----------|  
+| **`check.ps1`** | Diagnóstico rápido de integridade do sistema |
+| **`sfc.ps1`** | Diagnóstico e reparação completa (DISM, SFC, memória, processos) |
+| **`backup.ps1`** | Backup de configurações (Wi-Fi, impressoras, certificados, wallpaper) |
+| **`limp.ps1`** | Limpeza agressiva de arquivos temporários e cache |
+| **`update.ps1`** | Limpeza e instalação de atualizações do Windows |
+| **`hora.ps1`** | Sincronização automática de horário com NTP brasileiro |
+| **`net.ps1`** | Reset completo de rede, DNS, testes e relatórios |
+| **`print.ps1`** | Reparo de spooler e fila de impressão |
+| **`wallpaper.ps1`** | Aplicação de wallpaper corporativo padrão |
+| **`winforge.ps1`** | Instalação de aplicativos + otimizações do sistema |
 
 ---
 
@@ -240,47 +271,30 @@ irm get.hpinfo.com.br/menu | iex
 
 Se você clonou o repositório (`git clone`), use os comandos abaixo:
 
-### 1. Backup e Migração
-Este script exige que você defina uma pasta de destino para salvar os dados.
-
+### 1. Diagnóstico Completo
 ```powershell
-.\backup.ps1 -Destino "C:\Backups"
+.\scripts\check.ps1
 ```
 
-### 2. Inventário
+### 2. Backup de Configurações
 ```powershell
-.\info.ps1
+.\scripts\backup.ps1
 ```
 
-### 3. Updates do Windows
+### 3. Limpeza e Otimização
 ```powershell
-.\update.ps1
+.\scripts\limp.ps1
 ```
 
-🔧 PERF.ps1 — Diagnóstico e Score de Performance do Windows
+### 4. Reparo Completo do Windows
+```powershell
+.\scripts\sfc.ps1
+```
 
-O PERF.ps1 é um script PowerShell projetado para avaliar, registrar e comparar a performance real do Windows, antes e depois de processos de otimização e limpeza (como o limp.ps1).
-
-Ele coleta métricas essenciais do sistema, calcula um Score de Performance (0–100) e gera um relatório HTML visual, ideal para diagnóstico técnico, comprovação de serviço e histórico por máquina.
-
-▶️ Como usar (execução rápida)
-
-O PERF.ps1 pode ser executado diretamente da internet, sem necessidade de download manual, utilizando o PowerShell como Administrador:
-
-irm https://get.hpinfo.com.br/perf | iex
-
-
-Esse método permite:
-
-Execução imediata em qualquer máquina
-
-Sempre utilizar a versão mais atual do script
-
-Integração automática com outros módulos do projeto (como o limp.ps1)
-
-💡 Uso em conjunto com limpeza
-
-Quando executado antes e depois do limp.ps1, o PERF identifica automaticamente o cenário e gera a comparação Antes vs Depois, destacando os ganhos reais de performance no relatório HTML.
+### 5. Atualizações do Windows
+```powershell
+.\scripts\update.ps1
+```
 
 
 
@@ -288,7 +302,8 @@ Quando executado antes e depois do limp.ps1, o PERF identifica automaticamente o
 ---
 
 ## ⚠️ Requisitos
-* Windows 10 ou 11.
+* **Windows 7, 8, 10 ou 11**.
+* **PowerShell 2.0+** (incluído desde Windows 7) - **PowerShell 7+ recomendado**.
 * PowerShell executando como **Administrador**.
 * Política de execução liberada:
 ```powershell

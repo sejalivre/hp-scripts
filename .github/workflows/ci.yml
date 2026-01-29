@@ -1,22 +1,49 @@
-﻿name: Verificacao de Qualidade
-on: [push, pull_request]
+﻿name: Verificacao de Qualidade (Legacy Support)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   analise-de-codigo:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      - name: Baixar o código do repositório
-        uses: actions/checkout@v3
+      - name: Baixar o código
+        uses: actions/checkout@v4
 
-      - name: Testar sintaxe com PSScriptAnalyzer
+      # ESTA ETAPA GARANTE QUE O MENU FUNCIONE NO WINDOWS ANTIGO
+      - name: Verificar Encoding (UTF-8 BOM Obrigatório para PS 5.1-)
         shell: pwsh
         run: |
-          Install-Module PSScriptAnalyzer -Force
-          # Correção: Usando crase para escapar o cifrão
-          $resultado = Invoke-ScriptAnalyzer -Path . -Recurse
+          $files = Get-ChildItem -Recurse -Include *.ps1, *.psm1
+          $invalidFiles = @()
+          foreach ($file in $files) {
+              $bytes = Get-Content -Path $file.FullName -AsByteStream -TotalCount 3 -ErrorAction SilentlyContinue
+              # Verifica assinatura EF BB BF
+              if (-not ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)) {
+                  Write-Host "::warning file=$($file.Name):: Arquivo sem BOM. Vai quebrar a acentuação em Windows antigo!"
+                  $invalidFiles += $file.Name
+              }
+          }
+          if ($invalidFiles.Count -gt 0) {
+              Write-Error "FALHA: Converta os arquivos acima para UTF-8 com BOM no VS Code."
+              exit 1
+          }
+
+      # ESTA ETAPA VERIFICA ERROS DE SINTAXE, MAS IGNORA REGRAS DE ESTILO "MODERNO"
+      - name: Executar PSScriptAnalyzer (Modo Compatibilidade)
+        shell: pwsh
+        run: |
+          # Ignoramos regras que pedem para não usar Write-Host ou classes .NET, 
+          # pois seu script precisa delas para o Menu e TLS 1.2
+          $results = Invoke-ScriptAnalyzer -Path ./ -Recurse -Severity Error
           
-          $resultado | Format-Table -AutoSize
-          
-          if ($resultado.Severity -contains 'Error') {
-              Write-Error "Erros críticos encontrados no código!"
+          if ($results) {
+              $results | Format-Table -AutoSize
+              Write-Error "❌ Erros de sintaxe crítica encontrados. O script nem vai rodar."
+              exit 1
+          } else {
+              Write-Host "✅ Sintaxe aprovada (Compatível com estruturas Legacy)."
           }
