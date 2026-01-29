@@ -36,6 +36,7 @@ catch {
 }
 
 # Detecção robusta do diretório do script e modo de execução
+$ScriptRoot = $PSScriptRoot
 $IsLocalExecution = $false
 
 if ([string]::IsNullOrEmpty($ScriptRoot)) {
