@@ -46,7 +46,7 @@ $7zipExe = "$tempDir\7z.exe"
 $Password = "0"
 $BaseUrl = "http://get.hpinfo.com.br/tools"
 
-# --- PREPARAÇÃO ---
+# --- PREPARAÇÃO --- 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
 # Verifica Modo de Execução (Portátil vs Online)
