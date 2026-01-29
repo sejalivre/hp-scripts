@@ -35,8 +35,33 @@ catch {
     }
 }
 
+# Detecção robusta do diretório do script e modo de execução
+$IsLocalExecution = $false
+
+if ([string]::IsNullOrEmpty($ScriptRoot)) {
+    # Fallback 1: Tentar obter do caminho do script atual
+    if ($MyInvocation.MyCommand.Path) {
+        $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    }
+    # Fallback 2: Usar diretório atual
+    if ([string]::IsNullOrEmpty($ScriptRoot)) {
+        $ScriptRoot = Get-Location | Select-Object -ExpandProperty Path
+    }
+}
+
+# Verificar se estamos executando de um repositório local (com scripts/)
+if (Test-Path (Join-Path $ScriptRoot "scripts")) {
+    $IsLocalExecution = $true
+    Write-Host "[INFO] Modo: Execução Local (repositório detectado)" -ForegroundColor DarkGray
+}
+else {
+    $IsLocalExecution = $false
+    Write-Host "[INFO] Modo: Execução Remota (baixando scripts sob demanda)" -ForegroundColor DarkGray
+}
+
 # Configuração de Origem 
 $baseUrl = "get.hpinfo.com.br"
+
 
 # 1. Definição das Ferramentas
 $ferramentas = @(
@@ -122,22 +147,56 @@ function Show-MainMenu {
             }
             elseif ($selecionada.IsLocalScript) {
                 # Para scripts PowerShell locais (dentro de ./scripts/)
-                $scriptPath = Join-Path $PSScriptRoot "$($selecionada.Path).ps1"
-                if (Test-Path $scriptPath) {
-                    & $scriptPath
+                if ($IsLocalExecution) {
+                    # Modo local: executar arquivo do disco
+                    $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
+                    if (Test-Path $scriptPath) {
+                        & $scriptPath
+                    }
+                    else {
+                        Write-Host "`n[❌] ERRO: Script local não encontrado: $scriptPath" -ForegroundColor Red
+                    }
                 }
                 else {
-                    Write-Host "`n[❌] ERRO: Script local não encontrado: $scriptPath" -ForegroundColor Red
+                    # Modo remoto: baixar e executar
+                    $finalUrl = "https://$baseUrl/$($selecionada.Path).ps1"
+                    try {
+                        Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
+                        $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
+                        Invoke-Expression $scriptContent
+                    }
+                    catch {
+                        Write-Host "`n[❌] ERRO: Falha ao baixar script remoto." -ForegroundColor Red
+                        Write-Host "URL: $finalUrl" -ForegroundColor Gray
+                        Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                    }
                 }
             }
             elseif ($selecionada.IsLocal) {
-                # Para scripts locais
-                $scriptPath = Join-Path $PSScriptRoot $selecionada.Path
-                if (Test-Path $scriptPath) {
-                    & $scriptPath
+                # Para scripts locais (como menu_tools.ps1)
+                if ($IsLocalExecution) {
+                    # Modo local: executar arquivo do disco
+                    $scriptPath = Join-Path $ScriptRoot $selecionada.Path
+                    if (Test-Path $scriptPath) {
+                        & $scriptPath
+                    }
+                    else {
+                        Write-Host "`n[❌] ERRO: Script local não encontrado: $($selecionada.Path)" -ForegroundColor Red
+                    }
                 }
                 else {
-                    Write-Host "`n[❌] ERRO: Script local não encontrado: $($selecionada.Path)" -ForegroundColor Red
+                    # Modo remoto: baixar e executar
+                    $finalUrl = "https://$baseUrl/$($selecionada.Path)"
+                    try {
+                        Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
+                        $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
+                        Invoke-Expression $scriptContent
+                    }
+                    catch {
+                        Write-Host "`n[❌] ERRO: Falha ao baixar script remoto." -ForegroundColor Red
+                        Write-Host "URL: $finalUrl" -ForegroundColor Gray
+                        Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                    }
                 }
             }
             else {
