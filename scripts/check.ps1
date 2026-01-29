@@ -44,18 +44,33 @@ $ToolsDir = Join-Path $PortableRoot "tools"
 $tempDir = "$env:TEMP\HP-Tools"
 $7zipExe = "$tempDir\7z.exe"
 $Password = "0"
+$BaseUrl = "http://get.hpinfo.com.br/tools"
 
-# --- PREPARAÇÃO ---
-Write-Host "[*] Iniciando Diagnóstico HPTI v8.0 (Portátil)..." -ForegroundColor Cyan
-Write-Host "[*] Executando de: $PortableRoot" -ForegroundColor DarkGray
-
+# --- PREPARAÇÃO --- 
 if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
 
-# Copia 7z do pendrive para o temp (se existir localmente)
+# Verifica Modo de Execução (Portátil vs Online)
 $local7z = Join-Path $ToolsDir "7z.txe"
+
 if (Test-Path $local7z) {
+    Write-Host "[*] Modo: Portátil (Ferramentas Locais)" -ForegroundColor Cyan
     Copy-Item $local7z $7zipExe -Force
-    Write-Host "[OK] 7-Zip carregado do pendrive" -ForegroundColor Green
+}
+else {
+    Write-Host "[*] Modo: Online (Baixando Ferramentas)" -ForegroundColor Cyan
+    
+    # Download 7-Zip
+    try {
+        if (-not (Test-Path $7zipExe)) {
+            Write-Host "   -> Baixando dependência (7-Zip)..." -NoNewline -ForegroundColor Gray
+            Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zipExe -UseBasicParsing
+            Write-Host " [OK]" -ForegroundColor Green
+        }
+    }
+    catch {
+        Write-Host " [FALHA]" -ForegroundColor Red
+        Write-Host "   [!] Erro ao baixar 7z: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 
 $Tools = @(
@@ -64,19 +79,52 @@ $Tools = @(
 )
 
 $ExtractedPaths = @{}
+
 if (Test-Path $7zipExe) {
     foreach ($tool in $Tools) {
         $pasta = Join-Path $tempDir $tool.SubFolder
         $localArchive = Join-Path $ToolsDir $tool.Archive
+        $tempArchive = Join-Path $tempDir $tool.Archive
         
+        $ArchiveToUse = $null
+        
+        # 1. Tenta usar arquivo local (Pendrive)
         if (Test-Path $localArchive) {
-            Write-Host "[OK] Extraindo $($tool.Name) do pendrive..." -ForegroundColor Green
-            if (-not (Test-Path $pasta)) { New-Item -ItemType Directory -Path $pasta -Force | Out-Null }
-            & $7zipExe x "$localArchive" -o"$pasta" -p"$Password" -y | Out-Null
-            $ExtractedPaths[$tool.Name] = $pasta
+            $ArchiveToUse = $localArchive
+        }
+        # 2. Se não existir local, tenta baixar (Online)
+        else {
+            if (-not (Test-Path $tempArchive)) {
+                # Só baixa se ainda não tiver baixado
+                try {
+                    Write-Host "   -> Baixando $($tool.Name)..." -NoNewline -ForegroundColor Gray
+                    Invoke-WebRequest -Uri "$BaseUrl/$($tool.Archive)" -OutFile $tempArchive -UseBasicParsing
+                    Write-Host " [OK]" -ForegroundColor Green
+                }
+                catch {
+                    Write-Host " [FALHA]" -ForegroundColor Red
+                }
+            }
+            if (Test-Path $tempArchive) {
+                $ArchiveToUse = $tempArchive
+            }
+        }
+
+        # Extração
+        if ($ArchiveToUse) {
+            if (-not (Test-Path $pasta)) { 
+                # Write-Host "   -> Extraindo $($tool.Name)..." -ForegroundColor DarkGray
+                New-Item -ItemType Directory -Path $pasta -Force | Out-Null 
+                & $7zipExe x "$ArchiveToUse" -o"$pasta" -p"$Password" -y | Out-Null
+            }
+            
+            # Valida se extraiu
+            if (Test-Path $pasta) {
+                $ExtractedPaths[$tool.Name] = $pasta
+            }
         }
         else {
-            Write-Host "[AVISO] $($tool.Name) não encontrado no pendrive" -ForegroundColor Yellow
+            Write-Host "   [!] Ferramenta $($tool.Name) não disponível." -ForegroundColor Yellow
         }
     }
 }
