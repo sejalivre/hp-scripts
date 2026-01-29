@@ -9,13 +9,34 @@ repo_url: https://github.com/sejalivre/hp-scripts
 theme:
   name: material
   language: pt-BR
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Alternar para modo claro
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Alternar para modo escuro
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.expand
     - content.code.copy
+    - content.code.annotate
     - search.highlight
     - search.suggest
+    - toc.follow
 
 nav:
   - Início: index.md

@@ -40,40 +40,42 @@ $baseUrl = "get.hpinfo.com.br"
 
 # 1. Definição das Ferramentas
 $ferramentas = @(
-    @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "check" ; Color = "Yellow" }
-    @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "sfc"   ; Color = "Red" }
+    @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "../scripts/check" ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "../scripts/sfc"   ; Color = "Red" ; IsLocalScript = $true }
     @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
-    @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "winforge" ; Color = "Magenta" }
-    @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "limp"  ; Color = "Yellow" }
-    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "update"; Color = "Yellow" }
-    @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "hora"  ; Color = "Yellow" }
-    @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "net"   ; Color = "Yellow" }
-    @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "print" ; Color = "Yellow" }
-    @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "backup"; Color = "Yellow" }
+    @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "../scripts/winforge" ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "../scripts/limp"  ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "../scripts/update"; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "../scripts/hora"  ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "../scripts/net"   ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "../scripts/print" ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "../scripts/backup"; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
-    @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "wallpaper" ; Color = "Magenta" }
-    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" }
+    @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "../scripts/wallpaper" ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "../tools/nextdns/nextdns.ps1" ; Color = "Yellow" ; IsLocal = $true }
     @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; Color = "Green" ; IsLocal = $true }
 )
 
 function Show-MainMenu {
     do {
         Clear-Host
-        Write-Host "==========================================================" -ForegroundColor Cyan
-        Write-Host "             HPCRAFT - HUB DE AUTOMAÇÃO TI                " -ForegroundColor White -BackgroundColor DarkBlue
-        Write-Host "      Suporte: docs.hpinfo.com.br | v1.4                  " -ForegroundColor Gray
-        Write-Host "==========================================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "  ║       🚀  HPCRAFT PORTABLE - HUB DE AUTOMAÇÃO TI  🚀         ║" -ForegroundColor Cyan
+        Write-Host "  ║         Suporte: docs.hpinfo.com.br | v1.5 Portable          ║" -ForegroundColor DarkCyan
+        Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host ""
         
         # 2. Renderização Dinâmica do Menu  
         for ($i = 0; $i -lt $ferramentas.Count; $i++) {
             $n = $i + 1
             $item = $ferramentas[$i]
-            Write-Host ("{0,2}. [{1,-11}] {2}" -f $n, $item.ID, $item.Desc)
+            Write-Host ("  {0,2}. [{1,-11}] {2}" -f $n, $item.ID, $item.Desc) -ForegroundColor White
         }
 
-        Write-Host "----------------------------------------------------------"
-        Write-Host "Q. Sair"
-        Write-Host "==========================================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "  [Q] Sair" -ForegroundColor DarkGray
+        Write-Host ""
         
         $escolha = Read-Host "Selecione uma opção"
 
@@ -116,6 +118,16 @@ function Show-MainMenu {
                     Write-Host "`n[❌] ERRO: Falha ao executar instalador." -ForegroundColor Red
                     Write-Host "URL: $finalUrl" -ForegroundColor Gray
                     Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                }
+            }
+            elseif ($selecionada.IsLocalScript) {
+                # Para scripts PowerShell locais (dentro de ../scripts/)
+                $scriptPath = Join-Path $PSScriptRoot "$($selecionada.Path).ps1"
+                if (Test-Path $scriptPath) {
+                    & $scriptPath
+                }
+                else {
+                    Write-Host "`n[❌] ERRO: Script local não encontrado: $scriptPath" -ForegroundColor Red
                 }
             }
             elseif ($selecionada.IsLocal) {

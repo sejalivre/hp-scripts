@@ -88,8 +88,8 @@ irm https://get.hpinfo.com.br/[script] | iex
 ### Compatibilidade
 
 - ✅ Windows 7, 8, 10, 11
-- ✅ PowerShell 3.0+ (5.1+ recomendado)
-- ✅ Fallbacks para versões antigas
+- ✅ PowerShell 2.0+ (fallback automático via WMI)
+- ✅ PowerShell 5.1+ recomendado para melhor performance
 - ✅ Detecção automática de privilégios
 
 ### Segurança

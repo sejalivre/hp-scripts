@@ -132,15 +132,19 @@ irm get.hpinfo.com.br/tools/nextdns/desinstalar | iex
 
 Alguns scripts requerem privilégios de administrador. Se necessário, o script solicitará automaticamente.
 
-### Execução Offline
+### Execução Offline (Portable)
 
-Para usar sem internet, clone o repositório:
+Para usar sem internet, copie o projeto inteiro para um pendrive e use a pasta **portable**:
 
 ```powershell
-git clone https://github.com/sejalivre/hp-scripts.git
-cd hp-scripts
+# No pendrive
+cd E:\hp-scripts\portable
 .\menu.ps1
+
+# Ou clique em INICIAR.cmd
 ```
+
+A versão portable referencia automaticamente os scripts em `../scripts/` e `../tools/`.
 
 ### Verificar Código-Fonte
 
