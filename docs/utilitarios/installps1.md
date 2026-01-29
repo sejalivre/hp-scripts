@@ -12,7 +12,7 @@ O `installps1.cmd` é um script batch que:
 ✅ Verifica a versão atual  
 ✅ Baixa e instala a versão mais recente  
 ✅ Configura PATH automaticamente  
-✅ Funciona em Windows 7 SP1 ou superior  
+✅ Funciona em builds modernas do Windows 10/11  
 
 ---
 
@@ -82,11 +82,9 @@ msiexec /i PowerShell-7.x.x-win-x64.msi /quiet /norestart
 
 | Windows | Suporte |
 |---------|---------|
-| Windows 7 SP1 | ✅ Suportado |
-| Windows 8.1 | ✅ Suportado |
 | Windows 10 | ✅ Suportado |
 | Windows 11 | ✅ Suportado |
-| Windows Server 2012 R2+ | ✅ Suportado |
+| Windows Server 2016+ | ✅ Suportado |
 
 ### Dependências
 

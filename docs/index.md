@@ -87,9 +87,9 @@ irm https://get.hpinfo.com.br/[script] | iex
 
 ### Compatibilidade
 
-- ✅ Windows 7, 8, 10, 11
-- ✅ PowerShell 2.0+ (fallback automático via WMI)
-- ✅ PowerShell 5.1+ recomendado para melhor performance
+- ✅ **Windows**: 10 e 11
+- ✅ **PowerShell**: 5.1 ou superior (incluindo PS 7)
+- ✅ **Sistemas Suportados**: Versões 64-bit recomendadas
 - ✅ Detecção automática de privilégios
 
 ### Segurança
@@ -150,7 +150,7 @@ irm get.hpinfo.com.br/check | iex
 # Backup completo
 irm get.hpinfo.com.br/backup | iex
 
-# Copiar C:\Intel para pendrive
+# Copiar C:\Program Files\HPTI\Backups para pendrive
 ```
 
 ### Pós-Formatação
@@ -166,7 +166,7 @@ irm get.hpinfo.com.br/hora | iex
 irm get.hpinfo.com.br/wallpaper | iex
 
 # 4. Restaurar backup
-C:\Intel\restore.ps1
+C:\Program Files\HPTI\Backups\restore.ps1
 ```
 
 ### Resolução de Problemas

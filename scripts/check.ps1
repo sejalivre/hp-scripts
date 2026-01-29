@@ -4,33 +4,10 @@
 .DESCRIPTION
     - Verificação completa de licenciamento Windows com múltiplos métodos
     - 24 verificações abrangentes de sistema, segurança e performance
-    - Compatível com PowerShell 2.0+ (Windows 7+)
-.NOTES
-    Compatibilidade: PowerShell 2.0, 3.0, 4.0, 5.0, 5.1
+# Compatibilidade: PowerShell 5.1+ (Windows 10/11)
 #>
 
-# ============================================================
-# BLOCO DE COMPATIBILIDADE - Windows 7+
-# ============================================================
-
-# Importa módulo de compatibilidade
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-. (Join-Path $ScriptDir "CompatibilityLayer.ps1")
-
-# Configuração de TLS 1.2 (Essencial para HTTPS em sistemas antigos)
-try {
-    # Método primário (PowerShell 5.0+)
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-}
-catch {
-    try {
-        # Fallback para versões antigas
-        [System.Net.ServicePointManager]::SecurityProtocol = 'Tls12'
-    }
-    catch {
-        Write-Warning "Não foi possível forçar TLS 1.2. Conexões HTTPS podem falhar."
-    }
-}
+$ErrorActionPreference = "SilentlyContinue"
 
 $ErrorActionPreference = "SilentlyContinue"
 
@@ -160,7 +137,7 @@ try {
     }
     
     if ($t1_Res -eq "N/A") {
-        $wmi = Get-CimOrWmi -ClassName MsAcpi_ThermalZoneTemperature -Namespace "root/wmi"
+        $wmi = Get-CimInstance -ClassName MsAcpi_ThermalZoneTemperature -Namespace "root/wmi" -ErrorAction SilentlyContinue
         if ($wmi) {
             $val = ($wmi.CurrentTemperature / 10) - 273.15
             $t1_Res = "$([math]::Round($val,0)) °C (WMI)"
@@ -190,7 +167,7 @@ try {
         }
     }
     if ($t2_Res -eq "Desconhecido") {
-        $disk = Get-CimOrWmi -ClassName Win32_DiskDrive -First
+        $disk = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue | Select-Object -First 1
         $t2_Res = $disk.Status
         if ($disk.Status -eq "OK") { $t2_Stat = "OK"; $t2_Rec = "Status WMI OK." } else { $t2_Stat = "CRÍTICO"; $t2_Rec = "Erro detectado." }
     }
@@ -201,7 +178,7 @@ Add-Check 2 "Saúde Física (SMART)" $t2_Res $t2_Stat $t2_Rec
 # 3. Espaço Livre
 $t3_Res = ""; $t3_Stat = "OK"; $t3_Rec = "Espaço suficiente."
 try {
-    $disks = Get-CimOrWmi -ClassName Win32_LogicalDisk -Filter "DriveType=3"
+    $disks = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3"
     foreach ($d in $disks) {
         $pct = [math]::Round(($d.FreeSpace / $d.Size) * 100, 1)
         $t3_Res += "$($d.DeviceID) $pct% | "
@@ -290,7 +267,7 @@ try {
         if ([string]::IsNullOrWhiteSpace($t4_Res) -or $t4_Res -eq "Ativado (Registro)") {
             Write-Host "   -> Verificando via WMI..." -NoNewline -ForegroundColor DarkGray
             try {
-                $license = Get-CimOrWmi -ClassName SoftwareLicensingProduct -Namespace "root\cimv2" | 
+                $license = Get-CimInstance -ClassName SoftwareLicensingProduct -Namespace "root\cimv2" -ErrorAction SilentlyContinue | 
                 Where-Object { $_.Name -like "*Windows*" -and $_.LicenseStatus -eq 1 } | 
                 Select-Object -First 1
                 
@@ -351,7 +328,7 @@ try {
         if ([string]::IsNullOrWhiteSpace($t4_Res)) {
             Write-Host "   -> Verificando chave BIOS..." -NoNewline -ForegroundColor DarkGray
             try {
-                $biosKey = (Get-CimOrWmi -ClassName SoftwareLicensingService).OA3xOriginalProductKey
+                $biosKey = (Get-CimInstance -ClassName SoftwareLicensingService -ErrorAction SilentlyContinue).OA3xOriginalProductKey
                 if ($biosKey) {
                     $t4_Res = "Chave BIOS Detectada"
                     $t4_Stat = "ALERTA"
@@ -438,7 +415,7 @@ try {
         # MÉTODO 2: Fallback via WMI (se OSPP não funcionou)
         if (-not $osppFound) {
             Write-Host "   -> Verificando via WMI..." -NoNewline -ForegroundColor DarkGray
-            $officeAct = Get-CimOrWmi -ClassName SoftwareLicensingProduct -Filter "Description like '%Office%' AND PartialProductKey IS NOT NULL" | Where-Object LicenseStatus -eq 1
+            $officeAct = Get-CimInstance -ClassName SoftwareLicensingProduct -Filter "Description like '%Office%' AND PartialProductKey IS NOT NULL" -ErrorAction SilentlyContinue | Where-Object LicenseStatus -eq 1
             
             if ($officeAct) {
                 $t5_Stat = "OK"
@@ -482,7 +459,7 @@ Add-Check 6 "Bloatware / Lixo" $t6_Res $t6_Stat $t6_Rec
 
 # 7. Memória RAM
 try {
-    $os = Get-CimOrWmi -ClassName Win32_OperatingSystem
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
     $usedPct = [math]::Round((($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize) * 100, 0)
     if ($usedPct -gt 85) { $t7_Stat = "ALERTA"; $t7_Rec = "Fechar programas ou add RAM." }
     else { $t7_Stat = "OK"; $t7_Rec = "Uso dentro do normal." }
@@ -503,7 +480,7 @@ Add-Check 8 "Versão do Windows" $t8_Res $t8_Stat $t8_Rec
 
 # 9. Drivers GPU
 try {
-    $gpu = Get-CimOrWmi -ClassName Win32_VideoController -First
+    $gpu = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue | Select-Object -First 1
     $date = [Management.ManagementDateTimeConverter]::ToDateTime($gpu.DriverDate)
     $days = ((Get-Date) - $date).Days
     if ($days -gt 365) { $t9_Stat = "ALERTA"; $t9_Rec = "Atualizar driver de vídeo." }
@@ -515,7 +492,7 @@ Add-Check 9 "Drivers GPU" $t9_Res $t9_Stat $t9_Rec
 
 # 10. Inicialização
 try {
-    $count = (Get-CimOrWmi -ClassName Win32_StartupCommand).Count
+    $count = (Get-CimInstance -ClassName Win32_StartupCommand).Count
     if ($count -gt 8) { $t10_Stat = "ALERTA"; $t10_Rec = "Otimizar inicialização." }
     else { $t10_Stat = "OK"; $t10_Rec = "Boot rápido." }
     $t10_Res = "$count itens"
@@ -526,7 +503,7 @@ Add-Check 10 "Inicialização" $t10_Res $t10_Stat $t10_Rec
 # 11. Temperatura GPU
 $t11_Res = "N/A"; $t11_Stat = "OK"; $t11_Rec = "Monitorar sob carga."
 try {
-    $wmiGPU = Get-CimOrWmi -ClassName MsAcpi_ThermalZoneTemperature -Namespace "root/wmi" -First
+    $wmiGPU = Get-CimInstance -ClassName MsAcpi_ThermalZoneTemperature -Namespace "root/wmi" -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($wmiGPU) {
         $val = ($wmiGPU.CurrentTemperature / 10) - 273.15
         if ($val -gt 20 -and $val -lt 120) {
@@ -536,7 +513,7 @@ try {
         }
     }
     if ($t11_Res -eq "N/A") {
-        $gpuName = (Get-CimOrWmi -ClassName Win32_VideoController).Name
+        $gpuName = (Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue).Name
         $t11_Res = "$gpuName (Sem Sensor)"
     }
 }
@@ -545,7 +522,7 @@ Add-Check 11 "Temperatura GPU" $t11_Res $t11_Stat $t11_Rec
 
 # 12. Bateria
 try {
-    $bat = Get-CimOrWmi -ClassName Win32_Battery
+    $bat = Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue
     if ($bat) {
         $life = $bat.EstimatedChargeRemaining
         if ($life -lt 70) { $t12_Stat = "ALERTA"; $t12_Rec = "Considerar troca da bateria." }
@@ -772,7 +749,7 @@ try {
     }
     else {
         # Verifica se há outro antivírus instalado
-        $avList = Get-CimOrWmi -ClassName AntiVirusProduct -Namespace "root/SecurityCenter2"
+        $avList = Get-CimInstance -ClassName AntiVirusProduct -Namespace "root/SecurityCenter2" -ErrorAction SilentlyContinue
         if ($avList) {
             $activeAV = $avList | Where-Object { $_.productState -band 0x1000 }
             if ($activeAV) {
@@ -809,7 +786,7 @@ try {
     Write-Host "   -> Testando conectividade..." -NoNewline -ForegroundColor DarkGray
     
     # Verifica adaptador de rede
-    $adapter = Get-NetworkAdapter -Status "Up" | Where-Object { $_.PhysicalMediaType -ne "Unspecified" } | Select-Object -First 1
+    $adapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" -and $_.PhysicalMediaType -ne "Unspecified" } | Select-Object -First 1
     
     if ($adapter) {
         # Teste de ping para Google DNS
@@ -1054,7 +1031,7 @@ try {
     }
     
     # Verifica se é laptop
-    $battery = Get-CimOrWmi -ClassName Win32_Battery
+    $battery = Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue
     if ($battery) {
         $batteryPercent = $battery.EstimatedChargeRemaining
         $t21_Res = "Laptop - $planName ($batteryPercent% bateria)"
@@ -1126,7 +1103,7 @@ try {
     Write-Host "   -> Verificando uptime..." -NoNewline -ForegroundColor DarkGray
     
     # Calcula uptime
-    $os = Get-CimOrWmi -ClassName Win32_OperatingSystem
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
     $lastBoot = $os.LastBootUpTime
     $uptime = (Get-Date) - $lastBoot
     $uptimeDays = [math]::Round($uptime.TotalDays, 1)

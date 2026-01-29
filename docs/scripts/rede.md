@@ -217,8 +217,8 @@ if (-not $isAdmin) {
 
 ### Requisitos Mínimos
 
-- Windows 7+
-- PowerShell 2.0+ (3.0+ recomendado)
+- Windows 10+
+- PowerShell 5.1+
 - Privilégios de Administrador
 
 ### Fallbacks Implementados

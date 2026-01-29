@@ -1,27 +1,12 @@
 # ==============================================================================
 # SCRIPT: hora.ps1
 # DESCRIÇÃO: Configura sincronização de horário e cria tarefa agendada de reparo.
-# REQUER: PowerShell 3.0+ (Windows 8+)
+# REQUER: PowerShell 5.1+ (Windows 10/11)
 # ==============================================================================
 
 # Verifica versão do PowerShell
-$requiredVersion = 3
-if ($PSVersionTable.PSVersion.Major -lt $requiredVersion) {
-    Write-Warning "Este script requer PowerShell $requiredVersion.0 ou superior!"
-    Write-Warning "Versão atual: $($PSVersionTable.PSVersion)"
-    Write-Warning "Baixe o Windows Management Framework 5.1 em:"
-    Write-Warning "https://www.microsoft.com/download/details.aspx?id=54616"
-    pause
-    exit
-}
-
-# Verifica se o script está rodando com privilégios de administrador 
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = [Security.Principal.WindowsPrincipal]$identity
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "Este script precisa ser executado como Administrador."
-    Write-Warning "Por favor, abra o PowerShell como Administrador e tente novamente."
-    pause
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Warning "Este script requer PowerShell 5.1+ (Windows 10/11)!"
     exit
 }
 

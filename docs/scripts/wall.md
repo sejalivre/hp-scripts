@@ -140,8 +140,8 @@ BOOL SystemParametersInfoA(
 
 ### Requisitos Mínimos
 
-- Windows 7+
-- PowerShell 2.0+
+- Windows 10+
+- PowerShell 5.1+
 - Conexão com internet
 - Permissão para escrever em `C:\Intel`
 

@@ -275,18 +275,6 @@ function Install-PSWindowsUpdateModule {
     }
     
     try {
-        # Habilitar TLS 1.2
-        try {
-            $protocols = [Net.ServicePointManager]::SecurityProtocol
-            if ($protocols -notmatch 'Tls12') {
-                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Write-Log "TLS 1.2 habilitado" "Gray"
-            }
-        }
-        catch {
-            Write-Log "AVISO: Nao foi possivel habilitar TLS 1.2" "Yellow"
-        }
-        
         # Detectar proxy
         $proxySettings = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings" -ErrorAction SilentlyContinue
         if ($proxySettings -and $proxySettings.ProxyEnable -eq 1) {

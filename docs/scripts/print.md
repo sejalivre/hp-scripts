@@ -182,8 +182,8 @@ Start-Process "explorer.exe" "shell:::{A8A91A66-3A7D-4424-8D24-04E180695C7A}"
 
 ### Requisitos Mínimos
 
-- Windows 7+
-- PowerShell 2.0+
+- Windows 10+
+- PowerShell 5.1+
 - Privilégios de Administrador
 
 ### Fallbacks Implementados

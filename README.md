@@ -8,8 +8,8 @@ Coleção de scripts PowerShell para automação de TI, manutenção, diagnósti
 **Documentação Completa:** [docs.hpinfo.com.br](https://docs.hpinfo.com.br)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PowerShell-2.0+-blue?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell 2.0+"/>
-  <img src="https://img.shields.io/badge/Windows-7/8/10/11-success?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 7+"/>
+  <img src="https://img.shields.io/badge/PowerShell-5.1+-blue?style=for-the-badge&logo=powershell&logoColor=white" alt="PowerShell 5.1+"/>
+  <img src="https://img.shields.io/badge/Windows-10%2F11-success?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 10+"/>
   <img src="https://img.shields.io/github/license/sejalivre/hp-scripts?style=for-the-badge" alt="MIT License"/>
 </p>
 
@@ -118,11 +118,11 @@ irm get.hpinfo.com.br/tools/nextdns/install | iex
 
 | Script | Função | Uso |
 |--------|--------|-----|
-| **install.ps1** | Instalação completa com configuração de ID | `irm get.hpinfo.com.br/tools/nextdns/install \| iex` |
-| **reparar_nextdns.ps1** | Auto-reparo (roda automaticamente) | `irm get.hpinfo.com.br/tools/nextdns/reparar_nextdns \| iex` |
-| **nextdns.ps1** | Menu interativo de gerenciamento | `irm get.hpinfo.com.br/tools/nextdns/nextdns \| iex` |
-| **dns_padrão.ps1** | Restaurar DNS para DHCP | `irm get.hpinfo.com.br/tools/nextdns/dns_padrão \| iex` |
-| **remover_hpti.ps1** | Desinstalação completa | `irm get.hpinfo.com.br/tools/nextdns/remover_hpti \| iex` |
+| **install.ps1** | Instalação completa com configuração de ID | `irm get.hpinfo.com.br/tools/nextdns/install | iex` |
+| **reparar_nextdns.ps1** | Auto-reparo (roda automaticamente) | `irm get.hpinfo.com.br/tools/nextdns/reparar_nextdns | iex` |
+| **nextdns.ps1** | Menu interativo de gerenciamento | `irm get.hpinfo.com.br/tools/nextdns/nextdns | iex` |
+| **dns_padrão.ps1** | Restaurar DNS para DHCP | `irm get.hpinfo.com.br/tools/nextdns/dns_padrão | iex` |
+| **remover_hpti.ps1** | Desinstalação completa | `irm get.hpinfo.com.br/tools/nextdns/remover_hpti | iex` |
 
 ### Como Obter seu ID NextDNS
 
@@ -171,8 +171,8 @@ irm get.hpinfo.com.br/tools/nextdns/install | iex
 
 ## Requisitos mínimos
 
-- **Windows 7 / 8 / 10 / 11**  
-- **PowerShell 2.0+** (incluído desde Windows 7) - **PowerShell 7+ recomendado**  
+- **Windows 10 / 11**  
+- **PowerShell 5.1+** (padrão no Windows 10/11)  
 - Direitos de administrador  
 - Internet (para baixar ferramentas e atualizações)
 
@@ -199,7 +199,7 @@ hp-scripts/
 │   ├── print.ps1           # Reparo de impressão
 │   ├── wallpaper.ps1       # Configuração de wallpaper
 │   ├── winforge.ps1        # Instalação e otimização
-│   └── CompatibilityLayer.ps1  # Camada de compatibilidade PS 2.0+
+
 ├── tools/                  # Ferramentas portáteis
 │   ├── nextdns/            # Módulo NextDNS
 │   │   ├── install.ps1
@@ -302,8 +302,8 @@ Se você clonou o repositório (`git clone`), use os comandos abaixo:
 ---
 
 ## ⚠️ Requisitos
-* **Windows 7, 8, 10 ou 11**.
-* **PowerShell 2.0+** (incluído desde Windows 7) - **PowerShell 7+ recomendado**.
+* **Windows 10 ou 11**.
+* **PowerShell 5.1+**.
 * PowerShell executando como **Administrador**.
 * Política de execução liberada:
 ```powershell

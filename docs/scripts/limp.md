@@ -260,7 +260,8 @@ Write-Host "Espaço recuperado: $totalLimpoMB MB" -ForegroundColor White
 
 ### Requisitos Mínimos
 
-- Windows 8+ (PowerShell 3.0+)
+- Windows 10+
+- PowerShell 5.1+
 - Privilégios de Administrador (recomendado)
 
 ### Fallbacks Implementados

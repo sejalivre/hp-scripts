@@ -34,8 +34,8 @@ if %PS_MISSING%==0 (
     echo [INFO] Versao do PowerShell detectada: %PS_VERSION%
     
     if %PS_VERSION% LSS 5 (
-        echo [AVISO] Versao antiga detectada (menor que 5.1)
-        echo [INFO] Recomenda-se atualizar para PowerShell 7+
+        echo [AVISO] Versao insuficiente detectada (HP-Scripts requer 5.1+)
+        echo [INFO] Sera necessario atualizar para PowerShell 7
         set NEEDS_UPDATE=1
     ) else (
         echo [OK] Versao compativel (5.1+)

@@ -190,8 +190,8 @@ function Write-Log {
 
 ### Requisitos Mínimos
 
-- Windows 7+
-- PowerShell 3.0+
+- Windows 10+
+- PowerShell 5.1+
 - Privilégios de Administrador
 - Conexão com internet
 - 10 GB de espaço livre (recomendado)

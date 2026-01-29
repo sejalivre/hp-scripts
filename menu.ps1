@@ -2,21 +2,18 @@
 .SYNOPSIS
     Launcher Principal HP-Scripts - Hub de Automação Profissional.
 .DESCRIPTION
-    Versão 1.5 - Compatibilidade com Windows 10 antigo (1507+).
+    Versão 2.0 - Target: Windows 10/11.
 .NOTES
-    Requer PowerShell 3.0+ (incluído em todas as versões do Windows 10)
+    Requer PowerShell 5.1+ (Windows 10/11)
 #>
 
 # ============================================================
-# BLOCO DE COMPATIBILIDADE - Windows 10 Antigo
+# REQUISITOS DE SISTEMA
 # ============================================================
 
 # Verificação de Versão do PowerShell
-if ($PSVersionTable.PSVersion.Major -lt 3) {
-    Write-Host "[ERRO] Este script requer PowerShell 3.0 ou superior." -ForegroundColor Red
-    Write-Host "Versão detectada: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
-    Write-Host "Atualize o PowerShell antes de continuar." -ForegroundColor Gray
-    Read-Host "Pressione ENTER para sair"
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "[ERRO] Este script requer PowerShell 5.1 ou superior (Windows 10/11)." -ForegroundColor Red
     exit 1
 }
 

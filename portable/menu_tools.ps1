@@ -13,6 +13,14 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "HP Scripts - Menu de Ferramentas"
 
+# Verificação de Versão do PowerShell (Modernização)
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "[ERRO] Este script requer PowerShell 5.1 ou superior (Windows 10/11)." -ForegroundColor Red
+    Write-Host "Versão detectada: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
+    Read-Host "Pressione ENTER para sair"
+    exit 1
+}
+
 # Caminho base do script - Detecção Robusta
 $ScriptPath = $PSScriptRoot
 if ([string]::IsNullOrEmpty($ScriptPath)) {

@@ -1,9 +1,7 @@
 # net.ps1 - Diagnóstico e Reset de Rede
 # Executar como ADMINISTRADOR
 
-# Importa módulo de compatibilidade
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-. (Join-Path $ScriptDir "CompatibilityLayer.ps1")
+# Importações Removidas (Nativo PowerShell 5.1+)
 
 # ============================================================
 # CONFIGURAÇÃO DE DIRETÓRIOS E LOGGING
@@ -261,7 +259,7 @@ function Test-SharedFolders {
     try {
         # Listar compartilhamentos locais
         Write-Host "`n  Compartilhamentos locais:" -ForegroundColor Yellow
-        $localShares = Get-WmiObject -Class Win32_Share -ErrorAction SilentlyContinue | Where-Object { $_.Type -eq 0 }
+        $localShares = Get-CimInstance -ClassName Win32_Share -ErrorAction SilentlyContinue | Where-Object { $_.Type -eq 0 }
         
         if ($localShares) {
             foreach ($share in $localShares) {
@@ -281,26 +279,17 @@ function Test-SharedFolders {
         
         # Verificar sessões SMB ativas
         Write-Host "`n  Sessões de rede ativas:" -ForegroundColor Yellow
-        if ($PSVersionTable.PSVersion.Major -ge 3) {
-            $smbSessions = Get-SmbSession -ErrorAction SilentlyContinue
-            if ($smbSessions) {
-                foreach ($session in $smbSessions) {
-                    Write-Host "    ✓ Cliente: $($session.ClientComputerName) - Usuário: $($session.ClientUserName)" -ForegroundColor Green
-                }
-            }
-            else {
-                Write-Host "    Nenhuma sessão ativa" -ForegroundColor Gray
+        # Verificar sessões SMB ativas
+        Write-Host "`n  Sessões de rede ativas:" -ForegroundColor Yellow
+        
+        $smbSessions = Get-SmbSession -ErrorAction SilentlyContinue
+        if ($smbSessions) {
+            foreach ($session in $smbSessions) {
+                Write-Host "    ✓ Cliente: $($session.ClientComputerName) - Usuário: $($session.ClientUserName)" -ForegroundColor Green
             }
         }
         else {
-            # Fallback para versões antigas
-            $netSessions = net session 2>&1
-            if ($netSessions -match "Não há entradas|There are no entries") {
-                Write-Host "    Nenhuma sessão ativa" -ForegroundColor Gray
-            }
-            else {
-                Write-Host "    Sessões detectadas (use 'net session' para detalhes)" -ForegroundColor Yellow
-            }
+            Write-Host "    Nenhuma sessão ativa" -ForegroundColor Gray
         }
         
         # Testar acesso a compartilhamentos de rede conhecidos
@@ -324,9 +313,9 @@ function Get-SystemInfo {
     Write-Host "`n=== COLETANDO INFORMAÇÕES DO SISTEMA ===" -ForegroundColor Cyan
     
     try {
-        $os = Get-WmiObject Win32_OperatingSystem
-        $cs = Get-WmiObject Win32_ComputerSystem
-        $adapters = Get-NetworkAdapter -Status "Up"
+        $os = Get-CimInstance Win32_OperatingSystem
+        $cs = Get-CimInstance Win32_ComputerSystem
+        $adapters = Get-NetAdapter -Status Up
         
         $global:TestResults.SystemInfo = @{
             ComputerName   = $env:COMPUTERNAME
@@ -697,20 +686,29 @@ Write-Host "=== RESTAURANDO CONFIGURAÇÕES DE REDE ===" -ForegroundColor Cyan
     try {
         # 1. Backup de Configurações de IP
         Write-Log "Fazendo backup de configurações de IP..."
-        $netConfigs = Get-NetworkConfig | Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WiFi' }
+        # 1. Backup de Configurações de IP
+        Write-Log "Fazendo backup de configurações de IP..."
+        # Get-NetIPConfiguration retorna objetos com IPv4Address, IPv4DefaultGateway, DNSServer
+        $netConfigs = Get-NetIPConfiguration | Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WiFi' }
         
         foreach ($config in $netConfigs) {
             $alias = $config.InterfaceAlias
-            $adapter = Get-NetAdapter -Name $alias -ErrorAction SilentlyContinue
-            if (-not $adapter) { continue }
+            # Verifica DHCP na interface IPv4
+            $ipv4If = Get-NetIPInterface -InterfaceAlias $alias -AddressFamily IPv4 -ErrorAction SilentlyContinue
+            if (-not $ipv4If) { continue }
 
-            $dhcpEnabled = Test-DHCPEnabled -InterfaceAlias $alias
+            $dhcpEnabled = $ipv4If.Dhcp -eq 'Enabled'
 
-            if (-not $dhcpEnabled -and $config.IPv4Address -and $config.IPv4Address -notmatch '^169\.254|^0\.0\.0\.') {
-                $ip = $config.IPv4Address
-                $prefix = if ($config.PrefixLength) { $config.PrefixLength } else { 24 }
-                $gw = $config.IPv4DefaultGateway
-                $dns = if ($config.DNSServer) { \"'$($config.DNSServer -join \"','\")'\" } else { $null }
+            # Get IPv4 info from NetIPConfiguration object
+            $ipv4 = if ($config.IPv4Address) { $config.IPv4Address.IPAddress } else { $null }
+               
+            if (-not $dhcpEnabled -and $ipv4 -and $ipv4 -notmatch '^169\.254|^0\.0\.0\.') {
+                $ip = $ipv4
+                $prefix = $config.IPv4Address.PrefixLength
+                $gw = if ($config.IPv4DefaultGateway) { $config.IPv4DefaultGateway.NextHop } else { $null }
+                
+                $dnsServers = $config.DNSServer.ServerAddresses
+                $dns = if ($dnsServers) { "'$($dnsServers -join "','")'" } else { $null }
 
                 $backupContent += @"
 
@@ -1011,20 +1009,9 @@ else {
         netsh advfirewall reset | Out-Null
 
         # Limpeza do cache DNS
-        if ($PSVersionTable.PSVersion.Major -ge 3) {
-            Clear-DnsClientCache -ErrorAction Stop
-            Write-Log "→ Cache DNS limpo com sucesso"
-        }
-        else {
-            # Fallback para PowerShell 2.0
-            ipconfig /flushdns | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Log "→ Cache DNS limpo com sucesso"
-            }
-            else {
-                Write-Log "Falha ao limpar cache DNS" "ERROR"
-            }
-        }
+        # Limpeza do cache DNS
+        Clear-DnsClientCache -ErrorAction Stop
+        Write-Log "→ Cache DNS limpo com sucesso"
 
         Write-Log "[OK] Reset concluído" "SUCCESS"
 

@@ -236,14 +236,13 @@ C:\Program Files\HPTI\sfc_repair_YYYYMMDD.log
 ## 🔧 Requisitos
 
 ### Sistema Operacional
-- ✅ Windows 7 / 8 / 8.1
 - ✅ Windows 10 (todas as versões)
 - ✅ Windows 11
-- ✅ Windows Server 2008 R2+
+- ✅ Windows Server 2016+
 
 ### PowerShell
-- **Mínimo:** PowerShell 3.0
-- **Recomendado:** PowerShell 5.1 ou 7+
+- **Mínimo:** PowerShell 5.1
+- **Recomendado:** PowerShell 7+
 
 ### Permissões
 - ⚠️ **Requer privilégios de Administrador**

@@ -1,10 +1,8 @@
 # Script para gerar relatório do sistema + senhas Wi-Fi + softwares + restore script
 # Executar como administrador
-# Compatível com: PowerShell 2.0+ (Windows 7+)
+# Compatível com: PowerShell 5.1+ (Windows 10/11)
 
-# Importa módulo de compatibilidade
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-. (Join-Path $ScriptDir "CompatibilityLayer.ps1")
+# Importações Removidas
 
 # Verifica administrador
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -40,8 +38,9 @@ $oldHostname = $env:COMPUTERNAME
 Add-Section "Nome da Máquina" $oldHostname
 
 # Configurações de rede
+# Configurações de rede
 try {
-    $netConfigs = Get-NetworkConfig | Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WiFi' }
+    $netConfigs = Get-NetIPConfiguration | Where-Object { $_.InterfaceAlias -match 'Wi-Fi|Ethernet|WiFi' } | Select-Object @{N = 'InterfaceAlias'; E = { $_.InterfaceAlias } }, @{N = 'IPv4Address'; E = { $_.IPv4Address.IPAddress } }, @{N = 'PrefixLength'; E = { $_.IPv4Address.PrefixLength } }, @{N = 'IPv4DefaultGateway'; E = { $_.IPv4DefaultGateway.NextHop } }, @{N = 'DNSServer'; E = { $_.DNSServer.ServerAddresses } }
     $networkConfigsStr = $netConfigs | Format-List | Out-String
     Add-Section "Configurações de Rede" $networkConfigsStr
 }
@@ -57,7 +56,8 @@ foreach ($config in $netConfigs) {
     $alias = $config.InterfaceAlias
     if (-not $alias) { continue }
 
-    $dhcpEnabled = Test-DHCPEnabled -InterfaceAlias $alias
+    $ipv4If = Get-NetIPInterface -InterfaceAlias $alias -AddressFamily IPv4 -ErrorAction SilentlyContinue
+    $dhcpEnabled = if ($ipv4If) { $ipv4If.Dhcp -eq 'Enabled' } else { $true }
 
     if (-not $dhcpEnabled -and $config.IPv4Address -and $config.IPv4Address -notmatch '^169\.254|^0\.0\.0\.') {
         $ip = $config.IPv4Address
@@ -168,8 +168,8 @@ $niniteAppsParam = $appsForNinite -join '&'
 $niniteUrl = if ($niniteAppsParam) { "https://ninite.com/$niniteAppsParam/ninite.exe" } else { "https://ninite.com/" }
 
 # Pastas compartilhadas e Impressoras (mantido)
-Add-Section "Pastas Compartilhadas" (Get-ShareCompat | Format-List | Out-String)
-Add-Section "Impressoras Instaladas" (Get-PrinterCompat | Format-List | Out-String)
+Add-Section "Pastas Compartilhadas" (Get-SmbShare | Format-List | Out-String)
+Add-Section "Impressoras Instaladas" (Get-Printer | Format-List | Out-String)
 
 # Final relatório
 Add-Content -Path $reportFile -Value "`n=== Relatório gerado em: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss') ===" -Encoding UTF8
