@@ -1,13 +1,10 @@
 # limp.ps1 - Limpeza Profunda e Otimização de Cache
 # Executar como Administrador
-# Requer: PowerShell 3.0+ (Windows 8+)
+# Requer: PowerShell 5.1+ (Windows 10/11)
 
 # Verifica versão do PowerShell
-$requiredVersion = 3
-if ($PSVersionTable.PSVersion.Major -lt $requiredVersion) {
-    Write-Host "ERRO: Este script requer PowerShell $requiredVersion.0 ou superior!" -ForegroundColor Red
-    Write-Host "Versão atual: $($PSVersionTable.PSVersion)" -ForegroundColor Yellow
-    pause
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "ERRO: Este script requer PowerShell 5.1+ (Windows 10/11)!" -ForegroundColor Red
     exit
 }
 
@@ -136,32 +133,11 @@ foreach ($path in $browserCaches) {
 # 5. Lixeira e Delivery Optimization
 Write-Host "Limpando lixeira e otimização de entrega..." -ForegroundColor Yellow
 
-# Clear-RecycleBin só existe no PowerShell 5.0+
-if ($PSVersionTable.PSVersion.Major -ge 5) {
-    try {
-        Clear-RecycleBin -Confirm:$false -ErrorAction SilentlyContinue
-    }
-    catch {
-        Write-Host "Aviso: Não foi possível limpar a lixeira" -ForegroundColor Yellow
-    }
+try {
+    Clear-RecycleBin -Force -ErrorAction SilentlyContinue
 }
-else {
-    # Fallback para versões antigas usando COM
-    try {
-        $shell = New-Object -ComObject Shell.Application
-        $recycleBin = $shell.NameSpace(10)
-        $recycleBin.Items() | ForEach-Object { 
-            try {
-                Remove-Item $_.Path -Recurse -Force -ErrorAction SilentlyContinue 
-            }
-            catch {
-                # Ignorar erros individuais
-            }
-        }
-    }
-    catch {
-        Write-Host "Aviso: Não foi possível limpar a lixeira" -ForegroundColor Yellow
-    }
+catch {
+    Write-Host "Aviso: Não foi possível limpar a lixeira" -ForegroundColor Yellow
 }
 
 $doPath = "C:\Windows\SoftwareDistribution\DeliveryOptimization"

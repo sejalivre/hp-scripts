@@ -39,8 +39,8 @@ portable/
 
 ## ⚠️ Requisitos
 
-- **Windows 7, 8, 10 ou 11**
-- **PowerShell 2.0+** (incluído em todas as versões do Windows desde o 7)
+- **Windows 10 ou 11**
+
 - Privilégios de Administrador
 
 ## 📞 Suporte

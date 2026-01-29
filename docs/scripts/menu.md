@@ -162,8 +162,8 @@ if ($selecionada.External) {
 
 ```powershell
 # Verificação de Versão do PowerShell
-if ($PSVersionTable.PSVersion.Major -lt 3) {
-    Write-Host "[ERRO] Este script requer PowerShell 3.0 ou superior." -ForegroundColor Red
+if ($PSVersionTable.PSVersion.Major -lt 5) {
+    Write-Host "[ERRO] Este script requer PowerShell 5.1 ou superior." -ForegroundColor Red
     exit 1
 }
 

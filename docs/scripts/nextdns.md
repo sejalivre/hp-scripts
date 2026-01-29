@@ -310,7 +310,7 @@ irm get.hpinfo.com.br/tools/nextdns/install | iex
 
 ## Requisitos
 
-- Windows 7 ou superior
+- Windows 10 ou superior
 - PowerShell 5.1 ou superior (7+ recomendado)
 - Direitos de administrador
 - Conexão com internet

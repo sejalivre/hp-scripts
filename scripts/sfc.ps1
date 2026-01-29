@@ -79,7 +79,7 @@ Write-Log "Iniciando diagnóstico completo do sistema..." -Type "SUCCESS"
 Show-Header "1. ANÁLISE E OTIMIZAÇÃO DE MEMÓRIA"
 
 try {
-    $os = Get-WmiObject Win32_OperatingSystem
+    $os = Get-CimInstance Win32_OperatingSystem
     $totalMemory = [math]::Round($os.TotalVisibleMemorySize / 1MB, 2)
     $freeMemory = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
     $usedMemory = $totalMemory - $freeMemory
@@ -423,7 +423,7 @@ try {
     Write-Log "Verificando drivers problemáticos..."
     
     # Verificar drivers com problemas
-    $problemDevices = Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 }
+    $problemDevices = Get-CimInstance Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 }
     
     if ($problemDevices) {
         Write-Log "Dispositivos com problemas detectados:" -Type "WARNING"
@@ -515,9 +515,9 @@ Show-Header "RELATÓRIO FINAL"
 
 try {
     # Informações do sistema
-    $computerSystem = Get-WmiObject Win32_ComputerSystem
-    $os = Get-WmiObject Win32_OperatingSystem
-    $uptime = (Get-Date) - $os.ConvertToDateTime($os.LastBootUpTime)
+    $computerSystem = Get-CimInstance Win32_ComputerSystem
+    $os = Get-CimInstance Win32_OperatingSystem
+    $uptime = (Get-Date) - $os.LastBootUpTime
     
     Write-Host "`n╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Green
     Write-Host "║              DIAGNÓSTICO CONCLUÍDO COM SUCESSO                ║" -ForegroundColor Green

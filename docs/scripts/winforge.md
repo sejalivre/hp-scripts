@@ -159,7 +159,7 @@ O relatório é aberto automaticamente ao final da execução.
 
 ## Requisitos
 
-- **Windows**: 7 / 8 / 10 / 11
+- **Windows**: 10 / 11
 - **PowerShell**: 5.1 ou superior
 - **Privilégios**: Administrador (obrigatório)
 - **Internet**: Necessária para download de aplicativos
@@ -336,7 +336,7 @@ netsh interface tcp set global netdma=enabled
 
 - **Versão Atual**: 1.0
 - **Última Atualização**: 2026-01-27
-- **Compatibilidade**: Windows 7/8/10/11
+- **Compatibilidade**: Windows 10/11
 
 ## Contribuindo
 

@@ -70,16 +70,8 @@ try {
     }
 
     # 5. Listar impressoras instaladas
-    # USO DE WRITE-OUTPUT
     Write-Output "`n=== IMPRESSORAS INSTALADAS ==="
-    
-    if ($PSVersionTable.PSVersion.Major -ge 3) {
-        Get-Printer | Format-Table Name, DriverName, PortName -AutoSize
-    }
-    else {
-        # Fallback para PowerShell 2.0 usando WMI
-        Get-WmiObject Win32_Printer | Format-Table Name, DriverName, PortName -AutoSize
-    }
+    Get-Printer | Format-Table Name, DriverName, PortName -AutoSize
 
     # 6. Abrir a pasta clássica "Dispositivos e Impressoras" (legacy view)
     # USO DE WRITE-OUTPUT

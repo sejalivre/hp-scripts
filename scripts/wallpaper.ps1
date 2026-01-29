@@ -1,6 +1,6 @@
 # wallpaper.ps1 - Configuração de Wallpaper Padrão HPCRAFT
-# Versão: 1.2.0 | Compatibilidade melhorada
-# Requer: PowerShell 3.0+ (Windows 8+)
+# Versão: 1.5.0 | Compatibilidade Windows 10/11
+# Requer: PowerShell 5.1+ (Windows 10/11)
 
 # URL direta que funcionou no seu teste
 $wpUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools/wallpaper.jpg"
@@ -16,14 +16,8 @@ try {
     }
     
     # Download do arquivo com fallback para versões antigas
-    if ($PSVersionTable.PSVersion.Major -ge 3) {
-        Invoke-WebRequest -Uri $wpUrl -OutFile $wpPath -ErrorAction Stop
-    }
-    else {
-        # Fallback para PowerShell 2.0
-        $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($wpUrl, $wpPath)
-    }
+    # Download do arquivo
+    Invoke-WebRequest -Uri $wpUrl -OutFile $wpPath -ErrorAction Stop
     
     # Validar arquivo baixado
     if (-not (Test-Path $wpPath)) {

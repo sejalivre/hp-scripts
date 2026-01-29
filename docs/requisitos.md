@@ -10,26 +10,21 @@ Requisitos mínimos e recomendados para executar o HP Scripts.
 
 | Componente | Requisito |
 |------------|-----------|
-| **Windows** | Windows 7 SP1 ou superior |
+| **Windows** | Windows 10 (1507+) ou Windows 11 |
 | **Arquitetura** | x64 (64 bits) ou x86 (32 bits) |
 | **Build** | Qualquer versão suportada pela Microsoft |
 
 ✅ **Testado em:**
-- Windows 7 SP1
-- Windows 8.1
 - Windows 10 (todas as versões)
 - Windows 11
-- Windows Server 2012 R2+
+- Windows Server 2016+
 
 ### PowerShell
 
 | Versão | Status | Observações |
 |--------|--------|-------------|
-| **PowerShell 2.0** | ⚠️ Limitado | Funciona com fallbacks |
-| **PowerShell 3.0** | ✅ Suportado | Mínimo recomendado |
-| **PowerShell 4.0** | ✅ Suportado | Bom desempenho |
-| **PowerShell 5.1** | ✅ Recomendado | Melhor compatibilidade |
-| **PowerShell 7+** | ✅ Ideal | Performance máxima |
+| **PowerShell 5.1** | ✅ Padrão | Instalado nativamente no Win10/11 |
+| **PowerShell 7+** | ✅ Recomendado | Performance máxima |
 
 ### Privilégios
 
@@ -136,18 +131,11 @@ Test-NetConnection -ComputerName get.hpinfo.com.br -Port 443
 
 ## Limitações Conhecidas
 
-### PowerShell 2.0
+### PowerShell Legacy
+- Versões anteriores a 5.1 não são suportadas.
 
-- ✅ **Agora totalmente suportado** via módulo `CompatibilityLayer.ps1`
-- ✅ Fallback automático de `Get-CimInstance` para WMI
-- ✅ Funções de rede compatíveis (`Get-NetworkAdapter`, etc.)
-- ⚠️ Performance reduzida comparado a PS 5.1+
-
-### Windows 7
-
-- ⚠️ TLS 1.2 pode precisar ser habilitado manualmente
-- ⚠️ Algumas APIs modernas não disponíveis
-- ✅ Maioria dos scripts funciona normalmente
+### Legado
+- Sistemas legados (anteriores ao Windows 10) não são suportados. Este projeto foca exclusivamente em sistemas modernos e mantidos.
 
 ### Ambientes Corporativos
 
@@ -178,11 +166,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 2. Selecionar "Executar como administrador"
 3. Executar o comando novamente
 
-### Erro TLS em Windows 7
 
-```powershell
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-```
 
 ---
 
@@ -190,9 +174,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 ### Atualizar PowerShell para 5.1
 
-**Windows 7/8.1:**
-1. Instalar [.NET Framework 4.5+](https://dotnet.microsoft.com/download/dotnet-framework)
-2. Instalar [WMF 5.1](https://www.microsoft.com/download/details.aspx?id=54616)
+
 
 **Windows 10/11:**
 - PowerShell 5.1 já incluído

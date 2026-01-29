@@ -292,7 +292,7 @@ Auto-Reparo:
 
 ## ⚙️ Requisitos
 
-- Windows 7 ou superior
+- Windows 10 ou Windows 11
 - PowerShell 5.1 ou superior (7+ recomendado)
 - Direitos de administrador
 - Conexão com internet
