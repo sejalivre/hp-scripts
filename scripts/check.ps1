@@ -36,7 +36,7 @@ $WhatsAppLink = "https://wa.me/556235121468?text=Ola%20HPinfo,%20segue%20o%20rel
 # VERSÃO PORTÁTIL - USA FERRAMENTAS LOCAIS DO PENDRIVE
 # ============================================================
 
-# Detecta o diretório do script e do pendrive
+# Detecta o diretório do script e do pendrive 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $PortableRoot = Split-Path -Parent $ScriptDir
 $ToolsDir = Join-Path $PortableRoot "tools"
