@@ -6,7 +6,7 @@
 title HPCRAFT - Hub de Automacao TI (Portatil)
 color 0A
 
-:: Verifica se esta rodando como administrador
+:: Verifica se esta rodando como administrador 
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo.
@@ -33,6 +33,6 @@ if %errorlevel% neq 0 (
 echo.
 echo [*] Iniciando HPCRAFT - Versao Portatil...
 echo.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\menu.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0menu.ps1"
 
 pause
