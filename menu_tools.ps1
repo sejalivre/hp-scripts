@@ -16,26 +16,56 @@ $Host.UI.RawUI.WindowTitle = "HP Scripts - Menu de Ferramentas"
 # Caminho base do script
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ToolsPath = Join-Path $ScriptPath "tools"
-$TempPath = Join-Path $env:TEMP "hsati"
-$7zExe = Join-Path $ToolsPath "7z.exe"
+$TempPath = Join-Path $env:TEMP "HP-Tools"
+$BaseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+$7zExe = Join-Path $TempPath "7z.exe"
 $7zTxe = Join-Path $ToolsPath "7z.txe"
-$7zDll = Join-Path $ToolsPath "7z.dll"
+$7zDll = Join-Path $TempPath "7z.dll"
 $7zTxl = Join-Path $ToolsPath "7z.txl"
 
+function Check-Internet {
+    try {
+        $test = Test-Connection -ComputerName "google.com" -Count 1 -Quiet -ErrorAction SilentlyContinue
+        return $test
+    }
+    catch { return $false }
+}
+
+# Função para preparar 7-Zip
 # Função para preparar 7-Zip
 function Initialize-7Zip {
+    # Garante que o diretório temporário existe
+    if (-not (Test-Path $TempPath)) {
+        New-Item -ItemType Directory -Path $TempPath -Force | Out-Null
+    }
+
+    # Verifica e prepara 7z.exe
     if (-not (Test-Path $7zExe)) {
         if (Test-Path $7zTxe) {
             Copy-Item $7zTxe $7zExe -Force
         }
+        else {
+            # Tenta baixar 7z.txe se não existir localmente
+            if (Check-Internet) {
+                Write-Host "  -> Baixando dependência 7-Zip..." -ForegroundColor Gray
+                try {
+                    Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zExe -UseBasicParsing
+                }
+                catch { Write-Host "  [ERRO] Falha ao baixar 7z.exe" -ForegroundColor Red }
+            }
+        }
     }
+    
+    # Verifica e prepara 7z.dll
     if (-not (Test-Path $7zDll)) {
         if (Test-Path $7zTxl) {
             Copy-Item $7zTxl $7zDll -Force
         }
+        # Dll geralmente não é estritamente necessária se usar o exe estático, mas mantendo lógica existente se possível
     }
 }
 
+# Função para extrair e executar ferramenta
 # Função para extrair e executar ferramenta
 function Start-Tool {
     param(
@@ -44,10 +74,43 @@ function Start-Tool {
         [string]$Password = "0"
     )
     
-    $archivePath = Join-Path $ToolsPath $ArchiveName
+    # Define caminhos
+    $localArchive = Join-Path $ToolsPath $ArchiveName
+    $tempArchive = Join-Path $TempPath $ArchiveName
+    $archiveToUse = $null
     
-    if (-not (Test-Path $archivePath)) {
-        Write-Host "`n  [ERRO] Arquivo não encontrado: $ArchiveName" -ForegroundColor Red
+    # 1. Verifica se existe na pasta tools (Original)
+    if (Test-Path $localArchive) {
+        $archiveToUse = $localArchive
+    }
+    # 2. Se não, verifica se já foi baixado no temp
+    elseif (Test-Path $tempArchive) {
+        $archiveToUse = $tempArchive
+    }
+    # 3. Se não, tenta baixar
+    else {
+        Write-Host "`n  [AVISO] Ferramenta não encontrada localmente: $ArchiveName" -ForegroundColor Yellow
+        if (Check-Internet) {
+            Write-Host "  -> Tentando baixar de: $BaseUrl/$ArchiveName" -ForegroundColor Cyan
+            try {
+                if (-not (Test-Path $TempPath)) { New-Item -ItemType Directory -Path $TempPath -Force | Out-Null }
+                Invoke-WebRequest -Uri "$BaseUrl/$ArchiveName" -OutFile $tempArchive -UseBasicParsing
+                if (Test-Path $tempArchive) {
+                    $archiveToUse = $tempArchive
+                    Write-Host "  [OK] Download concluído." -ForegroundColor Green
+                }
+            }
+            catch {
+                Write-Host "  [FALHA] Erro no download: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host "  [ERRO] Sem internet para baixar a ferramenta." -ForegroundColor Red
+        }
+    }
+
+    if (-not $archiveToUse) {
+        Write-Host "  [ERRO] Impossível executar $ArchiveName" -ForegroundColor Red
         Start-Sleep -Seconds 2
         return
     }
@@ -62,8 +125,14 @@ function Start-Tool {
     }
     
     # Extrair arquivo
-    $extractArgs = "x `"$archivePath`" -o`"$TempPath`" -y -p$Password"
-    Start-Process -FilePath $7zExe -ArgumentList $extractArgs -Wait -WindowStyle Hidden
+    if (Test-Path $7zExe) {
+        $extractArgs = "x `"$archiveToUse`" -o`"$TempPath`" -y -p$Password"
+        Start-Process -FilePath $7zExe -ArgumentList $extractArgs -Wait -WindowStyle Hidden
+    }
+    else {
+        Write-Host "  [ERRO] 7z.exe não encontrado." -ForegroundColor Red
+        return
+    }
     
     # Executar programa
     $exePath = Join-Path $TempPath $ExeName
