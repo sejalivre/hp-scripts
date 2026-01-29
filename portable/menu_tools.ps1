@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Menu de Ferramentas Portáteis - HP Scripts
 .DESCRIPTION
@@ -13,8 +13,17 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "HP Scripts - Menu de Ferramentas"
 
-# Caminho base do script
-$ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Caminho base do script - Detecção Robusta
+$ScriptPath = $PSScriptRoot
+if ([string]::IsNullOrEmpty($ScriptPath)) {
+    if ($MyInvocation.MyCommand.Path) {
+        $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+    }
+    else {
+        $ScriptPath = (Get-Location).Path
+    }
+}
+
 $ToolsPath = Join-Path (Split-Path -Parent $ScriptPath) "tools"  # Usa ../tools/ da raiz
 $TempPath = Join-Path $env:TEMP "hsati"
 $7zExe = Join-Path $ToolsPath "7z.exe"

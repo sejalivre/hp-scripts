@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 :: ================================================================
 ::  HPCRAFT - Versao Portatil (Pendrive)
 ::  Inicializador do Menu Principal
@@ -33,6 +33,15 @@ if %errorlevel% neq 0 (
 echo.
 echo [*] Iniciando HPCRAFT - Versao Portatil...
 echo.
+
+:: Verifica se o arquivo menu.ps1 existe
+if not exist "%~dp0menu.ps1" (
+    echo [ERRO] O arquivo menu.ps1 nao foi encontrado!
+    echo Cerifique-se de que o INICIAR.cmd e o menu.ps1 estao na mesma pasta.
+    pause
+    exit /b 1
+)
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0menu.ps1"
 
 pause
