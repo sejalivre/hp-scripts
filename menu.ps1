@@ -160,10 +160,14 @@ function Show-MainMenu {
                 else {
                     # Modo remoto: baixar e executar
                     $finalUrl = "https://$baseUrl/$($selecionada.Path)"
+                    $TempScript = Join-Path $env:TEMP "HPTI_$($selecionada.ID).ps1"
                     try {
                         Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
-                        $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
-                        Invoke-Expression $scriptContent
+                        Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
+                        if (Test-Path $TempScript) {
+                            & $TempScript
+                            Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
+                        }
                     }
                     catch {
                         Write-Host "`n[❌] ERRO: Falha ao baixar script remoto." -ForegroundColor Red
@@ -187,10 +191,14 @@ function Show-MainMenu {
                 else {
                     # Modo remoto: baixar e executar
                     $finalUrl = "https://$baseUrl/$($selecionada.Path)"
+                    $TempScript = Join-Path $env:TEMP "HPTI_$($selecionada.ID).ps1"
                     try {
                         Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
-                        $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
-                        Invoke-Expression $scriptContent
+                        Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
+                        if (Test-Path $TempScript) {
+                            & $TempScript
+                            Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
+                        }
                     }
                     catch {
                         Write-Host "`n[❌] ERRO: Falha ao baixar script remoto." -ForegroundColor Red
