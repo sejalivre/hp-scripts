@@ -159,7 +159,7 @@ function Show-MainMenu {
                 }
                 else {
                     # Modo remoto: baixar e executar
-                    $finalUrl = "https://$baseUrl/$($selecionada.Path).ps1"
+                    $finalUrl = "https://$baseUrl/$($selecionada.Path)"
                     try {
                         Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
                         $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
@@ -173,7 +173,7 @@ function Show-MainMenu {
                 }
             }
             elseif ($selecionada.IsLocal) {
-                # Para scripts locais (como menu_tools.ps1)
+                # Para scripts locais (como  menu_tools.ps1)
                 if ($IsLocalExecution) {
                     # Modo local: executar arquivo do disco
                     $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
@@ -186,7 +186,7 @@ function Show-MainMenu {
                 }
                 else {
                     # Modo remoto: baixar e executar
-                    $finalUrl = "https://$baseUrl/$($selecionada.Path).ps1"
+                    $finalUrl = "https://$baseUrl/$($selecionada.Path)"
                     try {
                         Write-Host "[INFO] Baixando script remoto..." -ForegroundColor Gray
                         $scriptContent = Invoke-RestMethod -Uri $finalUrl -UseBasicParsing
