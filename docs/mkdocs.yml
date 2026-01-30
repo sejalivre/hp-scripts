@@ -48,6 +48,7 @@ nav:
       - Menu Principal: scripts/menu.md
       - Check (Diagnóstico): scripts/check.md
       - SFC (Reparação Completa): scripts/sfc.md
+      - Repair (Reparo Modular): scripts/repair.md
       - WinForge (Setup): scripts/winforge.md
       - Backup: scripts/backup.md
       - Limpeza (LIMP): scripts/limp.md
