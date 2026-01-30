@@ -13,6 +13,9 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "HP Scripts - Menu de Ferramentas"
 
+# Forçar TLS 1.2 para compatibilidade com GitHub
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+
 # Caminho base do script
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ToolsPath = Join-Path $ScriptPath "tools"
@@ -25,8 +28,13 @@ $7zTxl = Join-Path $ToolsPath "7z.txl"
 
 function Check-Internet {
     try {
+        # Tenta Ping primeiro (rápido)
         $test = Test-Connection -ComputerName "google.com" -Count 1 -Quiet -ErrorAction SilentlyContinue
-        return $test
+        if ($test) { return $true }
+        
+        # Fallback: Tenta HTTP (caso Ping esteja bloqueado)
+        $request = Invoke-WebRequest -Uri "http://www.google.com" -UseBasicParsing -Method Head -TimeoutSec 5 -ErrorAction SilentlyContinue
+        return ($request.StatusCode -eq 200)
     }
     catch { return $false }
 }
@@ -135,13 +143,28 @@ function Start-Tool {
     }
     
     # Executar programa
-    $exePath = Join-Path $TempPath $ExeName
-    if (Test-Path $exePath) {
+    # Executar programa
+    # Procura recursivamente pelo executável, pois alguns arquivos extraem em subpastas
+    $exePath = $null
+    $potentialExes = Get-ChildItem -Path $TempPath -Filter $ExeName -Recurse -ErrorAction SilentlyContinue
+    
+    if ($potentialExes) {
+        # Pega o primeiro encontrado (caso haja duplicatas, geralmente o primeiro é o correto ou único)
+        $exeFile = $potentialExes | Select-Object -First 1
+        $exePath = $exeFile.FullName
+        $workDir = $exeFile.DirectoryName
+        
         Write-Host "  Executando $ExeName..." -ForegroundColor Green
-        Start-Process -FilePath $exePath -WorkingDirectory $TempPath
+        try {
+            Start-Process -FilePath $exePath -WorkingDirectory $workDir
+        }
+        catch {
+            Write-Host "  [ERRO] Falha ao iniciar o processo: $($_.Exception.Message)" -ForegroundColor Red
+        }
     }
     else {
-        Write-Host "  [ERRO] Executável não encontrado: $ExeName" -ForegroundColor Red
+        Write-Host "  [ERRO] Executável não encontrado após extração: $ExeName" -ForegroundColor Red
+        Write-Host "  Verifique se o arquivo foi baixado corretamente." -ForegroundColor Yellow
         Start-Sleep -Seconds 2
     }
 }

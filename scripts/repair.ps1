@@ -340,7 +340,7 @@ function Repair-Disk {
         foreach ($disk in $disks) {
             $drive = $disk.DeviceID.Replace(":", "")
             Write-Status "Verificando disco $drive..." "INFO" $ColorInfo
-            chkdsk $drive: /f /x 2>&1 | Out-Null
+            chkdsk ${drive}: /f /x 2>&1 | Out-Null
             Write-Status "Disco $drive verificado" "SUCESSO" $ColorSuccess
         }
         
