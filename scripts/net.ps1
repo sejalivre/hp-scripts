@@ -12,6 +12,9 @@ $BackupDir = Join-Path $HPTIBase "NetworkBackups"
 $LogDir = Join-Path $HPTIBase "Logs"
 $ReportsDir = Join-Path $HPTIBase "Reports"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+
+# Forçar TLS 1.2 para downloads
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 $BackupFile = Join-Path $BackupDir "network_backup_$timestamp.ps1"
 $LogFile = Join-Path $LogDir "net_$(Get-Date -Format 'yyyyMMdd').log"
 
