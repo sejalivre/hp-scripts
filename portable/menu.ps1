@@ -26,6 +26,7 @@ $baseUrl = "get.hpinfo.com.br"
 # 1. Definição das Ferramentas
 $ferramentas = @(
     @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "../scripts/check" ; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "REPAIR"     ; Desc = "Reparo Automático do Sistema"       ; Path = "../scripts/repair" ; Color = "Magenta" ; IsLocalScript = $true }
     @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "../scripts/sfc"   ; Color = "Red" ; IsLocalScript = $true }
     @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
     @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "../scripts/winforge" ; Color = "Yellow" ; IsLocalScript = $true }
