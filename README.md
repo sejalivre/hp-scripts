@@ -80,6 +80,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 irm get.hpinfo.com.br/scripts/check    | iex
 irm get.hpinfo.com.br/scripts/backup   | iex
 irm get.hpinfo.com.br/scripts/sfc      | iex
+irm get.hpinfo.com.br/scripts/repair   | iex
 irm get.hpinfo.com.br/scripts/limp     | iex
 irm get.hpinfo.com.br/scripts/update   | iex
 irm get.hpinfo.com.br/scripts/hora     | iex
@@ -263,6 +264,7 @@ irm get.hpinfo.com.br/menu | iex
 | **`net.ps1`** | Reset completo de rede, DNS, testes e relatórios |
 | **`print.ps1`** | Reparo de spooler e fila de impressão |
 | **`wallpaper.ps1`** | Aplicação de wallpaper corporativo padrão |
+| **`repair.ps1`** | Diagnóstico e reparo automático modular (Rede, Disco, Updates, Segurança) |
 | **`winforge.ps1`** | Instalação de aplicativos + otimizações do sistema |
 
 ---

@@ -2,7 +2,7 @@
 
 Este documento serve como a **Fonte da Verdade** para agentes de IA que auxiliam no desenvolvimento, manutenção e expansão do repositório `hp-scripts`. Ele consolida a filosofia do projeto, diretrizes técnicas e um mapa detalhado das capacidades (skills) disponíveis.
 Responda em portugues do brasil
-## 🎯 Visão Geral e Contexto
+## 🎯 Visão Geral e Contexto 
 **HP-Scripts** é um kit de ferramentas "tudo-em-um" para automação, manutenção e diagnóstico de sistemas Windows (10 e 11).
 - **Público-Alvo**: Técnicos de TI e SysAdmins.
 - **Distribuição**: Execução remota via URL (`irm | iex`), eliminando a necessidade de download manual.
@@ -28,6 +28,32 @@ Para manter a integridade do projeto, o Agente de IA deve aderir aos seguintes p
 - **Instalação Silenciosa**: Priorizar `winget` ou flags `/S /quiet`.
 - **Não-Interatividade**: Automatizar prompts (`-Force`, `-Confirm:$false`) sempre que possível.
 - **Verificação de Estado**: "Check before act" (ex: verificar versão instalada antes de baixar update).
+
+### 3. Padrão de Download e Execução de Ferramentas Portáteis
+- **Base URL**: Sempre utilizar a variável centralizada para facilitar manutenção:
+  ```powershell
+  $BaseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+  ```
+- **Diretório Temporário**:
+  - Usar `$env:TEMP\HP-Tools` para armazenar downloads e extrações.
+  - Limpar diretório antes de baixar para evitar conflitos de versão.
+- **Download e Extração**:
+  - Baixar arquivos `.7z` ou executáveis.
+  - Para arquivos `.7z`, extrair usando `7za.exe` (incluído no projeto) ou buscar recursivamente o executável se extraído em subpastas.
+- **Execução**:
+  - Identificar o executável alvo (`.exe`).
+  - Usar `Start-Process` com `-WorkingDirectory` definido para o diretório do executável.
+  - Implementar verificação se o arquivo existe antes de tentar executar.
+
+### 4. Regras de Consistência e Manutenção
+- **Sincronização de Código (Raiz vs Portable)**:
+  - **Crucial**: Qualquer alteração, correção ou nova feature implementada nos scripts da raiz (ex: `menu_tools.ps1`, `menu.ps1`) DEVE ser replicada imediatamente nos scripts correspondentes dentro da pasta `/portable`.
+  - O modo Online e o modo Portable devem ter paridade funcional sempre que tecnicamente possível.
+- **Documentação Obrigatória**:
+  - Ao adicionar ou remover funcionalidades:
+    - Atualizar `README.md` (tabelas e listas de comandos).
+    - Criar ou atualizar o arquivo correspondente em `/docs`.
+    - Atualizar a navegação em `docs/mkdocs.yml`.
 
 ## 📂 Estrutura do Repositório (Mapa Mental)
 ```text
