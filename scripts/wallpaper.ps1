@@ -1,4 +1,4 @@
-# wallpaper.ps1 - Configuração de Wallpaper Padrão HPCRAFT
+﻿# wallpaper.ps1 - Configuração de Wallpaper Padrão HPCRAFT
 # Versão: 1.5.0 | Compatibilidade Windows 10/11
 # Requer: PowerShell 5.1+ (Windows 10/11)
 
@@ -60,3 +60,4 @@ try {
 catch {
     Write-Warning "Falha ao aplicar o wallpaper: $($_.Exception.Message)"
 }
+

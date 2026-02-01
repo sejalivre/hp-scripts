@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Check-up HPTI Master v8.0 - Diagnóstico Completo Windows
 .DESCRIPTION
@@ -1334,3 +1334,4 @@ Write-Host "[OK] Relatório HTML Gerado em: $ReportHTML" -ForegroundColor Green
 # Abrir relatório automaticamente
 Write-Host "[*] Abrindo relatório..." -ForegroundColor Cyan
 Invoke-Item $ReportHTML
+

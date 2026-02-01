@@ -1,4 +1,4 @@
-# Script para gerar relatório do sistema + senhas Wi-Fi + softwares + restore script
+﻿# Script para gerar relatório do sistema + senhas Wi-Fi + softwares + restore script
 # Executar como administrador
 # Compatível com: PowerShell 5.1+ (Windows 10/11)
 

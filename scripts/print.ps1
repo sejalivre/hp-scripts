@@ -1,4 +1,4 @@
-# Reset-Spooler.ps1 - Reinicia serviço de impressão + ajustes de registro de compatibilidade
+﻿# Reset-Spooler.ps1 - Reinicia serviço de impressão + ajustes de registro de compatibilidade
 # Executa sem confirmações - use com cautela!
 
 # Verifica se está rodando como administrador
@@ -86,4 +86,5 @@ catch {
 
 # USO DE WRITE-OUTPUT
 Write-Output "`nFinalizado. Pressione qualquer tecla para sair..."
+
 

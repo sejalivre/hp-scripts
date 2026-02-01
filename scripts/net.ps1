@@ -1,4 +1,4 @@
-# net.ps1 - Diagnóstico e Reset de Rede
+﻿# net.ps1 - Diagnóstico e Reset de Rede
 # Executar como ADMINISTRADOR
 
 # Importações Removidas (Nativo PowerShell 5.1+)
@@ -1032,3 +1032,4 @@ else {
 }
 
 # Fim do script
+

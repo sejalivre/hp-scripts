@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Menu de Ferramentas Portáteis - HP Scripts
 .DESCRIPTION

@@ -1,4 +1,4 @@
-# limp.ps1 - Limpeza Profunda e Otimização de Cache
+﻿# limp.ps1 - Limpeza Profunda e Otimização de Cache
 # Executar como Administrador
 # Requer: PowerShell 5.1+ (Windows 10/11)
 
@@ -180,3 +180,4 @@ try {
 catch {
     Write-Host "Aviso: Não foi possível reiniciar o Explorer" -ForegroundColor Yellow
 }
+

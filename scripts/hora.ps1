@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # SCRIPT: hora.ps1
 # DESCRIÇÃO: Configura sincronização de horário e cria tarefa agendada de reparo.
 # REQUER: PowerShell 5.1+ (Windows 10/11)
@@ -159,3 +159,4 @@ catch {
 
 Write-Host "`nPressione qualquer tecla para sair..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+

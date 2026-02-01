@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Launcher Principal HP-Scripts - Hub de Automação Profissional.
 .DESCRIPTION

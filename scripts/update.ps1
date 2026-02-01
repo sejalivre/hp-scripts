@@ -1,4 +1,4 @@
-# Windows Update Manager Script - HPCRAFT v2.0.0
+﻿# Windows Update Manager Script - HPCRAFT v2.0.0
 # Executar como Administrador
 # Verifica saúde do Windows Update → Se OK: instala atualizações | Se NOK: restaura o sistema
 
@@ -444,3 +444,4 @@ function Main {
 }
 
 Main
+

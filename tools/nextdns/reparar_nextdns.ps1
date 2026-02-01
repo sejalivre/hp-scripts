@@ -1,4 +1,4 @@
-# reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
+﻿# reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
 # Versão 2.0 - Leitura de ID via Arquivo de Configuração
 
 Write-Host "--- INICIANDO VERIFICAÇÃO DE SAÚDE HPTI ---" -ForegroundColor Cyan
