@@ -843,7 +843,7 @@ function Read-CheckReport {
         # Divide em linhas para processar
         $lines = $htmlContent -split "`r?`n"
         
-        for ($i = 0; $i < $lines.Count; $i++) {
+        for ($i = 0; $i -lt $lines.Count; $i++) {
             $line = $lines[$i]
             
             # Procura por linhas com class="status-critico" ou "status-alerta"
@@ -854,7 +854,7 @@ function Read-CheckReport {
                 # Extrai o texto da linha (contém emoji + status)
                 if ($line -match '>([^<]*)(CRÍTICO|ALERTA)') {
                     # Agora precisa voltar para pegar o nome da verificação
-                    # Procura para  trás até encontrar a segunda coluna <td>
+                    # Procura para trás até encontrar a segunda coluna <td>
                     $checkName = ""
                     
                     for ($j = $i - 1; $j -ge 0 -and $j -ge ($i - 10); $j--) {
