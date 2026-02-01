@@ -1,0 +1,192 @@
+﻿<!DOCTYPE html>
+<html>
+<head><meta charset='UTF-8'><style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 950px; margin: auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #003D7A; padding-bottom: 20px; margin-bottom: 25px; }
+    .header h1 { color: #003D7A; margin: 0; font-size: 28px; font-weight: 700; }
+    .header p { color: #666; margin: 5px 0 0 0; font-size: 14px; }
+    .score-box { background: linear-gradient(135deg, #EC7000 0%, #FF8C1A 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 25px; box-shadow: 0 3px 10px rgba(236, 112, 0, 0.3); }
+    .score-box h2 { margin: 0 0 10px 0; font-size: 48px; font-weight: 700; }
+    .score-box p { margin: 0; font-size: 16px; opacity: 0.95; }
+    .score-details { display: flex; justify-content: space-around; margin-top: 15px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #003D7A; color: white; padding: 12px; text-align: left; font-size: 13px; text-transform: uppercase; font-weight: 600; }
+    td { padding: 12px; border-bottom: 1px solid #e8e8e8; font-size: 13px; color: #333; }
+    tr:nth-child(even) { background-color: #fafafa; }
+    tr:hover { background-color: #f0f0f0; }
+    .status-ok { color: #27ae60; font-weight: bold; }
+    .status-alerta { color: #EC7000; font-weight: bold; }
+    .status-critico { color: #c0392b; font-weight: bold; background-color: #fff5f5; }
+    .wa-btn { display: block; background: #25d366; color: white; text-align: center; padding: 16px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 30px; font-size: 16px; transition: background 0.3s; }
+    .wa-btn:hover { background: #1fb855; }
+    .footer { text-align: center; margin-top: 25px; font-size: 11px; color: #999; border-top: 1px solid #e8e8e8; padding-top: 15px; }
+    .info-row { font-size: 12px; color: #666; }
+</style></head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div><h1>RELATÓRIO TÉCNICO HPinfo</h1><p>Diagnóstico Completo do Sistema</p></div>
+            <div style='text-align:right;' class='info-row'>
+                <strong>OS/Cliente:</strong> 7457<br>
+                <strong>Computador:</strong> -PC<br>
+                <strong>Usuário:</strong> USER<br>
+                <strong>Data:</strong> 31/01/2026 21:12
+            </div>
+        </div>
+        <div class='score-box'>
+            <h2>76/100</h2>
+            <p>NOTA GERAL DA MÁQUINA - BOM</p>
+            <div class='score-details'>
+                <span>✅ OK: 14</span>
+                <span>⚠️ Alertas: 7</span>
+                <span>❌ Críticos: 2</span>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>#</th><th>Verificação</th><th>Resultado</th><th>Status</th><th>Recomendação</th></tr></thead>
+            <tbody><tr>
+        <td>1</td>
+        <td>Temperatura CPU</td>
+        <td>82 °C</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Limpeza + Pasta Térmica.</td>
+    </tr><tr>
+        <td>2</td>
+        <td>Saúde Disco (SMART)</td>
+        <td>D1: SaudÃ¡vel (95 %) | D2: SaudÃ¡vel (99 %) [SMART (CDI)]</td>
+        <td class='status-critico'>❌ CRÍTICO</td>
+        <td>Risco de falha! Backup urgente.</td>
+    </tr><tr>
+        <td>3</td>
+        <td>Espaço em Disco</td>
+        <td>C: 90.6% | D: 63%</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Espaço suficiente.</td>
+    </tr><tr>
+        <td>4</td>
+        <td>Licenciamento Windows</td>
+        <td>Ativado via KMS</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Licença corporativa (temporária)</td>
+    </tr><tr>
+        <td>5</td>
+        <td>Pacote Office</td>
+        <td>Office LTSC Pro Plus 2021 - pt-br (Não Ativado)</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Ativar Office.</td>
+    </tr><tr>
+        <td>6</td>
+        <td>Bloatware / Lixo</td>
+        <td>Limpo</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Sistema otimizado.</td>
+    </tr><tr>
+        <td>7</td>
+        <td>Memória RAM</td>
+        <td>45% em uso</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Uso dentro do normal.</td>
+    </tr><tr>
+        <td>8</td>
+        <td>Versão do Windows</td>
+        <td>Build 19045</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Sistema atualizado.</td>
+    </tr><tr>
+        <td>9</td>
+        <td>Drivers GPU</td>
+        <td>Genérico</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td></td>
+    </tr><tr>
+        <td>10</td>
+        <td>Inicialização</td>
+        <td>5 itens</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Boot rápido.</td>
+    </tr><tr>
+        <td>11</td>
+        <td>Temperatura GPU</td>
+        <td>25 °C</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Monitorar sob carga.</td>
+    </tr><tr>
+        <td>12</td>
+        <td>Bateria</td>
+        <td>97% Carga</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Bateria saudável.</td>
+    </tr><tr>
+        <td>13</td>
+        <td>Windows Update</td>
+        <td>0 pendentes</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Sistema atualizado.</td>
+    </tr><tr>
+        <td>14</td>
+        <td>Integridade Sistema</td>
+        <td>Corrupção detectada</td>
+        <td class='status-critico'>❌ CRÍTICO</td>
+        <td>Executar: sfc /scannow e DISM /RestoreHealth</td>
+    </tr><tr>
+        <td>15</td>
+        <td>Eventos Críticos</td>
+        <td>8 erros (48h)</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Revisar Event Viewer.</td>
+    </tr><tr>
+        <td>16</td>
+        <td>Antivírus/Defender</td>
+        <td>Ativo e atualizado (Scan: 1 dias)</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Proteção funcionando.</td>
+    </tr><tr>
+        <td>17</td>
+        <td>Rede/Conectividade</td>
+        <td>Conectado (14ms)</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Rede funcionando bem.</td>
+    </tr><tr>
+        <td>18</td>
+        <td>Serviços Críticos</td>
+        <td>1 parado(s): Horário Windows</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Verificar serviços parados.</td>
+    </tr><tr>
+        <td>19</td>
+        <td>Fragmentação Disco</td>
+        <td>SSD - Otimização automática ativa</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>TRIM configurado.</td>
+    </tr><tr>
+        <td>20</td>
+        <td>Firewall Windows</td>
+        <td>Ativo em todos os perfis</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Firewall protegendo o sistema.</td>
+    </tr><tr>
+        <td>21</td>
+        <td>Fontes de Energia</td>
+        <td>Laptop - Equilibrado (97% bateria)</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Configuração adequada.</td>
+    </tr><tr>
+        <td>22</td>
+        <td>Certificados</td>
+        <td>9 certificados expirados</td>
+        <td class='status-alerta'>⚠️ ALERTA</td>
+        <td>Limpar certificados antigos (certmgr.msc).</td>
+    </tr><tr>
+        <td>23</td>
+        <td>Uptime Sistema</td>
+        <td>0 dias, 0 reboots/semana</td>
+        <td class='status-ok'>✅ OK</td>
+        <td>Uptime saudável.</td>
+    </tr></tbody>
+        </table>
+        <a href='https://wa.me/556235121468?text=Ola%20HPinfo,%20segue%20o%20relatorio%20do%20PC%20-PC%20-%20OS:%207457' class='wa-btn'>📲 FALAR COM SUPORTE TÉCNICO HPinfo</a>
+        <div class='footer'>HPinfo Tecnologia | Relatório gerado automaticamente | www.hpinfo.com.br</div>
+    </div>
+</body>
+</html>
