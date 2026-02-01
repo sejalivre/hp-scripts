@@ -837,53 +837,50 @@ function Read-CheckReport {
     try {
         $htmlContent = Get-Content -Path $ReportPath -Raw -Encoding UTF8
         
-        # Extrai problemas do HTML (busca por status CRÍTICO e ALERTA)
+        Write-Host "`n[DEBUG] Lendo relatório HTML..." -ForegroundColor Cyan
+        Write-Host "[DEBUG] Tamanho do arquivo: $($htmlContent.Length) caracteres" -ForegroundColor Cyan
+        
+        # Extrai problemas  do HTML (busca por status CRÍTICO e ALERTA) 
         $problems = @()
         
-        # Divide em linhas para processar
-        $lines = $htmlContent -split "`r?`n"
+        # Regex melhorado para extrair cada linha da tabela <tr>...</tr>
+        # Usa [\s\S] em vez de . para capturar quebras de linha
+        $rowPattern = '<tr[^>]*>[\s\S]*?</tr>'
+        $tableRows = [regex]::Matches($htmlContent, $rowPattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
         
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-            $line = $lines[$i]
+        Write-Host "[DEBUG] Total de linhas <tr> encontradas: $($tableRows.Count)" -ForegroundColor Cyan
+        
+        $criticalCount = 0
+        $alertCount = 0
+        
+        foreach ($rowMatch in $tableRows) {
+            $rowHtml = $rowMatch.Value
             
-            # Procura por linhas com class="status-critico" ou "status-alerta"
-            if ($line -match 'class="status-(critico|alerta)"') {
+            # Verifica se a linha contém CRÍTICO ou ALERTA
+            if ($rowHtml -match "class='status-(critico|alerta)'") {
                 $statusType = $matches[1]
                 $status = if ($statusType -eq "critico") { "CRÍTICO" } else { "ALERTA" }
                 
-                # Extrai o texto da linha (contém emoji + status)
-                if ($line -match '>([^<]*)(CRÍTICO|ALERTA)') {
-                    # Agora precisa voltar para pegar o nome da verificação
-                    # Procura para trás até encontrar a segunda coluna <td>
-                    $checkName = ""
+                if ($status -eq "CRÍTICO") { $criticalCount++ } else { $alertCount++ }
+                
+                # Extrai todas as células <td> (melhorado para lidar com atributos)
+                $cellPattern = '<td[^>]*>(.*?)</td>'
+                $cells = [regex]::Matches($rowHtml, $cellPattern, [System.Text.RegularExpressions.RegexOptions]::Singleline -bor [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                
+                if ($cells.Count -ge 2) {
+                    # Segunda célula (índice 1) contém o nome da verificação
+                    $checkName = $cells[1].Groups[1].Value
                     
-                    for ($j = $i - 1; $j -ge 0 -and $j -ge ($i - 10); $j--) {
-                        $prevLine = $lines[$j]
-                        
-                        # Pula a primeira coluna (número)
-                        if ($prevLine -match '<td[^>]*>(\d+)</td>') {
-                            continue
-                        }
-                        
-                        # Segunda coluna é o nome
-                        if ($prevLine -match '<td[^>]*>([^<]+)</td>') {
-                            $checkName = $matches[1].Trim()
-                            # Remove emojis e caracteres especiais
-                            $checkName = $checkName -replace '[\u{1F300}-\u{1F9FF}]', ''
-                            $checkName = $checkName -replace '[^\w\s\-\(\)/]', ''
-                            $checkName = $checkName.Trim()
-                            
-                            if (-not [string]::IsNullOrWhiteSpace($checkName)) {
-                                break
-                            }
-                        }
-                    }
+                    # Remove tags HTML residuais e limpa o texto
+                    $checkName = $checkName -replace '<[^>]+>', ''
+                    $checkName = $checkName.Trim()
                     
                     if (-not [string]::IsNullOrWhiteSpace($checkName)) {
                         $problems += [PSCustomObject]@{
                             Name   = $checkName
                             Status = $status
                         }
+                        Write-Host "[DEBUG] Problema encontrado: $checkName ($status)" -ForegroundColor Gray
                     }
                 }
             }
@@ -892,10 +889,16 @@ function Read-CheckReport {
         # Remove duplicatas
         $problems = $problems | Sort-Object Name -Unique
         
+        Write-Host "`n[DEBUG] Resumo do parsing:" -ForegroundColor Yellow
+        Write-Host "[DEBUG] - Críticos encontrados: $criticalCount" -ForegroundColor Red
+        Write-Host "[DEBUG] - Alertas encontrados: $alertCount" -ForegroundColor Yellow
+        Write-Host "[DEBUG] - Total de problemas únicos: $($problems.Count)" -ForegroundColor White
+        
         if ($problems.Count -gt 0) {
-            Write-Host "`n[DEBUG] Problemas detectados: $($problems.Count)" -ForegroundColor Yellow
+            Write-Host "`n[DEBUG] Lista de problemas detectados:" -ForegroundColor Yellow
             foreach ($p in $problems) {
-                Write-Host "  - $($p.Name): $($p.Status)" -ForegroundColor Gray
+                $color = if ($p.Status -eq "CRÍTICO") { "Red" } else { "Yellow" }
+                Write-Host "  - $($p.Name): $($p.Status)" -ForegroundColor $color
             }
         }
         
@@ -903,6 +906,7 @@ function Read-CheckReport {
     }
     catch {
         Write-Status "Erro ao ler relatório: $($_.Exception.Message)" "ERRO" $ColorError
+        Write-Host "[DEBUG] Stack trace: $($_.Exception.StackTrace)" -ForegroundColor Red
         return $null
     }
 }
