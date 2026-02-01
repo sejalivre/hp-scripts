@@ -41,7 +41,7 @@ function Test-WindowsUpdateHealth {
                 $isHealthy = $false
             }
             else {
-                Write-Log "  [OK] Servico $serviceName: $status" "Green"
+                Write-Log "  [OK] Servico ${serviceName}: $status" "Green"
             }
         }
         catch {
@@ -98,7 +98,7 @@ function Test-WindowsUpdateHealth {
     foreach ($url in $testUrls) {
         try {
             $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
-            Write-Log "  [OK] Conectividade com $url : OK" "Green"
+            Write-Log "  [OK] Conectividade com ${url}: OK" "Green"
         }
         catch {
             Write-Log "  [X] Falha ao conectar com $url" "Red"

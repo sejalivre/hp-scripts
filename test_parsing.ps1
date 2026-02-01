@@ -12,7 +12,7 @@ Write-Host "Total de linhas encontradas: $($tableRows.Count)" -ForegroundColor C
 foreach ($rowMatch in $tableRows) {
     $rowHtml = $rowMatch.Value
     
-    # Verifica se a linha contém CRÍTICO ou ALERTA
+    # Verifica se a linha contém CRÍTICO ou ALERTA 
     if ($rowHtml -match "class='status-(critico|alerta)'") {
         $statusType = $matches[1]
         $status = if ($statusType -eq "critico") { "CRÍTICO" } else { "ALERTA" }
