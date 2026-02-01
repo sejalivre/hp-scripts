@@ -26,12 +26,12 @@ echo.
 :: ============================================================
 :: ETAPA 2: Verificar versao do PowerShell (se existir)
 :: ============================================================
-if %PS_MISSING%==0 (
+if !PS_MISSING!==0 (
     echo [2/5] Verificando versao do PowerShell...
     
     for /f "delims=" %%i in ('powershell -NoProfile -Command "[int]$PSVersionTable.PSVersion.Major"') do set PS_VERSION=%%i
     
-    echo [INFO] Versao do PowerShell detectada: %PS_VERSION%
+    echo [INFO] Versao do PowerShell detectada: !PS_VERSION!
     
     if !PS_VERSION! LSS 5 (
         echo [AVISO] Versao insuficiente detectada (HP-Scripts requer 5.1+)
@@ -53,7 +53,7 @@ echo.
 echo [3/5] Verificando disponibilidade do Winget...
 
 where winget >nul 2>nul
-if %ERRORLEVEL% NEQ 0 (
+if !ERRORLEVEL! NEQ 0 (
     echo [AVISO] Winget nao encontrado.
     echo [INFO] Tentando metodo alternativo (instalacao via MSI)...
     set USE_WINGET=0
@@ -68,17 +68,17 @@ echo.
 :: ============================================================
 echo [4/5] Processando instalacao/atualizacao...
 
-if %USE_WINGET%==1 (
+if !USE_WINGET!==1 (
     :: Metodo 1: Usando Winget (preferencial)
     echo [INFO] Usando Winget para gerenciar PowerShell 7...
     
     winget list --id Microsoft.PowerShell --exact >nul 2>nul
     
-    if %ERRORLEVEL% EQU 0 (
+    if !ERRORLEVEL! EQU 0 (
         echo [INFO] PowerShell 7 ja instalado. Verificando atualizacoes...
         winget upgrade --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
         
-        if %ERRORLEVEL% EQU 0 (
+        if !ERRORLEVEL! EQU 0 (
             echo [OK] PowerShell 7 atualizado com sucesso.
         ) else (
             echo [INFO] Nenhuma atualizacao disponivel ou ja esta na versao mais recente.
@@ -87,7 +87,7 @@ if %USE_WINGET%==1 (
         echo [INFO] PowerShell 7 nao encontrado. Instalando...
         winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
         
-        if %ERRORLEVEL% EQU 0 (
+        if !ERRORLEVEL! EQU 0 (
             echo [OK] PowerShell 7 instalado com sucesso.
         ) else (
             echo [ERRO] Falha ao instalar PowerShell 7 via Winget.
@@ -100,7 +100,7 @@ if %USE_WINGET%==1 (
     :: Metodo 2: Instalacao via script web (fallback)
     echo [INFO] Usando metodo alternativo (download direto da Microsoft)...
     
-    if %PS_MISSING%==1 (
+    if !PS_MISSING!==1 (
         echo [ERRO] PowerShell nao esta instalado e Winget nao esta disponivel.
         echo [INFO] Por favor, instale o PowerShell manualmente:
         echo        https://aka.ms/powershell-release?tag=stable
@@ -109,7 +109,7 @@ if %USE_WINGET%==1 (
     
     powershell -NoProfile -ExecutionPolicy Bypass -Command "& {try {Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://aka.ms/install-powershell.ps1')); Install-PowerShell -UseMSI -Quiet} catch {Write-Host '[ERRO] Falha no download/instalacao'; exit 1}}"
     
-    if %ERRORLEVEL% EQU 0 (
+    if !ERRORLEVEL! EQU 0 (
         echo [OK] Instalacao via script web concluida.
     ) else (
         echo [ERRO] Falha na instalacao alternativa.
@@ -125,7 +125,7 @@ echo.
 echo [5/5] Verificacao final...
 
 where pwsh.exe >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
+if !ERRORLEVEL! EQU 0 (
     echo [OK] PowerShell 7 (pwsh.exe) detectado no sistema.
     
     for /f "tokens=*" %%i in ('pwsh -NoProfile -Command "$PSVersionTable.PSVersion.ToString()"') do set PWSH_VERSION=%%i

@@ -198,7 +198,7 @@ function Show-DiagnosticoMenu {
     Write-Host "  ══════════════════  DIAGNÓSTICO DE HARDWARE  ══════════════════" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [1] CPU-Z              - Informações detalhadas do processador" -ForegroundColor White
-    Write-Host "  [2] AD             - Diagnóstico completo do sistema" -ForegroundColor White
+    Write-Host "  [2] AD                 - Diagnóstico completo do sistema" -ForegroundColor White
     Write-Host "  [3] Core Temp          - Monitor de temperatura da CPU" -ForegroundColor White
     Write-Host "  [4] CrystalDiskInfo    - Saúde do disco rígido/SSD" -ForegroundColor White
     Write-Host "  [5] SSD Life           - Vida útil de SSDs" -ForegroundColor White
