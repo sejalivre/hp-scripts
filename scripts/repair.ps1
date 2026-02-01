@@ -37,15 +37,21 @@ $ColorAction = "Magenta"
 # Detecta caminho do check.ps1
 $CheckScriptPath = $null
 
+# Detecta diretório do script (funciona mesmo quando $PSScriptRoot está vazio)
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+if (-not $ScriptDir) { $ScriptDir = Get-Location }
+
 # Tenta localizar check.ps1 em locais conhecidos
 $possiblePaths = @(
-    (Join-Path $PSScriptRoot "check.ps1"),                           # Mesmo diretório
+    (Join-Path $ScriptDir "check.ps1"),                              # Mesmo diretório
     "c:\hp\GitHub\hp-scripts\scripts\check.ps1",                     # Repositório
     "C:\Program Files\HPTI\scripts\check.ps1",                       # Instalação
-    (Join-Path (Split-Path $PSScriptRoot) "scripts\check.ps1")      # Diretório pai
+    (Join-Path (Split-Path $ScriptDir) "scripts\check.ps1"),        # Diretório pai
+    (Join-Path (Get-Location) "check.ps1")                           # Diretório atual
 )
 
-foreach ($path in $possiblePaths) {
+# Remove caminhos vazios e testa cada um
+foreach ($path in $possiblePaths | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) {
     if (Test-Path $path) {
         $CheckScriptPath = $path
         break
@@ -834,68 +840,50 @@ function Read-CheckReport {
         # Extrai problemas do HTML (busca por status CRÍTICO e ALERTA)
         $problems = @()
         
-        # Método 1: Regex melhorada para capturar linhas da tabela
-        # Busca por <td> que contém CRÍTICO ou ALERTA
-        $pattern = '<tr[^>]*>.*?<td[^>]*>(\d+)</td>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*class="status-(critico|alerta)"[^>]*>.*?(CRÍTICO|ALERTA).*?</td>.*?</tr>'
+        # Divide em linhas para processar
+        $lines = $htmlContent -split "`r?`n"
         
-        $regexMatches = [regex]::Matches($htmlContent, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-        
-        foreach ($match in $regexMatches) {
-            $id = $match.Groups[1].Value.Trim()
-            $checkName = $match.Groups[2].Value.Trim()
-            $status = $match.Groups[5].Value.Trim()
+        for ($i = 0; $i < $lines.Count; $i++) {
+            $line = $lines[$i]
             
-            $problems += [PSCustomObject]@{
-                ID     = $id
-                Name   = $checkName
-                Status = $status
-            }
-        }
-        
-        # Método 2: Se não encontrou com regex complexa, tenta método alternativo
-        if ($problems.Count -eq 0) {
-            Write-Status "Tentando método alternativo de parsing..." "INFO" $ColorInfo
-            
-            # Divide por linhas e procura padrões
-            $lines = $htmlContent -split "`n"
-            $inTable = $false
-            $currentRow = ""
-            
-            foreach ($line in $lines) {
-                if ($line -match '<tr[^>]*>') {
-                    $inTable = $true
-                    $currentRow = $line
-                }
-                elseif ($inTable) {
-                    $currentRow += $line
+            # Procura por linhas com class="status-critico" ou "status-alerta"
+            if ($line -match 'class="status-(critico|alerta)"') {
+                $statusType = $matches[1]
+                $status = if ($statusType -eq "critico") { "CRÍTICO" } else { "ALERTA" }
+                
+                # Extrai o texto da linha (contém emoji + status)
+                if ($line -match '>([^<]*)(CRÍTICO|ALERTA)') {
+                    # Agora precisa voltar para pegar o nome da verificação
+                    # Procura para  trás até encontrar a segunda coluna <td>
+                    $checkName = ""
                     
-                    if ($line -match '</tr>') {
-                        # Verifica se tem CRÍTICO ou ALERTA
-                        if ($currentRow -match '(CRÍTICO|ALERTA)') {
-                            $status = $matches[1]
-                            
-                            # Extrai todas as colunas <td>
-                            $tdMatches = [regex]::Matches($currentRow, '<td[^>]*>([^<]+)</td>')
-                            
-                            if ($tdMatches.Count -ge 2) {
-                                # Segunda coluna é o nome da verificação
-                                $checkName = $tdMatches[1].Groups[1].Value.Trim()
-                                
-                                # Remove emojis e caracteres especiais
-                                $checkName = $checkName -replace '[^\w\s\-\(\)]', ''
-                                $checkName = $checkName.Trim()
-                                
-                                if (-not [string]::IsNullOrWhiteSpace($checkName) -and $checkName -notmatch '^\d+$') {
-                                    $problems += [PSCustomObject]@{
-                                        Name   = $checkName
-                                        Status = $status
-                                    }
-                                }
-                            }
+                    for ($j = $i - 1; $j -ge 0 -and $j -ge ($i - 10); $j--) {
+                        $prevLine = $lines[$j]
+                        
+                        # Pula a primeira coluna (número)
+                        if ($prevLine -match '<td[^>]*>(\d+)</td>') {
+                            continue
                         }
                         
-                        $inTable = $false
-                        $currentRow = ""
+                        # Segunda coluna é o nome
+                        if ($prevLine -match '<td[^>]*>([^<]+)</td>') {
+                            $checkName = $matches[1].Trim()
+                            # Remove emojis e caracteres especiais
+                            $checkName = $checkName -replace '[\u{1F300}-\u{1F9FF}]', ''
+                            $checkName = $checkName -replace '[^\w\s\-\(\)/]', ''
+                            $checkName = $checkName.Trim()
+                            
+                            if (-not [string]::IsNullOrWhiteSpace($checkName)) {
+                                break
+                            }
+                        }
+                    }
+                    
+                    if (-not [string]::IsNullOrWhiteSpace($checkName)) {
+                        $problems += [PSCustomObject]@{
+                            Name   = $checkName
+                            Status = $status
+                        }
                     }
                 }
             }
@@ -903,6 +891,13 @@ function Read-CheckReport {
         
         # Remove duplicatas
         $problems = $problems | Sort-Object Name -Unique
+        
+        if ($problems.Count -gt 0) {
+            Write-Host "`n[DEBUG] Problemas detectados: $($problems.Count)" -ForegroundColor Yellow
+            foreach ($p in $problems) {
+                Write-Host "  - $($p.Name): $($p.Status)" -ForegroundColor Gray
+            }
+        }
         
         return $problems
     }
