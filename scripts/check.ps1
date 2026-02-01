@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($OSNumber)) {
     $OSNumber = "N/A"
 }
 
-# --- CONFIGURAÇÕES ---
+# --- CONFIGURAÇÕES  ---
 $ComputerName = $env:COMPUTERNAME
 $HPTIReportsDir = "C:\Program Files\HPTI\Reports"
 if (-not (Test-Path $HPTIReportsDir)) { New-Item -Path $HPTIReportsDir -ItemType Directory -Force | Out-Null }
