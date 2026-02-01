@@ -1,12 +1,20 @@
 ﻿<#
 .SYNOPSIS
-    HP-Scripts Repair v1.0 - Reparo Automático de Problemas do Windows
+    HP-Scripts Repair v2.0 - Reparo Automático Inteligente de Problemas do Windows
 .DESCRIPTION
     Script de reparo automático baseado em diagnóstico do sistema.
     Oferece ações corretivas para problemas comuns detectados no check.ps1
+    
+    NOVIDADES v2.0:
+    - Integração completa com check.ps1
+    - Reparo inteligente baseado em relatórios
+    - Comparação antes/depois dos reparos
+    - Remoção automática de bloatware
+    - Otimização de inicialização
+    - Atualização de drivers
 .NOTES
     Autor: HP-Scripts Team
-    Versão: 1.0
+    Versão: 2.0
     Compatibilidade: PowerShell 5.1+ (Windows 10/11)
     Requer: Execução como Administrador
 #>
@@ -45,21 +53,31 @@ function Show-RepairMenu {
     Write-Host ""
     Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║           🛠️  HPCRAFT - REPARO AUTOMÁTICO TI  🛠️            ║" -ForegroundColor Cyan
-    Write-Host "  ║              Suporte: docs.hpinfo.com.br | v1.0              ║" -ForegroundColor DarkCyan
+    Write-Host "  ║              Suporte: docs.hpinfo.com.br | v2.0              ║" -ForegroundColor DarkCyan
     Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
     
-    Write-Host "  [1] 🔍 Executar Diagnóstico Completo + Sugestões de Reparo" -ForegroundColor White
-    Write-Host "  [2] 🌐 Reparo de Rede e Conectividade" -ForegroundColor White
-    Write-Host "  [3] 🧹 Limpeza e Otimização do Sistema" -ForegroundColor White
-    Write-Host "  [4] 🛡️  Reparo de Segurança e Windows Defender" -ForegroundColor White
-    Write-Host "  [5] ⚙️  Reparo de Serviços do Windows" -ForegroundColor White
-    Write-Host "  [6] 💾 Reparo de Disco e Sistema de Arquivos" -ForegroundColor White
-    Write-Host "  [7] 🔄 Reparo de Windows Update" -ForegroundColor White
-    Write-Host "  [8] 🚀 Otimização de Desempenho" -ForegroundColor White
-    Write-Host "  [9] 📋 Reparo Completo (Todas as Categorias)" -ForegroundColor $ColorAction
+    Write-Host "  ═══ REPAROS INTELIGENTES ═══" -ForegroundColor Magenta
+    Write-Host "  [1] 🔍 Executar Diagnóstico (check.ps1)" -ForegroundColor White
+    Write-Host "  [2] 🤖 Reparo Inteligente (Ler último check + Reparar)" -ForegroundColor White
+    Write-Host "  [3] 📊 Reparo Completo com Comparação (Check → Repair → Check)" -ForegroundColor $ColorAction
     Write-Host ""
-    Write-Host "  [D] 📊 Verificar Diagnóstico Atual do Sistema" -ForegroundColor Gray
+    
+    Write-Host "  ═══ REPAROS ESPECÍFICOS ═══" -ForegroundColor Cyan
+    Write-Host "  [4] 🌐 Reparo de Rede e Conectividade" -ForegroundColor White
+    Write-Host "  [5] 🧹 Limpeza e Otimização do Sistema" -ForegroundColor White
+    Write-Host "  [6] 🛡️  Reparo de Segurança e Windows Defender" -ForegroundColor White
+    Write-Host "  [7] ⚙️  Reparo de Serviços do Windows" -ForegroundColor White
+    Write-Host "  [8] 💾 Reparo de Disco e Sistema de Arquivos" -ForegroundColor White
+    Write-Host "  [9] 🔄 Reparo de Windows Update" -ForegroundColor White
+    Write-Host "  [10] 🚀 Otimização de Desempenho" -ForegroundColor White
+    Write-Host "  [11] 🗑️  Remover Bloatware" -ForegroundColor White
+    Write-Host "  [12] ⏱️  Otimizar Inicialização" -ForegroundColor White
+    Write-Host "  [13] 🔧 Atualizar Drivers" -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "  [99] 📋 Reparo Completo (Todas as Categorias)" -ForegroundColor Yellow
+    Write-Host ""
     Write-Host "  [L] 📝 Ver Log de Reparos Executados" -ForegroundColor Gray
     Write-Host "  [Q] Sair" -ForegroundColor DarkGray
     Write-Host ""
@@ -561,6 +579,513 @@ function Repair-Complete {
     return $successCount -eq $totalCount
 }
 
+function Repair-Bloatware {
+    Write-Status "Iniciando remoção de bloatware..." "INFO" $ColorInfo
+    
+    try {
+        # Lista expandida de bloatware
+        $bloatwarePatterns = @(
+            "*WebCompanion*", "*McAfee*", "*Norton*", "*Baidu*", "*Segurazo*", 
+            "*Avast*", "*AVG*", "*CCleaner*", "*PC Cleaner*", "*Driver Booster*",
+            "*Advanced SystemCare*", "*WinZip*", "*WinRAR Trial*", "*Toolbar*"
+        )
+        
+        $removedCount = 0
+        
+        # 1. Remover via Get-Package (programas Win32)
+        Write-Status "Verificando programas instalados..." "INFO" $ColorInfo
+        $installedApps = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue
+        $installedApps += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue
+        
+        foreach ($pattern in $bloatwarePatterns) {
+            $found = $installedApps | Where-Object { $_.DisplayName -like $pattern }
+            foreach ($app in $found) {
+                Write-Status "Removendo: $($app.DisplayName)..." "INFO" $ColorInfo
+                try {
+                    $uninstallString = $app.UninstallString
+                    if ($uninstallString) {
+                        if ($uninstallString -match "msiexec") {
+                            $productCode = $app.PSChildName
+                            Start-Process "msiexec.exe" -ArgumentList "/x $productCode /qn /norestart" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+                        }
+                        else {
+                            Start-Process $uninstallString -ArgumentList "/S", "/VERYSILENT", "/SILENT", "/QUIET" -Wait -NoNewWindow -ErrorAction SilentlyContinue
+                        }
+                        Write-Status "Removido: $($app.DisplayName)" "SUCESSO" $ColorSuccess
+                        $removedCount++
+                    }
+                }
+                catch {
+                    Write-Status "Falha ao remover: $($app.DisplayName)" "AVISO" $ColorWarning
+                }
+            }
+        }
+        
+        # 2. Remover Apps UWP desnecessários
+        Write-Status "Verificando apps UWP..." "INFO" $ColorInfo
+        $uwpBloat = @(
+            "*CandyCrush*", "*BubbleWitch*", "*MarchofEmpires*", "*Solitaire*",
+            "*BingNews*", "*BingSports*", "*BingWeather*", "*Twitter*",
+            "*Facebook*", "*Spotify*", "*Disney*", "*Netflix*"
+        )
+        
+        foreach ($pattern in $uwpBloat) {
+            $apps = Get-AppxPackage -Name $pattern -AllUsers -ErrorAction SilentlyContinue
+            foreach ($app in $apps) {
+                try {
+                    Write-Status "Removendo app UWP: $($app.Name)..." "INFO" $ColorInfo
+                    Remove-AppxPackage -Package $app.PackageFullName -AllUsers -ErrorAction SilentlyContinue
+                    Write-Status "Removido: $($app.Name)" "SUCESSO" $ColorSuccess
+                    $removedCount++
+                }
+                catch {
+                    Write-Status "Falha ao remover: $($app.Name)" "AVISO" $ColorWarning
+                }
+            }
+        }
+        
+        if ($removedCount -gt 0) {
+            Write-Status "Remoção de bloatware concluída: $removedCount itens removidos" "SUCESSO" $ColorSuccess
+        }
+        else {
+            Write-Status "Nenhum bloatware detectado" "SUCESSO" $ColorSuccess
+        }
+        
+        return $true
+    }
+    catch {
+        Write-Status "Erro durante remoção de bloatware: $($_.Exception.Message)" "ERRO" $ColorError
+        return $false
+    }
+}
+
+function Repair-StartupItems {
+    Write-Status "Iniciando otimização de inicialização..." "INFO" $ColorInfo
+    
+    try {
+        $disabledCount = 0
+        
+        # Lista de itens seguros para manter
+        $safeStartupItems = @(
+            "*Windows Defender*", "*SecurityHealth*", "*OneDrive*",
+            "*Intel*", "*AMD*", "*NVIDIA*", "*Realtek*",
+            "*Synaptics*", "*Dell*", "*HP*", "*Lenovo*"
+        )
+        
+        # 1. Desabilitar itens de inicialização via Registro (Run)
+        Write-Status "Verificando registro de inicialização..." "INFO" $ColorInfo
+        $runKeys = @(
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+            "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run",
+            "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Run"
+        )
+        
+        foreach ($key in $runKeys) {
+            if (Test-Path $key) {
+                $items = Get-ItemProperty -Path $key -ErrorAction SilentlyContinue
+                foreach ($prop in $items.PSObject.Properties) {
+                    if ($prop.Name -notmatch "PS.*") {
+                        $isSafe = $false
+                        foreach ($safe in $safeStartupItems) {
+                            if ($prop.Value -like $safe) {
+                                $isSafe = $true
+                                break
+                            }
+                        }
+                        
+                        if (-not $isSafe) {
+                            try {
+                                Remove-ItemProperty -Path $key -Name $prop.Name -ErrorAction SilentlyContinue
+                                Write-Status "Desabilitado: $($prop.Name)" "SUCESSO" $ColorSuccess
+                                $disabledCount++
+                            }
+                            catch {}
+                        }
+                    }
+                }
+            }
+        }
+        
+        # 2. Desabilitar tarefas agendadas desnecessárias
+        Write-Status "Otimizando tarefas agendadas..." "INFO" $ColorInfo
+        $taskPatterns = @("*Adobe*", "*CCleaner*", "*Google Update*", "*Skype*")
+        
+        foreach ($pattern in $taskPatterns) {
+            $tasks = Get-ScheduledTask -TaskName $pattern -ErrorAction SilentlyContinue
+            foreach ($task in $tasks) {
+                if ($task.State -eq "Ready") {
+                    try {
+                        Disable-ScheduledTask -TaskName $task.TaskName -ErrorAction SilentlyContinue | Out-Null
+                        Write-Status "Tarefa desabilitada: $($task.TaskName)" "SUCESSO" $ColorSuccess
+                        $disabledCount++
+                    }
+                    catch {}
+                }
+            }
+        }
+        
+        Write-Status "Otimização de inicialização concluída: $disabledCount itens desabilitados" "SUCESSO" $ColorSuccess
+        return $true
+    }
+    catch {
+        Write-Status "Erro durante otimização de inicialização: $($_.Exception.Message)" "ERRO" $ColorError
+        return $false
+    }
+}
+
+function Repair-DriversUpdate {
+    Write-Status "Iniciando atualização de drivers..." "INFO" $ColorInfo
+    
+    try {
+        # Tenta atualizar drivers via Windows Update
+        Write-Status "Verificando drivers via Windows Update..." "INFO" $ColorInfo
+        
+        try {
+            $updateSession = New-Object -ComObject Microsoft.Update.Session
+            $updateSearcher = $updateSession.CreateUpdateSearcher()
+            $searchResult = $updateSearcher.Search("IsInstalled=0 and Type='Driver'")
+            
+            if ($searchResult.Updates.Count -gt 0) {
+                Write-Status "Encontrados $($searchResult.Updates.Count) drivers para atualizar" "INFO" $ColorInfo
+                Write-Status "Execute Windows Update para instalar drivers" "AVISO" $ColorWarning
+            }
+            else {
+                Write-Status "Todos os drivers estão atualizados via Windows Update" "SUCESSO" $ColorSuccess
+            }
+        }
+        catch {
+            Write-Status "Não foi possível verificar drivers via Windows Update" "AVISO" $ColorWarning
+        }
+        
+        # Sugestão para drivers de GPU
+        $gpu = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($gpu) {
+            $gpuName = $gpu.Name
+            if ($gpuName -match "NVIDIA") {
+                Write-Status "GPU NVIDIA detectada: Visite https://www.nvidia.com/drivers" "INFO" $ColorInfo
+            }
+            elseif ($gpuName -match "AMD|Radeon") {
+                Write-Status "GPU AMD detectada: Visite https://www.amd.com/support" "INFO" $ColorInfo
+            }
+            elseif ($gpuName -match "Intel") {
+                Write-Status "GPU Intel detectada: Visite https://www.intel.com/content/www/us/en/download-center/home.html" "INFO" $ColorInfo
+            }
+        }
+        
+        return $true
+    }
+    catch {
+        Write-Status "Erro durante atualização de drivers: $($_.Exception.Message)" "ERRO" $ColorError
+        return $false
+    }
+}
+
+function Get-LatestCheckReport {
+    $reportsDir = "C:\Program Files\HPTI\Reports"
+    
+    if (-not (Test-Path $reportsDir)) {
+        return $null
+    }
+    
+    $latestReport = Get-ChildItem -Path $reportsDir -Filter "checkup_*.html" -ErrorAction SilentlyContinue | 
+    Sort-Object LastWriteTime -Descending | 
+    Select-Object -First 1
+    
+    if ($latestReport) {
+        return $latestReport.FullName
+    }
+    
+    return $null
+}
+
+function Read-CheckReport {
+    param([string]$ReportPath)
+    
+    if (-not (Test-Path $ReportPath)) {
+        Write-Status "Relatório não encontrado: $ReportPath" "ERRO" $ColorError
+        return $null
+    }
+    
+    try {
+        $htmlContent = Get-Content -Path $ReportPath -Raw -Encoding UTF8
+        
+        # Extrai problemas do HTML (busca por status CRÍTICO e ALERTA)
+        $problems = @()
+        
+        # Regex para extrair linhas da tabela
+        $tableRows = [regex]::Matches($htmlContent, '<tr[^>]*>.*?</tr>')
+        
+        foreach ($row in $tableRows) {
+            $rowHtml = $row.Value
+            
+            # Extrai status
+            if ($rowHtml -match '(CRÍTICO|ALERTA)') {
+                $status = $matches[1]
+                
+                # Extrai nome da verificação
+                if ($rowHtml -match '<td[^>]*>([^<]+)</td>') {
+                    $checkName = $matches[1].Trim()
+                    
+                    $problems += [PSCustomObject]@{
+                        Name   = $checkName
+                        Status = $status
+                    }
+                }
+            }
+        }
+        
+        return $problems
+    }
+    catch {
+        Write-Status "Erro ao ler relatório: $($_.Exception.Message)" "ERRO" $ColorError
+        return $null
+    }
+}
+
+function Repair-FromCheckReport {
+    Write-Status "Iniciando reparo inteligente baseado em diagnóstico..." "INFO" $ColorInfo
+    
+    $reportPath = Get-LatestCheckReport
+    
+    if (-not $reportPath) {
+        Write-Status "Nenhum relatório de check.ps1 encontrado" "AVISO" $ColorWarning
+        Write-Status "Execute check.ps1 primeiro para gerar diagnóstico" "INFO" $ColorInfo
+        return $false
+    }
+    
+    Write-Status "Lendo relatório: $reportPath" "INFO" $ColorInfo
+    $problems = Read-CheckReport -ReportPath $reportPath
+    
+    if (-not $problems -or $problems.Count -eq 0) {
+        Write-Status "Nenhum problema detectado no relatório!" "SUCESSO" $ColorSuccess
+        return $true
+    }
+    
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "PROBLEMAS DETECTADOS: $($problems.Count)" -ForegroundColor Yellow
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    
+    foreach ($problem in $problems) {
+        $icon = if ($problem.Status -eq "CRÍTICO") { "❌" } else { "⚠️" }
+        Write-Host "  $icon $($problem.Name) - $($problem.Status)" -ForegroundColor $(if ($problem.Status -eq "CRÍTICO") { "Red" } else { "Yellow" })
+    }
+    
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "EXECUTANDO REPAROS AUTOMATIZADOS" -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    
+    $results = @{}
+    
+    # Mapeamento de problemas para funções de reparo
+    $problemMap = @{
+        "Windows Defender" = { Repair-Security }
+        "Firewall"         = { Repair-Security }
+        "Licenciamento"    = { Repair-Security }
+        "Bloatware"        = { Repair-Bloatware }
+        "Inicialização"    = { Repair-StartupItems }
+        "Windows Update"   = { Repair-WindowsUpdate }
+        "Integridade"      = { Repair-Disk }
+        "Serviços"         = { Repair-Services }
+        "Rede"             = { Repair-Network }
+        "DNS"              = { Repair-Network }
+        "Conectividade"    = { Repair-Network }
+    }
+    
+    # Executa reparos baseados nos problemas detectados
+    $executedRepairs = @()
+    
+    foreach ($problem in $problems) {
+        foreach ($key in $problemMap.Keys) {
+            if ($problem.Name -match $key -and $executedRepairs -notcontains $key) {
+                Write-Host "`n[→] Executando reparo: $key" -ForegroundColor Cyan
+                $result = & $problemMap[$key]
+                $results[$key] = $result
+                $executedRepairs += $key
+                Start-Sleep -Seconds 2
+            }
+        }
+    }
+    
+    # Se não encontrou reparos específicos, executa reparo completo
+    if ($executedRepairs.Count -eq 0) {
+        Write-Status "Executando reparo completo..." "INFO" $ColorInfo
+        return Repair-Complete
+    }
+    
+    # Resumo
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "RESUMO DOS REPAROS" -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    
+    $successCount = ($results.Values | Where-Object { $_ -eq $true }).Count
+    $totalCount = $results.Count
+    
+    foreach ($key in $results.Keys) {
+        $status = if ($results[$key]) { "✅ SUCESSO" } else { "❌ FALHA" }
+        Write-Host "  $($key.PadRight(20)): $status" -ForegroundColor $(if ($results[$key]) { "Green" } else { "Red" })
+    }
+    
+    Write-Host "`n  Total: $successCount/$totalCount reparos bem-sucedidos" -ForegroundColor $(if ($successCount -eq $totalCount) { "Green" } else { "Yellow" })
+    
+    return $successCount -eq $totalCount
+}
+
+function New-ComparisonReport {
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "REPARO COMPLETO COM COMPARAÇÃO" -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $startTime = Get-Date
+    $reportsDir = "C:\Program Files\HPTI\Reports"
+    $checkScript = Join-Path $PSScriptRoot "check.ps1"
+    
+    if (-not (Test-Path $checkScript)) {
+        Write-Status "Script check.ps1 não encontrado em: $checkScript" "ERRO" $ColorError
+        return $false
+    }
+    
+    # FASE 1: Diagnóstico ANTES
+    Write-Status "FASE 1/3: Executando diagnóstico inicial..." "INFO" $ColorInfo
+    Write-Host ""
+    
+    & $checkScript
+    Start-Sleep -Seconds 2
+    
+    $reportBefore = Get-LatestCheckReport
+    if (-not $reportBefore) {
+        Write-Status "Falha ao gerar relatório inicial" "ERRO" $ColorError
+        return $false
+    }
+    
+    $problemsBefore = Read-CheckReport -ReportPath $reportBefore
+    $criticalBefore = ($problemsBefore | Where-Object { $_.Status -eq "CRÍTICO" }).Count
+    $alertBefore = ($problemsBefore | Where-Object { $_.Status -eq "ALERTA" }).Count
+    
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "DIAGNÓSTICO INICIAL" -ForegroundColor Yellow
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "  ❌ Problemas Críticos: $criticalBefore" -ForegroundColor Red
+    Write-Host "  ⚠️  Alertas: $alertBefore" -ForegroundColor Yellow
+    Write-Host "  📊 Total de Problemas: $($problemsBefore.Count)" -ForegroundColor White
+    
+    Read-Host "`nPressione ENTER para iniciar os reparos"
+    
+    # FASE 2: REPAROS
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "FASE 2/3: Executando reparos automatizados..." -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Repair-FromCheckReport
+
+    
+    # FASE 3: Diagnóstico DEPOIS
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "FASE 3/3: Executando diagnóstico final..." -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Start-Sleep -Seconds 3
+    & $checkScript
+    Start-Sleep -Seconds 2
+    
+    $reportAfter = Get-LatestCheckReport
+    if (-not $reportAfter -or $reportAfter -eq $reportBefore) {
+        Write-Status "Falha ao gerar relatório final" "ERRO" $ColorError
+        return $false
+    }
+    
+    $problemsAfter = Read-CheckReport -ReportPath $reportAfter
+    $criticalAfter = ($problemsAfter | Where-Object { $_.Status -eq "CRÍTICO" }).Count
+    $alertAfter = ($problemsAfter | Where-Object { $_.Status -eq "ALERTA" }).Count
+    
+    # COMPARAÇÃO
+    $endTime = Get-Date
+    $duration = $endTime - $startTime
+    
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "RELATÓRIO COMPARATIVO - ANTES vs DEPOIS" -ForegroundColor White
+    Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host ""
+    
+    Write-Host "  ANTES DOS REPAROS:" -ForegroundColor Yellow
+    Write-Host "    ❌ Críticos: $criticalBefore" -ForegroundColor Red
+    Write-Host "    ⚠️  Alertas: $alertBefore" -ForegroundColor Yellow
+    Write-Host "    📊 Total: $($problemsBefore.Count)" -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "  DEPOIS DOS REPAROS:" -ForegroundColor Green
+    Write-Host "    ❌ Críticos: $criticalAfter" -ForegroundColor $(if ($criticalAfter -eq 0) { "Green" } else { "Red" })
+    Write-Host "    ⚠️  Alertas: $alertAfter" -ForegroundColor $(if ($alertAfter -lt $alertBefore) { "Green" } else { "Yellow" })
+    Write-Host "    📊 Total: $($problemsAfter.Count)" -ForegroundColor $(if ($problemsAfter.Count -lt $problemsBefore.Count) { "Green" } else { "White" })
+    Write-Host ""
+    
+    $criticalFixed = $criticalBefore - $criticalAfter
+    $alertFixed = $alertBefore - $alertAfter
+    $totalFixed = $problemsBefore.Count - $problemsAfter.Count
+    
+    Write-Host "  RESULTADOS:" -ForegroundColor Cyan
+    Write-Host "    ✅ Críticos Resolvidos: $criticalFixed" -ForegroundColor Green
+    Write-Host "    ✅ Alertas Resolvidos: $alertFixed" -ForegroundColor Green
+    Write-Host "    ✅ Total Resolvido: $totalFixed" -ForegroundColor Green
+    Write-Host "    ⏱️  Tempo Total: $($duration.Minutes)m $($duration.Seconds)s" -ForegroundColor Cyan
+    Write-Host ""
+    
+    if ($totalFixed -gt 0) {
+        $percentFixed = [math]::Round(($totalFixed / $problemsBefore.Count) * 100, 1)
+        Write-Host "  🎯 Taxa de Sucesso: $percentFixed%" -ForegroundColor Green
+    }
+    
+    Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+    
+    # Salvar relatório comparativo
+    $comparisonFile = Join-Path $reportsDir "repair_comparison_$(Get-Date -Format 'yyyyMMdd_HHmmss').txt"
+    
+    $comparisonContent = @"
+═══════════════════════════════════════════════════════════════
+RELATÓRIO COMPARATIVO DE REPAROS - HP-Scripts
+═══════════════════════════════════════════════════════════════
+
+Data/Hora: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')
+Computador: $env:COMPUTERNAME
+Duração: $($duration.Minutes)m $($duration.Seconds)s
+
+───────────────────────────────────────────────────────────────
+ANTES DOS REPAROS
+───────────────────────────────────────────────────────────────
+Problemas Críticos: $criticalBefore
+Alertas: $alertBefore
+Total de Problemas: $($problemsBefore.Count)
+
+Relatório: $reportBefore
+
+───────────────────────────────────────────────────────────────
+DEPOIS DOS REPAROS
+───────────────────────────────────────────────────────────────
+Problemas Críticos: $criticalAfter
+Alertas: $alertAfter
+Total de Problemas: $($problemsAfter.Count)
+
+Relatório: $reportAfter
+
+───────────────────────────────────────────────────────────────
+RESULTADOS
+───────────────────────────────────────────────────────────────
+Críticos Resolvidos: $criticalFixed
+Alertas Resolvidos: $alertFixed
+Total Resolvido: $totalFixed
+Taxa de Sucesso: $percentFixed%
+
+═══════════════════════════════════════════════════════════════
+"@
+    
+    $comparisonContent | Out-File -FilePath $comparisonFile -Encoding UTF8
+    Write-Status "Relatório comparativo salvo em: $comparisonFile" "SUCESSO" $ColorSuccess
+    
+    return $true
+}
+
 # ============================================================
 # LÓGICA PRINCIPAL DO SCRIPT
 # ============================================================
@@ -585,64 +1110,98 @@ do {
     
     switch ($choice) {
         "1" {
-            # Diagnóstico + Sugestões
+            # Executar Diagnóstico
             Write-Status "Executando diagnóstico completo..." "INFO" $ColorInfo
-            Write-Host "`n[INFO] Esta funcionalidade requer integração com check.ps1" -ForegroundColor Yellow
-            Write-Host "[INFO] Execute o script check.ps1 primeiro para diagnóstico detalhado" -ForegroundColor Yellow
+            $checkScript = Join-Path $PSScriptRoot "check.ps1"
+            if (Test-Path $checkScript) {
+                & $checkScript
+            }
+            else {
+                Write-Status "Script check.ps1 não encontrado em: $checkScript" "ERRO" $ColorError
+            }
             Read-Host "`nPressione ENTER para continuar"
         }
-        "2" { 
+        "2" {
+            # Reparo Inteligente (Ler último check + Reparar)
             Start-TranscriptLog
-            Repair-Network
+            Repair-FromCheckReport
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
-        "3" { 
+        "3" {
+            # Reparo Completo com Comparação
             Start-TranscriptLog
-            Repair-Cleanup
+            New-ComparisonReport
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "4" { 
             Start-TranscriptLog
-            Repair-Security
+            Repair-Network
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "5" { 
             Start-TranscriptLog
-            Repair-Services
+            Repair-Cleanup
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "6" { 
             Start-TranscriptLog
-            Repair-Disk
+            Repair-Security
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "7" { 
             Start-TranscriptLog
-            Repair-WindowsUpdate
+            Repair-Services
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "8" { 
             Start-TranscriptLog
-            Repair-Performance
+            Repair-Disk
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "9" { 
             Start-TranscriptLog
-            Repair-Complete
+            Repair-WindowsUpdate
             Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
-        "D" {
-            # Verificar diagnóstico atual
-            Write-Status "Executando verificação rápida do sistema..." "INFO" $ColorInfo
-            & "$PSScriptRoot\check.ps1"
+        "10" { 
+            Start-TranscriptLog
+            Repair-Performance
+            Stop-TranscriptLog
+            Read-Host "`nPressione ENTER para continuar"
+        }
+        "11" {
+            # Remover Bloatware
+            Start-TranscriptLog
+            Repair-Bloatware
+            Stop-TranscriptLog
+            Read-Host "`nPressione ENTER para continuar"
+        }
+        "12" {
+            # Otimizar Inicialização
+            Start-TranscriptLog
+            Repair-StartupItems
+            Stop-TranscriptLog
+            Read-Host "`nPressione ENTER para continuar"
+        }
+        "13" {
+            # Atualizar Drivers
+            Start-TranscriptLog
+            Repair-DriversUpdate
+            Stop-TranscriptLog
+            Read-Host "`nPressione ENTER para continuar"
+        }
+        "99" { 
+            Start-TranscriptLog
+            Repair-Complete
+            Stop-TranscriptLog
             Read-Host "`nPressione ENTER para continuar"
         }
         "L" {
