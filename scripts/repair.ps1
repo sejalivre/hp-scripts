@@ -59,7 +59,49 @@ foreach ($path in $possiblePaths | Where-Object { -not [string]::IsNullOrWhiteSp
 }
 
 if (-not $CheckScriptPath) {
-    Write-Warning "check.ps1 não encontrado. Funcionalidades de comparação desabilitadas."
+    Write-Warning "check.ps1 não encontrado localmente."
+}
+
+function Download-CheckScript {
+    Write-Status "Tentando baixar check.ps1 do GitHub..." "INFO" $ColorInfo
+    
+    try {
+        # Verifica conexão com internet
+        $testConnection = Test-Connection -ComputerName "github.com" -Count 1 -Quiet -ErrorAction SilentlyContinue
+        if (-not $testConnection) {
+            Write-Status "Sem conexão com internet" "ERRO" $ColorError
+            return $false
+        }
+        
+        # URL do check.ps1 no GitHub
+        $checkUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/scripts/check.ps1"
+        
+        # Determina onde salvar
+        $downloadPath = Join-Path $ScriptDir "check.ps1"
+        
+        Write-Status "Baixando de: $checkUrl" "INFO" $ColorInfo
+        Write-Status "Salvando em: $downloadPath" "INFO" $ColorInfo
+        
+        # Força TLS 1.2
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        
+        # Baixa o arquivo
+        Invoke-WebRequest -Uri $checkUrl -OutFile $downloadPath -UseBasicParsing -ErrorAction Stop
+        
+        if (Test-Path $downloadPath) {
+            $script:CheckScriptPath = $downloadPath
+            Write-Status "check.ps1 baixado com sucesso!" "SUCESSO" $ColorSuccess
+            return $true
+        }
+        else {
+            Write-Status "Falha ao salvar arquivo" "ERRO" $ColorError
+            return $false
+        }
+    }
+    catch {
+        Write-Status "Erro ao baixar check.ps1: $($_.Exception.Message)" "ERRO" $ColorError
+        return $false
+    }
 }
 
 function Write-Status {
@@ -383,11 +425,29 @@ function Repair-Disk {
         # 3. Verificar e reparar discos com CHKDSK
         Write-Status "Verificando discos com CHKDSK..." "INFO" $ColorInfo
         $disks = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3"
+        $systemDrive = $env:SystemDrive.Replace(":", "")
+        
         foreach ($disk in $disks) {
             $drive = $disk.DeviceID.Replace(":", "")
             Write-Status "Verificando disco $drive..." "INFO" $ColorInfo
-            chkdsk ${drive}: /f /x 2>&1 | Out-Null
-            Write-Status "Disco $drive verificado" "SUCESSO" $ColorSuccess
+            
+            if ($drive -eq $systemDrive) {
+                # Disco do sistema: agendar para próximo boot
+                Write-Status "Agendando verificação do disco $drive para o próximo boot..." "INFO" $ColorInfo
+                $result = echo Y | chkdsk ${drive}: /f 2>&1
+                Write-Status "Verificação do disco $drive agendada" "SUCESSO" $ColorSuccess
+                Write-Status "IMPORTANTE: Reinicie o computador para completar a verificação" "AVISO" $ColorWarning
+            }
+            else {
+                # Outros discos: tentar verificação imediata
+                try {
+                    chkdsk ${drive}: /f /x 2>&1 | Out-Null
+                    Write-Status "Disco $drive verificado" "SUCESSO" $ColorSuccess
+                }
+                catch {
+                    Write-Status "Não foi possível verificar disco $drive" "AVISO" $ColorWarning
+                }
+            }
         }
         
         # 4. Otimizar discos (TRIM para SSD, desfragmentação para HDD)
@@ -1009,9 +1069,18 @@ function New-ComparisonReport {
     $reportsDir = "C:\Program Files\HPTI\Reports"
     $checkScript = $CheckScriptPath
     
+    # Tentar baixar check.ps1 se não existir
     if (-not $checkScript -or -not (Test-Path $checkScript)) {
-        Write-Status "Script check.ps1 não encontrado" "ERRO" $ColorError
-        return $false
+        Write-Status "Script check.ps1 não encontrado localmente" "AVISO" $ColorWarning
+        $downloaded = Download-CheckScript
+        
+        if ($downloaded) {
+            $checkScript = $CheckScriptPath
+        }
+        else {
+            Write-Status "Não foi possível obter check.ps1" "ERRO" $ColorError
+            return $false
+        }
     }
     
     # FASE 1: Diagnóstico ANTES
@@ -1182,11 +1251,21 @@ do {
             # Executar Diagnóstico
             Write-Status "Executando diagnóstico completo..." "INFO" $ColorInfo
             $checkScript = $CheckScriptPath
+            
+            # Tentar baixar se não existir
+            if (-not $checkScript -or -not (Test-Path $checkScript)) {
+                Write-Status "Script check.ps1 não encontrado localmente" "AVISO" $ColorWarning
+                $downloaded = Download-CheckScript
+                if ($downloaded) {
+                    $checkScript = $CheckScriptPath
+                }
+            }
+            
             if ($checkScript -and (Test-Path $checkScript)) {
                 & $checkScript
             }
             else {
-                Write-Status "Script check.ps1 não encontrado" "ERRO" $ColorError
+                Write-Status "Não foi possível obter check.ps1" "ERRO" $ColorError
             }
             Read-Host "`nPressione ENTER para continuar"
         }
