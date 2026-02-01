@@ -192,13 +192,13 @@ function Show-MainMenu {
     Write-Host ""
 }
 
-# Submenu - Diagnóstico de Hardware
+# Submenu - Diagnóstico de Hardware 
 function Show-DiagnosticoMenu {
     Show-Header
     Write-Host "  ══════════════════  DIAGNÓSTICO DE HARDWARE  ══════════════════" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [1] CPU-Z              - Informações detalhadas do processador" -ForegroundColor White
-    Write-Host "  [2] AIDA64             - Diagnóstico completo do sistema" -ForegroundColor White
+    Write-Host "  [2] AD             - Diagnóstico completo do sistema" -ForegroundColor White
     Write-Host "  [3] Core Temp          - Monitor de temperatura da CPU" -ForegroundColor White
     Write-Host "  [4] CrystalDiskInfo    - Saúde do disco rígido/SSD" -ForegroundColor White
     Write-Host "  [5] SSD Life           - Vida útil de SSDs" -ForegroundColor White
@@ -212,7 +212,7 @@ function Show-DiagnosticoMenu {
     switch ($choice) {
         "1" { Start-Tool "cpuz_All.7z" "cpuz_All.exe" }
         "2" { Start-Tool "Aida64.7z" "aida64.exe" }
-        "3" { Start-Tool "CoreTemp.7z" "Core Temp.exe" }
+        "3" { Start-Tool "CoreTemp.7z" "CoreTemp.exe" }
         "4" { Start-Tool "CrystalDiskInfo.7z" "DiskInfo64.exe" }
         "5" { Start-Tool "ssdlife.7z" "SSDLife.exe" }
         "6" { Start-Tool "BatteryInfoView.7z" "BatteryInfoView.exe" }
@@ -264,11 +264,11 @@ function Show-SenhaMenu {
     
     $choice = Read-Host "  Escolha uma opção"
     switch ($choice) {
-        "1" { Start-Tool "PasswordReset.7z" "PasswordReset.exe" }
-        "2" { Start-Tool "ActivePasswordChanger.7z" "PasswordChanger.exe" }
+        "1" { Start-Tool "PasswordReset.7z" "PassReset.exe" }
+        "2" { Start-Tool "ActivePasswordChanger.7z" "ActivePasswordChanger.exe" }
         "3" { Start-Tool "AdminPasswordResetter.7z" "AdminPasswordResetter.exe" }
         "4" { Start-Tool "DaossoftWindowsPassword.7z" "DaossoftWindowsPassword.exe" }
-        "5" { Start-Tool "OOUserManager.7z" "ooum64.exe" }
+        "5" { Start-Tool "OOUserManager.7z" "oostarting.exe" }
         "0" { return }
     }
     Show-SenhaMenu
@@ -297,10 +297,10 @@ function Show-UtilitariosMenu {
         "2" { Start-Tool "UltraISO.7z" "UltraISO.exe" }
         "3" { Start-Tool "Unlocker.7z" "Unlocker.exe" }
         "4" { Start-Tool "TakeOwnershipPro.7z" "TakeOwnershipPro.exe" }
-        "5" { Start-Tool "RevoUninstaller.7z" "RevoUnin.exe" }
-        "6" { Start-Tool "screenshot.7z" "Screenshot.exe" }
-        "7" { Start-Tool "usbshow.7z" "usbshow.exe" }
-        "8" { Start-Tool "BloqueadordeFirewall.7z" "Firewall App Blocker.exe" }
+        "5" { Start-Tool "RevoUninstaller.7z" "Revoupport.exe" }
+        "6" { Start-Tool "screenshot.7z" "yandexdiskscreenshoteditor.exe" }
+        "7" { Start-Tool "usbshow.7z" "usb show.exe" }
+        "8" { Start-Tool "BloqueadordeFirewall.7z" "menu de contexto.exe" }
         "0" { return }
     }
     Show-UtilitariosMenu
@@ -341,8 +341,8 @@ function Show-RedeMenu {
     
     $choice = Read-Host "  Escolha uma opção"
     switch ($choice) {
-        "1" { Start-Tool "advancedipscanner.7z" "advanced_ip_scanner.exe" }
-        "2" { Start-Tool "MudarMAC.7z" "TMAC_Manager.exe" }
+        "1" { Start-Tool "advancedipscanner.7z" "advancedipscanner.exe" }
+        "2" { Start-Tool "MudarMAC.7z" "TMAC.exe" }
         "0" { return }
     }
     Show-RedeMenu
@@ -351,12 +351,13 @@ function Show-RedeMenu {
 # Submenu - Boot e Recuperação
 function Show-BootMenu {
     Show-Header
-    Write-Host "  ═════════════════════  BOOT E RECUPERAÇÃO  ════════════════════" -ForegroundColor Yellow
+    Write-Host "  ═════════════════════  BOOT E RECUPERAÇÃO  ═══════════════════" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [1] NTBOOTAutoFix      - Reparar boot do Windows" -ForegroundColor White
     Write-Host "  [2] BOOTICE            - Editor de boot avançado" -ForegroundColor White
-    Write-Host "  [3] BCD/EFI Edit       - Editar configuração BCD" -ForegroundColor White
-    Write-Host "  [4] QEMU Simple Boot   - Testar boot de ISO" -ForegroundColor White
+    Write-Host "  [3] EasyBCD            - Editar configuração BCD (Windows 10)" -ForegroundColor White
+    Write-Host "  [4] EasyUEFI           - Gerenciar boot UEFI" -ForegroundColor White
+    Write-Host "  [5] QEMU Simple Boot   - Testar boot de ISO" -ForegroundColor White
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -365,8 +366,9 @@ function Show-BootMenu {
     switch ($choice) {
         "1" { Start-Tool "NTBOOTAutoFix.7z" "NTBOOTautofix.exe" }
         "2" { Start-Tool "BOOTICEx64.7z" "BOOTICEx64.exe" }
-        "3" { Start-Tool "BCD_UFI_EDIT.7z" "BCDEDIT.exe" }
-        "4" { Start-Tool "QemuSimpleBoot.7z" "QemuSimpleBoot.exe" }
+        "3" { Start-Tool "BCD_UFI_EDIT.7z" "EasyBCD_W10.exe" }
+        "4" { Start-Tool "BCD_UFI_EDIT.7z" "EasyUEFI64.exe" }
+        "5" { Start-Tool "QemuSimpleBoot.7z" "QemuSimpleBoot.exe" }
         "0" { return }
     }
     Show-BootMenu

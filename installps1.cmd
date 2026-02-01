@@ -29,11 +29,11 @@ echo.
 if %PS_MISSING%==0 (
     echo [2/5] Verificando versao do PowerShell...
     
-    for /f "tokens=*" %%i in ('powershell -NoProfile -Command "$PSVersionTable.PSVersion.Major"') do set PS_VERSION=%%i
+    for /f "delims=" %%i in ('powershell -NoProfile -Command "[int]$PSVersionTable.PSVersion.Major"') do set PS_VERSION=%%i
     
     echo [INFO] Versao do PowerShell detectada: %PS_VERSION%
     
-    if %PS_VERSION% LSS 5 (
+    if !PS_VERSION! LSS 5 (
         echo [AVISO] Versao insuficiente detectada (HP-Scripts requer 5.1+)
         echo [INFO] Sera necessario atualizar para PowerShell 7
         set NEEDS_UPDATE=1
