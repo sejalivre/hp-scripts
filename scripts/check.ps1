@@ -32,6 +32,14 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $ReportHTML = "$HPTIReportsDir\checkup_${ComputerName}_$timestamp.html"
 $WhatsAppLink = "https://wa.me/556235121468?text=Ola%20HPinfo,%20segue%20o%20relatorio%20do%20PC%20$ComputerName%20-%20OS:%20$OSNumber"
 
+# Configuração de Logs
+$HPTILogsDir = "C:\Program Files\HPTI\Logs"
+if (-not (Test-Path $HPTILogsDir)) { New-Item -Path $HPTILogsDir -ItemType Directory -Force | Out-Null }
+$LogFile = "$HPTILogsDir\check_${ComputerName}_$timestamp.log"
+
+# Inicia transcript
+Start-Transcript -Path $LogFile -Append -ErrorAction SilentlyContinue
+
 # ============================================================
 # VERSÃO PORTÁTIL - USA FERRAMENTAS LOCAIS DO PENDRIVE
 # ============================================================
@@ -1330,6 +1338,10 @@ $html = @"
 
 $html | Out-File $ReportHTML -Encoding UTF8
 Write-Host "[OK] Relatório HTML Gerado em: $ReportHTML" -ForegroundColor Green
+
+# Para transcript
+Stop-Transcript -ErrorAction SilentlyContinue
+Write-Host "[OK] Log salvo em: $LogFile" -ForegroundColor Cyan
 
 # Abrir relatório automaticamente
 Write-Host "[*] Abrindo relatório..." -ForegroundColor Cyan
