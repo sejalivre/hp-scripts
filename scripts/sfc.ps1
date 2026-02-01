@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     Script de Diagnóstico e Reparação Completa do Windows
@@ -562,3 +562,4 @@ Write-Host "`n"
 Write-Log "Script finalizado!" -Type "SUCCESS"
 Write-Host "`nPressione qualquer tecla para sair..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+

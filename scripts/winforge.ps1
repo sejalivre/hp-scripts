@@ -1,4 +1,4 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     WinForge - Sistema de Instalação e Otimização do Windows
@@ -794,3 +794,4 @@ Write-Host ""
 Write-Log "=== WINFORGE CONCLUÍDO ===" "SUCCESS"
 Write-Host "Log completo: $LogFile" -ForegroundColor Cyan
 Write-Host "Relatório: $ReportFile" -ForegroundColor Cyan
+

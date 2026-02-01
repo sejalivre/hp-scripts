@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     HP-Scripts Repair v1.0 - Reparo Automático de Problemas do Windows
 .DESCRIPTION
@@ -680,3 +680,4 @@ do {
 } while ($true)
 
 Write-Host "`nScript de reparo finalizado. Logs disponíveis em: $logDir" -ForegroundColor Cyan
+

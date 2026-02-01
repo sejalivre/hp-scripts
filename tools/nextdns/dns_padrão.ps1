@@ -1,4 +1,4 @@
-# ==========================================
+﻿# ==========================================
 # RESTAURAR DNS PADRÃO (DHCP)
 # ==========================================
 # Este script remove configurações de DNS estático e restaura para DHCP.

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Instalador HPTI NextDNS + Flush DNS + Kill Browsers + Agendamento + DDNS
     Versão 1.1 - Com seleção de ID Dinâmico
