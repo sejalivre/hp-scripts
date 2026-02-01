@@ -34,6 +34,28 @@ $ColorError = "Red"
 $ColorInfo = "Cyan"
 $ColorAction = "Magenta"
 
+# Detecta caminho do check.ps1
+$CheckScriptPath = $null
+
+# Tenta localizar check.ps1 em locais conhecidos
+$possiblePaths = @(
+    (Join-Path $PSScriptRoot "check.ps1"),                           # Mesmo diretório
+    "c:\hp\GitHub\hp-scripts\scripts\check.ps1",                     # Repositório
+    "C:\Program Files\HPTI\scripts\check.ps1",                       # Instalação
+    (Join-Path (Split-Path $PSScriptRoot) "scripts\check.ps1")      # Diretório pai
+)
+
+foreach ($path in $possiblePaths) {
+    if (Test-Path $path) {
+        $CheckScriptPath = $path
+        break
+    }
+}
+
+if (-not $CheckScriptPath) {
+    Write-Warning "check.ps1 não encontrado. Funcionalidades de comparação desabilitadas."
+}
+
 function Write-Status {
     param([string]$Message, [string]$Status, [string]$Color = "White")
     
@@ -554,7 +576,7 @@ function Repair-Complete {
     
     $results.Performance = Repair-Performance
     
-    # Resumo dos resultados
+    # Resumo dos resultados 
     Write-Host "`n══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
     Write-Host "RESUMO DO REPARO COMPLETO" -ForegroundColor White
     Write-Host "══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
@@ -812,27 +834,75 @@ function Read-CheckReport {
         # Extrai problemas do HTML (busca por status CRÍTICO e ALERTA)
         $problems = @()
         
-        # Regex para extrair linhas da tabela
-        $tableRows = [regex]::Matches($htmlContent, '<tr[^>]*>.*?</tr>')
+        # Método 1: Regex melhorada para capturar linhas da tabela
+        # Busca por <td> que contém CRÍTICO ou ALERTA
+        $pattern = '<tr[^>]*>.*?<td[^>]*>(\d+)</td>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*class="status-(critico|alerta)"[^>]*>.*?(CRÍTICO|ALERTA).*?</td>.*?</tr>'
         
-        foreach ($row in $tableRows) {
-            $rowHtml = $row.Value
+        $regexMatches = [regex]::Matches($htmlContent, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+        
+        foreach ($match in $regexMatches) {
+            $id = $match.Groups[1].Value.Trim()
+            $checkName = $match.Groups[2].Value.Trim()
+            $status = $match.Groups[5].Value.Trim()
             
-            # Extrai status
-            if ($rowHtml -match '(CRÍTICO|ALERTA)') {
-                $status = $matches[1]
-                
-                # Extrai nome da verificação
-                if ($rowHtml -match '<td[^>]*>([^<]+)</td>') {
-                    $checkName = $matches[1].Trim()
+            $problems += [PSCustomObject]@{
+                ID     = $id
+                Name   = $checkName
+                Status = $status
+            }
+        }
+        
+        # Método 2: Se não encontrou com regex complexa, tenta método alternativo
+        if ($problems.Count -eq 0) {
+            Write-Status "Tentando método alternativo de parsing..." "INFO" $ColorInfo
+            
+            # Divide por linhas e procura padrões
+            $lines = $htmlContent -split "`n"
+            $inTable = $false
+            $currentRow = ""
+            
+            foreach ($line in $lines) {
+                if ($line -match '<tr[^>]*>') {
+                    $inTable = $true
+                    $currentRow = $line
+                }
+                elseif ($inTable) {
+                    $currentRow += $line
                     
-                    $problems += [PSCustomObject]@{
-                        Name   = $checkName
-                        Status = $status
+                    if ($line -match '</tr>') {
+                        # Verifica se tem CRÍTICO ou ALERTA
+                        if ($currentRow -match '(CRÍTICO|ALERTA)') {
+                            $status = $matches[1]
+                            
+                            # Extrai todas as colunas <td>
+                            $tdMatches = [regex]::Matches($currentRow, '<td[^>]*>([^<]+)</td>')
+                            
+                            if ($tdMatches.Count -ge 2) {
+                                # Segunda coluna é o nome da verificação
+                                $checkName = $tdMatches[1].Groups[1].Value.Trim()
+                                
+                                # Remove emojis e caracteres especiais
+                                $checkName = $checkName -replace '[^\w\s\-\(\)]', ''
+                                $checkName = $checkName.Trim()
+                                
+                                if (-not [string]::IsNullOrWhiteSpace($checkName) -and $checkName -notmatch '^\d+$') {
+                                    $problems += [PSCustomObject]@{
+                                        Name   = $checkName
+                                        Status = $status
+                                    }
+                                }
+                            }
+                        }
+                        
+                        $inTable = $false
+                        $currentRow = ""
                     }
                 }
             }
         }
+        
+        # Remove duplicatas
+        $problems = $problems | Sort-Object Name -Unique
         
         return $problems
     }
@@ -938,10 +1008,10 @@ function New-ComparisonReport {
     
     $startTime = Get-Date
     $reportsDir = "C:\Program Files\HPTI\Reports"
-    $checkScript = Join-Path $PSScriptRoot "check.ps1"
+    $checkScript = $CheckScriptPath
     
-    if (-not (Test-Path $checkScript)) {
-        Write-Status "Script check.ps1 não encontrado em: $checkScript" "ERRO" $ColorError
+    if (-not $checkScript -or -not (Test-Path $checkScript)) {
+        Write-Status "Script check.ps1 não encontrado" "ERRO" $ColorError
         return $false
     }
     
@@ -1112,12 +1182,12 @@ do {
         "1" {
             # Executar Diagnóstico
             Write-Status "Executando diagnóstico completo..." "INFO" $ColorInfo
-            $checkScript = Join-Path $PSScriptRoot "check.ps1"
-            if (Test-Path $checkScript) {
+            $checkScript = $CheckScriptPath
+            if ($checkScript -and (Test-Path $checkScript)) {
                 & $checkScript
             }
             else {
-                Write-Status "Script check.ps1 não encontrado em: $checkScript" "ERRO" $ColorError
+                Write-Status "Script check.ps1 não encontrado" "ERRO" $ColorError
             }
             Read-Host "`nPressione ENTER para continuar"
         }
