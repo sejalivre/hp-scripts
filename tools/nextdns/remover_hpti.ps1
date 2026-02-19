@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Script de Remoção Total HPTI - NextDNS -> Google DNS
 .DESCRIPTION
@@ -31,7 +31,6 @@ else {
 # --- 2. TENTAR DESINSTALAÇÃO OFICIAL ---
 Write-Host "`n2. Desinstalando NextDNS..." -ForegroundColor Yellow
 
-# Tenta encontrar o executável na pasta padrão
 $Uninstaller = "$env:ProgramFiles\NextDNS\NextDNSSetup.exe"
 
 if (Test-Path $Uninstaller) {
@@ -40,14 +39,11 @@ if (Test-Path $Uninstaller) {
     Write-Host " -> Desinstalação concluída." -ForegroundColor Green
 }
 else {
-    # SE NÃO ACHAR O DESINSTALADOR, FAZ REMOÇÃO FORÇADA DO SERVIÇO
     Write-Warning " -> Desinstalador oficial não encontrado. Forçando remoção manual do serviço..."
     
     $Service = Get-Service | Where-Object { $_.DisplayName -like "*NextDNS*" } | Select-Object -First 1
     if ($Service) {
         Stop-Service -InputObject $Service -Force -ErrorAction SilentlyContinue
-        
-        # Remove o serviço via sc.exe (PowerShell não tem comando nativo simples pra deletar serviço)
         sc.exe delete $Service.Name | Out-Null
         Write-Host " -> Serviço removido forçadamente." -ForegroundColor Green
     }
@@ -57,17 +53,15 @@ else {
 Write-Host "`n3. Limpando pastas HPTI..." -ForegroundColor Yellow
 $HptiDir = "$env:ProgramFiles\HPTI"
 if (Test-Path $HptiDir) {
-    # Remove arquivo de configuração também
     $ConfigFile = "$HptiDir\config.txt"
     if (Test-Path $ConfigFile) {
         Remove-Item -Path $ConfigFile -Force -ErrorAction SilentlyContinue
         Write-Host " -> Arquivo de configuração removido." -ForegroundColor Gray
     }
     
-    Remove-Item -Path $HptiDir -Recurse -Force
+    Remove-Item -Path $HptiDir -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host " -> Pasta HPTI removida." -ForegroundColor Green
 }
-# Limpa pasta residual do NextDNS se estiver vazia ou sobrar lixo
 $NextDir = "$env:ProgramFiles\NextDNS"
 if (Test-Path $NextDir) {
     Remove-Item -Path $NextDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -85,12 +79,18 @@ try {
     }
 }
 catch {
-    Write-Error "Erro ao definir DNS."
+    Write-Warning "Erro ao definir DNS: $($_.Exception.Message)"
 }
 
 # --- 5. LIMPEZA FINAL ---
 Write-Host "`n5. Limpando Cache..." -ForegroundColor Yellow
-Invoke-Expression -Command "ipconfig /flushdns"
+try {
+    ipconfig /flushdns | Out-Null
+    Write-Host "[OK] Cache DNS limpo." -ForegroundColor Green
+}
+catch {
+    Write-Warning "Não foi possível limpar o cache DNS."
+}
 
 Write-Host "`n[SUCESSO] Sistema limpo e restaurado." -ForegroundColor Cyan
 Start-Sleep -Seconds 5
