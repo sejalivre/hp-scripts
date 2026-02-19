@@ -1,5 +1,12 @@
-﻿# reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
+# reparar_nextdns.ps1 - Manutenção e Auto-Recuperação HPTI
 # Versão 2.0 - Leitura de ID via Arquivo de Configuração
+
+# --- VERIFICAÇÃO DE ADMINISTRADOR ---
+if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "Execute como ADMINISTRADOR!"
+    Start-Sleep -Seconds 3
+    Exit
+}
 
 Write-Host "--- INICIANDO VERIFICAÇÃO DE SAÚDE HPTI ---" -ForegroundColor Cyan
 
@@ -8,7 +15,6 @@ $HptiDir = "$env:ProgramFiles\HPTI"
 $ConfigFile = "$HptiDir\config.txt"
 $NextDNS_ID = ""
 
-# Tenta ler o ID do arquivo de configuração
 if (Test-Path $ConfigFile) {
     $NextDNS_ID = Get-Content $ConfigFile -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($NextDNS_ID -and $NextDNS_ID -match '^[a-zA-Z0-9]{6}$') {
@@ -20,12 +26,11 @@ if (Test-Path $ConfigFile) {
     }
 }
 
-# Fallback: Se não conseguiu ler do arquivo, usa ID padrão e avisa
 if (-not $NextDNS_ID) {
     Write-Warning "Arquivo de configuração não encontrado ou ID inválido!"
     Write-Warning "Execute o instalador novamente para configurar o ID correto."
     Write-Host "Usando ID padrão temporário (bloqueio pode não funcionar)..." -ForegroundColor Yellow
-    $NextDNS_ID = "3a495c"  # ID padrão apenas como fallback
+    $NextDNS_ID = "3a495c"
 }
 
 # --- CONFIGURAÇÕES DE INFRAESTRUTURA (URLs Absolutas) ---
@@ -36,40 +41,51 @@ $7zipExe = "$tempDir\7z.exe"
 $nextDnsZip = "$tempDir\nextdns.7z"
 $extractDir = "$tempDir\nextdns_extracted"
 
+# Garante que as pastas existem sempre (independente do fluxo abaixo)
+if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
+if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
+
 # --- 1. VERIFICAÇÃO DO SERVIÇO (REINSTALAÇÃO COMPLETA SE SUMIR) ---
 $svc = Get-Service -Name "NextDNS" -ErrorAction SilentlyContinue
 if ($null -eq $svc) {
     Write-Warning "[ALERTA] Serviço não encontrado. Iniciando reinstalação via Web..."
-    
-    # Garante pastas
-    if (-not (Test-Path $tempDir)) { New-Item -ItemType Directory -Path $tempDir -Force | Out-Null }
-    if (-not (Test-Path $extractDir)) { New-Item -ItemType Directory -Path $extractDir -Force | Out-Null }
 
-    # Baixa motor de extração se necessário 
     if (-not (Test-Path $7zipExe)) {
         Write-Host " -> Preparando motor de extração..." -ForegroundColor Gray
-        Invoke-WebRequest -Uri "$repoBase/7z.txe" -OutFile "$tempDir\7z.txe" -UseBasicParsing
-        Copy-Item -Path "$tempDir\7z.txe" -Destination $7zipExe -Force
+        try {
+            Invoke-WebRequest -Uri "$repoBase/7z.txe" -OutFile "$tempDir\7z.txe" -UseBasicParsing -ErrorAction Stop
+            Copy-Item -Path "$tempDir\7z.txe" -Destination $7zipExe -Force
+        }
+        catch {
+            Write-Warning "Falha ao baixar motor de extração: $($_.Exception.Message)"
+        }
     }
 
-    # Baixa e Extrai o pacote NextDNS
     Write-Host " -> Baixando e Extraindo pacote de reparo..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -UseBasicParsing -ErrorAction Stop
-    
-    # Extração silenciosa
-    $argumentos = "x `"$nextDnsZip`" -o`"$extractDir`" -p`"0`" -y"
-    Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
+    try {
+        Invoke-WebRequest -Uri "$dnsBase/nextdns.7z" -OutFile $nextDnsZip -UseBasicParsing -ErrorAction Stop
+    }
+    catch {
+        Write-Warning "Falha ao baixar pacote NextDNS: $($_.Exception.Message)"
+    }
 
-    # Executa a instalação silenciosa COM O ID CORRETO
+    if (Test-Path $nextDnsZip) {
+        $argumentos = "x `"$nextDnsZip`" -o`"$extractDir`" -p`"0`" -y"
+        Start-Process -FilePath $7zipExe -ArgumentList $argumentos -Wait -NoNewWindow
+    }
+
     $InstallerPath = Join-Path $extractDir "NextDNSSetup-3.0.13.exe"
     if (Test-Path $InstallerPath) {
         Write-Host " -> Restaurando serviço NextDNS (ID: $NextDNS_ID)..." -ForegroundColor Cyan
         Start-Process -FilePath $InstallerPath -ArgumentList "/S", "/ID=$NextDNS_ID" -Wait
     }
+    else {
+        Write-Warning "Instalador não encontrado após extração."
+    }
 }
 elseif ($svc.Status -ne "Running") {
     Write-Host " -> Iniciando serviço NextDNS parado..." -ForegroundColor Yellow
-    Start-Service -Name "NextDNS"
+    Start-Service -Name "NextDNS" -ErrorAction SilentlyContinue
 }
 
 # --- 2. RESTAURAÇÃO DE REDE (DHCP) ---
@@ -82,14 +98,23 @@ foreach ($nic in $adapters) {
 # --- 3. RE-APLICAÇÃO DO CERTIFICADO ---
 $CertPath = Join-Path $extractDir "NextDNS.cer"
 if (-not (Test-Path $CertPath)) {
-    # Tenta baixar se não existir localmente
-    Invoke-WebRequest -Uri "$dnsBase/NextDNS.cer" -OutFile $CertPath -UseBasicParsing -ErrorAction SilentlyContinue
+    try {
+        Invoke-WebRequest -Uri "$dnsBase/NextDNS.cer" -OutFile $CertPath -UseBasicParsing -ErrorAction Stop
+    }
+    catch {
+        Write-Warning "Não foi possível baixar o certificado: $($_.Exception.Message)"
+    }
 }
 if (Test-Path $CertPath) {
     $certStore = Get-ChildItem Cert:\LocalMachine\Root | Where-Object { $_.Subject -like "*NextDNS*" }
     if (-not $certStore) {
         Write-Host " -> Restaurando certificado de bloqueio..." -ForegroundColor Yellow
-        Import-Certificate -FilePath $CertPath -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+        try {
+            Import-Certificate -FilePath $CertPath -CertStoreLocation Cert:\LocalMachine\Root | Out-Null
+        }
+        catch {
+            Write-Warning "Falha ao importar certificado: $($_.Exception.Message)"
+        }
     }
 }
 
@@ -109,12 +134,11 @@ foreach ($path in $uninstallPaths) {
 
 # --- 5. SINCRONIZAÇÃO E FLUSH ---
 try {
-    # URL de vínculo IP atualizada para usar a variável do ID
     Invoke-WebRequest -Uri "https://link-ip.nextdns.io/$NextDNS_ID/97a2d3980330d01a" -UseBasicParsing | Out-Null
     Write-Host " -> IP vinculado com sucesso ($NextDNS_ID)." -ForegroundColor Green
 }
 catch {
-    Write-Warning "Falha ao vincular IP (Verifique conexão)."
+    Write-Warning "Falha ao vincular IP (Verifique conexão): $($_.Exception.Message)"
 }
 ipconfig /flushdns | Out-Null
 
