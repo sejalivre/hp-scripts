@@ -88,11 +88,21 @@ elseif ($svc.Status -ne "Running") {
     Start-Service -Name "NextDNS" -ErrorAction SilentlyContinue
 }
 
-# --- 2. RESTAURAÇÃO DE REDE (DHCP) ---
-Write-Host " -> Garantindo DHCP nas placas de rede..." -ForegroundColor Gray
-$adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
-foreach ($nic in $adapters) {
-    Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue
+# --- 2. REAPLICAÇÃO DE DNS ESTÁTICO DO NEXTDNS ---
+Write-Host " -> Reaplicando DNS estático do NextDNS nas placas de rede..." -ForegroundColor Cyan
+$NextDNSv4 = @("45.90.28.188", "45.90.30.188")
+$NextDNSv6 = @("2a07:a8c0::3a:495c", "2a07:a8c1::3a:495c")
+
+try {
+    $adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+    foreach ($nic in $adapters) {
+        Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ServerAddresses $NextDNSv4 -ErrorAction SilentlyContinue
+        Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ServerAddresses $NextDNSv6 -ErrorAction SilentlyContinue
+    }
+    Write-Host "[OK] DNS estático reaplicado." -ForegroundColor Green
+}
+catch {
+    Write-Warning "Falha ao reaplicar DNS: $($_.Exception.Message)"
 }
 
 # --- 3. RE-APLICAÇÃO DO CERTIFICADO ---
