@@ -71,7 +71,7 @@ $ferramentas = @(
     @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
     @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "scripts/winforge" ; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "scripts/limp"  ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "scripts/update"; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "scripts/update_menu"; Color = "Yellow" ; IsLocal = $true }
     @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "scripts/hora"  ; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "scripts/net"   ; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "scripts/print" ; Color = "Yellow" ; IsLocalScript = $true }
