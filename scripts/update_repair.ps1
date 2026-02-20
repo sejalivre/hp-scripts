@@ -1,6 +1,10 @@
-# Windows Update Repair Script - HPCRAFT v2.0.0
-# Executar como Administrador
-# Diagnóstico e reparo do Windows Update
+﻿#Requires -RunAsAdministrator
+<#
+.SYNOPSIS
+    Reparação do Windows Update - HPCRAFT
+.DESCRIPTION
+    Diagnostica e repara componentes do Windows Update
+#>
 
 $ErrorActionPreference = "Continue"
 $logFile = "C:\Program Files\HPTI\Logs\update_repair_$(Get-Date -Format 'yyyyMMdd').log"
@@ -267,7 +271,7 @@ function Repair-WindowsUpdate {
 }
 
 function Main {
-    Write-Log "=== WINDOWS UPDATE REPAIR - HPCRAFT v2.0.0 ===" "Cyan"
+    Write-Log "=== WINDOWS UPDATE REPAIR - HPCRAFT ===" "Cyan"
     Write-Log "Iniciado em: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')" "Gray"
     Write-Log "" "White"
     
