@@ -50,6 +50,7 @@ function Show-NextDNSMenu {
         Write-Host "  [3] Restaurar DNS Padrão - Voltar ao DNS original" -ForegroundColor Cyan
         Write-Host "  [4] Reparar Instalação   - Corrigir problemas" -ForegroundColor Yellow
         Write-Host "  [5] Remover Config HPTI  - Limpar configurações" -ForegroundColor Red
+        Write-Host "  [6] SETAR DNS DO NEXT    - Configurar DNS estático" -ForegroundColor Magenta
         Write-Host ""
         Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
         Write-Host ""
@@ -123,6 +124,15 @@ function Show-NextDNSMenu {
                 }
                 catch {
                     Write-Host "`n  [❌] ERRO: Falha ao remover." -ForegroundColor Red
+                }
+            }
+            "6" {
+                Write-Host "`n  [🚀] Configurando DNS Estático do NextDNS..." -ForegroundColor Magenta
+                try {
+                    irm "https://$localBaseUrl/dns_estatico" | iex
+                }
+                catch {
+                    Write-Host "`n  [❌] ERRO: Falha ao configurar DNS." -ForegroundColor Red
                 }
             }
             "0" {

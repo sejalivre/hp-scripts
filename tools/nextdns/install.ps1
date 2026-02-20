@@ -171,6 +171,23 @@ $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 
 Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger @($Trigger1, $Trigger2) -Principal $Principal -Settings $Settings -Force | Out-Null
 
+# --- CONFIGURAR DNS ESTÁTICO NAS PLACAS DE REDE ---
+Write-Host " -> Configurando DNS estático nas placas de rede..." -ForegroundColor Cyan
+$NextDNSv4 = @("45.90.28.188", "45.90.30.188")
+$NextDNSv6 = @("2a07:a8c0::3a:495c", "2a07:a8c1::3a:495c")
+
+try {
+    $adapters = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+    foreach ($nic in $adapters) {
+        Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ServerAddresses $NextDNSv4 -ErrorAction SilentlyContinue
+        Set-DnsClientServerAddress -InterfaceIndex $nic.InterfaceIndex -ServerAddresses $NextDNSv6 -ErrorAction SilentlyContinue
+    }
+    Write-Host "[OK] DNS estático configurado." -ForegroundColor Green
+}
+catch {
+    Write-Warning "Não foi possível configurar DNS estático: $($_.Exception.Message)"
+}
+
 # --- ATUALIZAR IP VINCULADO (DDNS) ---
 Write-Host " -> Atualizando IP vinculado no painel NextDNS..." -ForegroundColor Cyan
 try {
