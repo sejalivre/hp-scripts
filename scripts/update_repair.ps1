@@ -1,10 +1,16 @@
-﻿#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Reparação do Windows Update - HPCRAFT
+    Reparacao do Windows Update - HPCRAFT
 .DESCRIPTION
     Diagnostica e repara componentes do Windows Update
 #>
+
+# Verificacao de administrador
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Warning "Execute como ADMINISTRADOR!"
+    Start-Sleep -Seconds 3
+    exit
+}
 
 $ErrorActionPreference = "Continue"
 $logFile = "C:\Program Files\HPTI\Logs\update_repair_$(Get-Date -Format 'yyyyMMdd').log"
@@ -25,7 +31,7 @@ function Write-Log {
 }
 
 function Test-WindowsUpdateHealth {
-    Write-Log "=== VERIFICANDO SAÚDE DO WINDOWS UPDATE ===" "Cyan"
+    Write-Log "=== VERIFICANDO SAUDE DO WINDOWS UPDATE ===" "Cyan"
     $isHealthy = $true
     $issues = @()
     
@@ -132,8 +138,8 @@ function Test-WindowsUpdateHealth {
     # Resultado final
     Write-Log "" "White"
     if ($isHealthy) {
-        Write-Log "=== RESULTADO: SISTEMA SAUDÁVEL ===" "Green"
-        Write-Log "Todos os componentes do Windows Update estão funcionando corretamente." "Green"
+        Write-Log "=== RESULTADO: SISTEMA SAUDAVEL ===" "Green"
+        Write-Log "Todos os componentes do Windows Update estao funcionando corretamente." "Green"
     }
     else {
         Write-Log "=== RESULTADO: PROBLEMAS DETECTADOS ===" "Red"
@@ -148,7 +154,7 @@ function Test-WindowsUpdateHealth {
 }
 
 function Repair-WindowsUpdate {
-    Write-Log "=== INICIANDO RESTAURAÇÃO DO WINDOWS UPDATE ===" "Yellow"
+    Write-Log "=== INICIANDO RESTAURACAO DO WINDOWS UPDATE ===" "Yellow"
     
     try {
         # 1. Parar serviços
@@ -208,12 +214,12 @@ function Repair-WindowsUpdate {
         }
         
         # 4. Resetar configurações do Windows Update
-        Write-Log "Resetando configurações do Windows Update..." "Yellow"
+        Write-Log "Resetando configuracoes do Windows Update..." "Yellow"
         try {
             Start-Process "sc.exe" -ArgumentList "config wuauserv start= auto" -Wait -NoNewWindow
             Start-Process "sc.exe" -ArgumentList "config bits start= auto" -Wait -NoNewWindow
             Start-Process "sc.exe" -ArgumentList "config cryptsvc start= auto" -Wait -NoNewWindow
-            Write-Log "  Configurações de serviços restauradas" "Gray"
+            Write-Log "  Configuracoes de serviços restauradas" "Gray"
         }
         catch {
             Write-Log "  Aviso: Erro ao configurar serviços" "Yellow"
@@ -232,11 +238,11 @@ function Repair-WindowsUpdate {
         }
         
         # 6. Executar DISM e SFC
-        Write-Log "Executando verificação de integridade do sistema (DISM)..." "Yellow"
+        Write-Log "Executando verificacao de integridade do sistema (DISM)..." "Yellow"
         try {
             $dismResult = Start-Process "dism.exe" -ArgumentList "/Online /Cleanup-Image /RestoreHealth" -Wait -PassThru -NoNewWindow
             if ($dismResult.ExitCode -eq 0) {
-                Write-Log "  DISM concluído com sucesso" "Green"
+                Write-Log "  DISM concluido com sucesso" "Green"
             }
             else {
                 Write-Log "  DISM retornou código: $($dismResult.ExitCode)" "Yellow"
@@ -246,11 +252,11 @@ function Repair-WindowsUpdate {
             Write-Log "  Aviso: Erro ao executar DISM" "Yellow"
         }
         
-        Write-Log "Executando verificação de arquivos do sistema (SFC)..." "Yellow"
+        Write-Log "Executando verificacao de arquivos do sistema (SFC)..." "Yellow"
         try {
             $sfcResult = Start-Process "sfc.exe" -ArgumentList "/scannow" -Wait -PassThru -NoNewWindow
             if ($sfcResult.ExitCode -eq 0) {
-                Write-Log "  SFC concluído com sucesso" "Green"
+                Write-Log "  SFC concluido com sucesso" "Green"
             }
             else {
                 Write-Log "  SFC retornou código: $($sfcResult.ExitCode)" "Yellow"
@@ -260,12 +266,12 @@ function Repair-WindowsUpdate {
             Write-Log "  Aviso: Erro ao executar SFC" "Yellow"
         }
         
-        Write-Log "=== RESTAURAÇÃO CONCLUÍDA ===" "Green"
-        Write-Log "Recomenda-se reiniciar o computador para aplicar todas as correções." "Yellow"
+        Write-Log "=== RESTAURACAO CONCLUIDA ===" "Green"
+        Write-Log "Recomenda-se reiniciar o computador para aplicar todas as correcoes." "Yellow"
         return $true
     }
     catch {
-        Write-Log "ERRO durante restauração: $($_.Exception.Message)" "Red"
+        Write-Log "ERRO durante restauracao: $($_.Exception.Message)" "Red"
         return $false
     }
 }
@@ -275,30 +281,22 @@ function Main {
     Write-Log "Iniciado em: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')" "Gray"
     Write-Log "" "White"
     
-    # Verificar privilégios de administrador
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
-    if (!$isAdmin) {
-        Write-Log "ERRO: Este script requer privilégios de Administrador!" "Red"
-        Write-Log "Execute o PowerShell como Administrador e tente novamente." "Yellow"
-        return
-    }
-    
     Write-Log "" "White"
     
-    # ETAPA 1: Verificar saúde do Windows Update
+    # ETAPA 1: Verificar saude do Windows Update
     $isHealthy = Test-WindowsUpdateHealth
     
     # ETAPA 2: Se não estiver saudável, executar reparo
     if (-not $isHealthy) {
         Write-Log "" "White"
-        Write-Log "Problemas detectados. Prosseguindo com restauração do Windows Update..." "Red"
+        Write-Log "Problemas detectados. Prosseguindo com restauracao do Windows Update..." "Red"
         Write-Log "" "White"
         
         $repaired = Repair-WindowsUpdate
         
         if ($repaired) {
             Write-Log "" "White"
-            Write-Log "Deseja verificar novamente a saúde do sistema? (S/N): " "Yellow"
+            Write-Log "Deseja verificar novamente a saude do sistema? (S/N): " "Yellow"
             $response = Read-Host
             
             if ($response -eq 'S' -or $response -eq 's') {
@@ -309,11 +307,11 @@ function Main {
     }
     else {
         Write-Log "" "White"
-        Write-Log "Sistema já está saudável. Use a opção 'Instala Update' para instalar atualizações." "Green"
+        Write-Log "Sistema já está saudavel. Use a opcao 'Instala Update' para instalar atualizacoes." "Green"
     }
     
     Write-Log "" "White"
-    Write-Log "=== PROCESSO CONCLUÍDO ===" "Cyan"
+    Write-Log "=== PROCESSO CONCLUIDO ===" "Cyan"
     Write-Log "Finalizado em: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')" "Gray"
     Write-Log "Log completo salvo em: $logFile" "Gray"
 }
