@@ -48,6 +48,13 @@ certutil -urlcache -f https://get.hpinfo.com.br/installps1.cmd install.cmd && in
 
 ## ⚠️ Liberar execução de scripts (quando necessário)
 
+### Opção 1: Pelo Menu HP-Scripts (Recomendado)
+Execute o menu principal e selecione a opção **🔓 POLICY** (15):
+```powershell
+irm get.hpinfo.com.br/menu | iex
+```
+
+### Opção 2: Manualmente
 ```powershell
 # Opção mais segura (recomendada)
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -73,6 +80,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | 11 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
 | 12 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
 | 13 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
+| 14 | 🛠️ TOOLS                     | Menu de ferramentas portáteis (CoreTemp, CrystalDiskInfo, etc.)                     |
+| 15 | 🔓 POLICY                    | Libera política de execução do PowerShell (Unrestricted)                            |
 
 ## Scripts que você pode chamar diretamente
 
