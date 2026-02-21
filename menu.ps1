@@ -80,7 +80,45 @@ $ferramentas = @(
     @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "scripts/wallpaper" ; Color = "Yellow" ; IsLocalScript = $true }
     @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; Color = "Yellow" ; IsLocal = $true }
     @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools" ; Color = "Green" ; IsLocal = $true }
+    @{ ID = "POLICY"     ; Desc = "Liberar Política de Execução"        ; Path = "SetExecutionPolicy" ; Color = "Magenta" ; IsFunction = $true }
 )
+
+function Set-ExecutionPolicy-Unrestricted {
+    $command = "Set-ExecutionPolicy Unrestricted -Scope CurrentUser -Force"
+
+    try {
+        $currentPolicy = Get-ExecutionPolicy -Scope CurrentUser
+
+        if ($currentPolicy -eq "Unrestricted" -or $currentPolicy -eq "RemoteSigned" -or $currentPolicy -eq "Bypass") {
+            Write-Host "[OK] Política de execução já está liberada: $currentPolicy" -ForegroundColor Green
+            return
+        }
+
+        Write-Host "[INFO] Política atual: $currentPolicy" -ForegroundColor Yellow
+        Write-Host "[INFO] Tentando alterar para Unrestricted..." -ForegroundColor Cyan
+
+        Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser -Force -ErrorAction Stop
+
+        $newPolicy = Get-ExecutionPolicy -Scope CurrentUser
+        Write-Host "[OK] Política alterada com sucesso para: $newPolicy" -ForegroundColor Green
+        Write-Host "[INFO] Comando executado: $command" -ForegroundColor Gray
+    }
+    catch {
+        Write-Host "[AVISO] Não foi possível alterar automaticamente." -ForegroundColor Yellow
+        Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+        Write-Host "`n[INFO] Copiando comando para área de transferência..." -ForegroundColor Cyan
+
+        try {
+            Set-Clipboard -Value $command
+            Write-Host "[OK] Comando copiado: $command" -ForegroundColor Green
+            Write-Host "[INFO] Cole no PowerShell com CTRL+V e execute como Administrador" -ForegroundColor Yellow
+        }
+        catch {
+            Write-Host "[INFO] Comando para copiar manualmente:" -ForegroundColor Cyan
+            Write-Host $command -ForegroundColor White
+        }
+    }
+}
 
 function Show-MainMenu {
     do {
@@ -206,6 +244,13 @@ function Show-MainMenu {
                         Write-Host "URL: $finalUrl" -ForegroundColor Gray
                         Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
                     }
+                }
+            }
+            elseif ($selecionada.IsFunction) {
+                # Para funções internas (não requerem download)
+                switch ($selecionada.Path) {
+                    "SetExecutionPolicy" { Set-ExecutionPolicy-Unrestricted }
+                    default { Write-Warning "Função desconhecida: $($selecionada.Path)" }
                 }
             }
             else {
