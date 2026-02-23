@@ -201,23 +201,9 @@ function Show-MainMenu {
     do {
         Clear-Host
         Write-Host ""
-        Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ██╗  ██╗██████╗                           ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ██║  ██║██╔══██╗                          ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ███████║██████╔╝                          ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ██╔══██║██╔═══╝                           ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ██║  ██║██║                               ║" -ForegroundColor Cyan
-        Write-Host "  ║                    ╚═╝  ╚═╝╚═╝                               ║" -ForegroundColor Cyan
-        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-        Write-Host "  ║              ██╗███╗   ██╗███████ ██████╗                    ║" -ForegroundColor Cyan
-        Write-Host "  ║              ██║████╗  ██║██╔════╝██╔══██╗                   ║" -ForegroundColor Cyan
-        Write-Host "  ║              ██║██╔██╗ ██║█████╗  ██████╔╝                   ║" -ForegroundColor Cyan
-        Write-Host "  ║              ██║██║╚██╗██║██╔══╝  ██╔══██╗                   ║" -ForegroundColor Cyan
-        Write-Host "  ║              ██║██║ ╚████║██║     ██║  ██║                   ║" -ForegroundColor Cyan
-        Write-Host "  ║              ╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝  ╚═╝                   ║" -ForegroundColor Cyan
-        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
-        Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+        Write-Host "  ╔════════════════════════╗" -ForegroundColor Cyan
+        Write-Host "  ║      HPCRAFT v2        ║" -ForegroundColor Cyan
+        Write-Host "  ╚════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
 
         # Exibir informações de hardware
