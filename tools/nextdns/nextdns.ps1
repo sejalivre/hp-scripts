@@ -10,39 +10,21 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "HP Scripts - Gerenciamento NextDNS"
 
-# Função para captura de tecla instantânea (sem ENTER)
-function Read-MenuKey {
-    param(
-        [string]$Prompt = "Selecione uma opcao"
-    )
+# ============================================================
+# IMPORTAR MÓDULO UI-UTILS
+# ============================================================
+# Determina o caminho para ui-utils.ps1 (está em ../../scripts/ui-utils.ps1)
+$NextDNSScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent (Split-Path -Parent $NextDNSScriptPath)
+$uiUtilsPath = Join-Path $ProjectRoot "scripts\ui-utils.ps1"
 
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
-
-    # Tenta usar ReadKey para resposta instantânea
-    if ($Host.Name -eq 'ConsoleHost') {
-        try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
-        }
-        catch {
-            return Read-Host $Prompt
-        }
-    }
-    else {
-        return Read-Host $Prompt
-    }
+if (Test-Path $uiUtilsPath) {
+    . $uiUtilsPath
 }
 
 function Show-Header {
     Clear-Host
-    Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║            🌐  GERENCIAMENTO NEXTDNS  🌐                     ║" -ForegroundColor Cyan
-    Write-Host "  ║                docs.hpinfo.com.br                            ║" -ForegroundColor DarkCyan
-    Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-    Write-Host ""
+    Show-BoxHeader -Title "GERENCIAMENTO NEXTDNS" -Subtitle "docs.hpinfo.com.br"
 }
 
 function Show-NextDNSMenu {
@@ -60,7 +42,7 @@ function Show-NextDNSMenu {
 
     do {
         Show-Header
-        
+
         # Mostrar ID atual
         Write-Host "  ┌──────────────────────────────────────────────────────────────┐" -ForegroundColor Gray
         Write-Host "  │  ID Atual: $CurrentID" -ForegroundColor Green -NoNewline
@@ -68,14 +50,13 @@ function Show-NextDNSMenu {
         Write-Host "│" -ForegroundColor Gray
         Write-Host "  └──────────────────────────────────────────────────────────────┘" -ForegroundColor Gray
         Write-Host ""
-        Write-Host "  ══════════════════════  OPÇÕES  ═══════════════════════════════" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "  [1] Instalar NextDNS     - Instalação completa" -ForegroundColor Green
-        Write-Host "  [2] Ver/Alterar ID       - Configurar ID do NextDNS" -ForegroundColor Cyan
-        Write-Host "  [3] Restaurar DNS Padrão - Voltar ao DNS original" -ForegroundColor Cyan
-        Write-Host "  [4] Reparar Instalação   - Corrigir problemas" -ForegroundColor Yellow
-        Write-Host "  [5] Remover Config HPTI  - Limpar configurações" -ForegroundColor Red
-        Write-Host "  [6] SETAR DNS DO NEXT    - Configurar DNS estático" -ForegroundColor Magenta
+        Show-MenuSeparator -Text "OPÇÕES"
+        Show-MenuItem -Number 1 -ID "Install" -Description "Instalação completa" -Color "Green"
+        Show-MenuItem -Number 2 -ID "ConfigID" -Description "Configurar ID do NextDNS" -Color "Cyan"
+        Show-MenuItem -Number 3 -ID "RestoreDNS" -Description "Voltar ao DNS original" -Color "Cyan"
+        Show-MenuItem -Number 4 -ID "Repair" -Description "Corrigir problemas" -Color "Yellow"
+        Show-MenuItem -Number 5 -ID "RemoveConfig" -Description "Limpar configurações" -Color "Red"
+        Show-MenuItem -Number 6 -ID "StaticDNS" -Description "Configurar DNS estático" -Color "Magenta"
         Write-Host ""
         Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
         Write-Host ""
