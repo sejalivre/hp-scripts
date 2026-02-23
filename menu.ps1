@@ -77,7 +77,15 @@ else {
     Write-Host "[INFO] Modo: Execução Remota (baixando scripts sob demanda)" -ForegroundColor DarkGray
 }
 
-# Configuração de Origem 
+# ============================================================
+# IMPORTAR MÓDULO UI-UTILS
+# ============================================================
+$uiUtilsPath = Join-Path $ScriptRoot "scripts\ui-utils.ps1"
+if (Test-Path $uiUtilsPath) {
+    . $uiUtilsPath
+}
+
+# Configuração de Origem
 $baseUrl = "get.hpinfo.com.br"
 
 
@@ -138,55 +146,7 @@ function Set-ExecutionPolicy-Unrestricted {
     }
 }
 
-# Função para obter informações de hardware
-function Get-HardwareInfo {
-    try {
-        $cpu = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Name
-        if (-not $cpu) { $cpu = "N/A" }
-
-        $ram = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
-        $ramTotal = if ($ram) { [math]::Round($ram.TotalPhysicalMemory / 1GB, 2) } else { 0 }
-
-        $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction SilentlyContinue
-        $diskFree = if ($disk) { [math]::Round($disk.FreeSpace / 1GB, 2) } else { 0 }
-        $diskTotal = if ($disk) { [math]::Round($disk.Size / 1GB, 2) } else { 0 }
-
-        return @{
-            CPU = $cpu
-            RAM = $ramTotal
-            DiskFree = $diskFree
-            DiskTotal = $diskTotal
-        }
-    }
-    catch {
-        return $null
-    }
-}
-
-# Função para captura de tecla instantânea (sem ENTER)
-function Read-MenuKey {
-    param(
-        [string]$Prompt = "Selecione uma opcao"
-    )
-
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
-
-    # Tenta usar ReadKey para resposta instantânea
-    if ($Host.Name -eq 'ConsoleHost') {
-        try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
-        }
-        catch {
-            return Read-Host $Prompt
-        }
-    }
-    else {
-        return Read-Host $Prompt
-    }
-}
+# Funções Read-MenuKey e Get-HardwareInfo estão disponíveis no ui-utils.ps1
 
 function Show-MatrixEffect {
     param([int]$DurationSeconds = 2)
@@ -240,36 +200,31 @@ Show-MatrixEffect -DurationSeconds 2
 function Show-MainMenu {
     do {
         Clear-Host
-        Write-Host ""
-        Write-Host "  ╔════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "  ║      HPCRAFT v2        ║" -ForegroundColor Cyan
-        Write-Host "  ╚════════════════════════╝" -ForegroundColor Cyan
-        Write-Host ""
+        Show-BoxHeader -Title "HPCRAFT v2" -Subtitle "Windows Optimization Tool"
 
         # Exibir informações de hardware
-        $hw = Get-HardwareInfo
-        if ($hw) {
-            Write-Host "  CPU: $($hw.CPU)" -ForegroundColor Gray
-            Write-Host "  RAM: $($hw.RAM)GB | Disco C: $($hw.DiskFree)GB/$($hw.DiskTotal)GB" -ForegroundColor Gray
-            Write-Host ""
-        }
-        
-        # 2. Renderização Dinâmica do Menu  
+        Show-HardwareInfo
+
+        # Renderização Dinâmica do Menu
         for ($i = 0; $i -lt $ferramentas.Count; $i++) {
             $n = $i + 1
             $item = $ferramentas[$i]
-            Write-Host ("  {0,2}. [{1,-11}] {2}" -f $n, $item.ID, $item.Desc) -ForegroundColor White
+            $color = if ($item.Color) { $item.Color } else { "White" }
+            Show-MenuItem -Number $n -ID $item.ID -Description $item.Desc -Color $color
         }
 
-        Write-Host ""
-        Write-Host "  [Q] Sair" -ForegroundColor DarkGray
-        Write-Host ""
-        
+        Show-MenuFooter -Options @("Q", "H") -Labels @("Sair", "Ajuda")
+
         $escolha = Read-MenuKey -Prompt "Selecione uma opcao"
 
-        if ($escolha -eq "Q" -or $escolha -eq "q") { 
+        if ($escolha -eq "Q" -or $escolha -eq "q") {
             Write-Host "`nEncerrando..." -ForegroundColor Green
-            break 
+            break
+        }
+
+        if ($escolha -eq "H" -or $escolha -eq "h") {
+            Show-HelpMenu -HelpURL "https://docs.hpinfo.com.br"
+            continue
         }
 
         # 3. Lógica de Execução

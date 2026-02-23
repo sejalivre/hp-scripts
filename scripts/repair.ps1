@@ -41,6 +41,14 @@ $CheckScriptPath = $null
 $ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
 if (-not $ScriptDir) { $ScriptDir = Get-Location }
 
+# ============================================================
+# IMPORTAR MÓDULO UI-UTILS
+# ============================================================
+$uiUtilsPath = Join-Path $ScriptDir "ui-utils.ps1"
+if (Test-Path $uiUtilsPath) {
+    . $uiUtilsPath
+}
+
 # Tenta localizar check.ps1 em locais conhecidos
 $possiblePaths = @(
     (Join-Path $ScriptDir "check.ps1"),                              # Mesmo diretório
@@ -118,62 +126,32 @@ function Write-Status {
     Write-Host "$icon $Message" -ForegroundColor $Color
 }
 
-# Função para captura de tecla instantânea (sem ENTER)
-function Read-MenuKey {
-    param(
-        [string]$Prompt = "Selecione uma opcao"
-    )
-
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
-
-    # Tenta usar ReadKey para resposta instantânea
-    if ($Host.Name -eq 'ConsoleHost') {
-        try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
-        }
-        catch {
-            return Read-Host $Prompt
-        }
-    }
-    else {
-        return Read-Host $Prompt
-    }
-}
-
 function Show-RepairMenu {
     Clear-Host
+    Show-BoxHeader -Title "HPCRAFT - REPARO AUTOMÁTICO" -Subtitle "Suporte: docs.hpinfo.com.br | v2.0"
+
+    Show-MenuSeparator -Text "REPAROS INTELIGENTES"
+    Show-MenuItem -Number 1 -ID "Diagnóstico" -Description "Executar check.ps1"
+    Show-MenuItem -Number 2 -ID "ReparoIntel" -Description "Ler último check + Reparar"
+    Show-MenuItem -Number 3 -ID "ReparoComp" -Description "Check → Repair → Check com comparação" -Color "Magenta"
     Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║           🛠️  HPCRAFT - REPARO AUTOMÁTICO TI  🛠️            ║" -ForegroundColor Cyan
-    Write-Host "  ║              Suporte: docs.hpinfo.com.br | v2.0              ║" -ForegroundColor DarkCyan
-    Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+
+    Show-MenuSeparator -Text "REPAROS ESPECÍFICOS"
+    Show-MenuItem -Number 4 -ID "Rede" -Description "Reparo de Rede e Conectividade"
+    Show-MenuItem -Number 5 -ID "Limpeza" -Description "Limpeza e Otimização do Sistema"
+    Show-MenuItem -Number 6 -ID "Segurança" -Description "Reparo de Segurança e Windows Defender"
+    Show-MenuItem -Number 7 -ID "Serviços" -Description "Reparo de Serviços do Windows"
+    Show-MenuItem -Number 8 -ID "Disco" -Description "Reparo de Disco e Sistema de Arquivos"
+    Show-MenuItem -Number 9 -ID "WinUpdate" -Description "Reparo de Windows Update"
+    Show-MenuItem -Number 10 -ID "Performance" -Description "Otimização de Desempenho"
+    Show-MenuItem -Number 11 -ID "Bloatware" -Description "Remover Bloatware"
+    Show-MenuItem -Number 12 -ID "Inicialização" -Description "Otimizar Inicialização"
+    Show-MenuItem -Number 13 -ID "Drivers" -Description "Atualizar Drivers"
     Write-Host ""
-    
-    Write-Host "  ═══ REPAROS INTELIGENTES ═══" -ForegroundColor Magenta
-    Write-Host "  [1] 🔍 Executar Diagnóstico (check.ps1)" -ForegroundColor White
-    Write-Host "  [2] 🤖 Reparo Inteligente (Ler último check + Reparar)" -ForegroundColor White
-    Write-Host "  [3] 📊 Reparo Completo com Comparação (Check → Repair → Check)" -ForegroundColor $ColorAction
+
+    Show-MenuItem -Number 99 -ID "ReparoTotal" -Description "Todas as Categorias" -Color "Yellow"
     Write-Host ""
-    
-    Write-Host "  ═══ REPAROS ESPECÍFICOS ═══" -ForegroundColor Cyan
-    Write-Host "  [4] 🌐 Reparo de Rede e Conectividade" -ForegroundColor White
-    Write-Host "  [5] 🧹 Limpeza e Otimização do Sistema" -ForegroundColor White
-    Write-Host "  [6] 🛡️  Reparo de Segurança e Windows Defender" -ForegroundColor White
-    Write-Host "  [7] ⚙️  Reparo de Serviços do Windows" -ForegroundColor White
-    Write-Host "  [8] 💾 Reparo de Disco e Sistema de Arquivos" -ForegroundColor White
-    Write-Host "  [9] 🔄 Reparo de Windows Update" -ForegroundColor White
-    Write-Host "  [10] 🚀 Otimização de Desempenho" -ForegroundColor White
-    Write-Host "  [11] 🗑️  Remover Bloatware" -ForegroundColor White
-    Write-Host "  [12] ⏱️  Otimizar Inicialização" -ForegroundColor White
-    Write-Host "  [13] 🔧 Atualizar Drivers" -ForegroundColor White
-    Write-Host ""
-    
-    Write-Host "  [99] 📋 Reparo Completo (Todas as Categorias)" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [L] 📝 Ver Log de Reparos Executados" -ForegroundColor Gray
+    Write-Host "  [L] Ver Log de Reparos Executados" -ForegroundColor Gray
     Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
     Write-Host "  [Q] Sair" -ForegroundColor DarkGray
     Write-Host ""

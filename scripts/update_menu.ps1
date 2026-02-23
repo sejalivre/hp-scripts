@@ -35,50 +35,29 @@ if (Test-Path (Join-Path $ScriptRoot "scripts")) {
 
 $baseUrl = "get.hpinfo.com.br"
 
-# Função para captura de tecla instantânea (sem ENTER)
-function Read-MenuKey {
-    param(
-        [string]$Prompt = "Selecione uma opcao"
-    )
-
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
-
-    # Tenta usar ReadKey para resposta instantânea
-    if ($Host.Name -eq 'ConsoleHost') {
-        try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
-        }
-        catch {
-            return Read-Host $Prompt
-        }
-    }
-    else {
-        return Read-Host $Prompt
-    }
+# ============================================================
+# IMPORTAR MÓDULO UI-UTILS
+# ============================================================
+$uiUtilsPath = Join-Path $ScriptRoot "ui-utils.ps1"
+if (Test-Path $uiUtilsPath) {
+    . $uiUtilsPath
 }
 
 function Show-Header {
     Clear-Host
-    Write-Host ""
-    Write-Host "  ===============================================" -ForegroundColor Cyan
-    Write-Host "  GERENCIAMENTO WINDOWS UPDATE" -ForegroundColor Cyan
-    Write-Host "  ===============================================" -ForegroundColor Cyan
-    Write-Host ""
+    Show-BoxHeader -Title "GERENCIAMENTO WINDOWS UPDATE"
 }
 
 function Show-UpdateMenu {
     do {
         Show-Header
-        
-        Write-Host "  [1] Restaura Update - Diagnostica e repara" -ForegroundColor Yellow
-        Write-Host "  [2] Instala Update  - Instala atualizacoes" -ForegroundColor Green
+
+        Show-MenuItem -Number 1 -ID "Restore" -Description "Diagnostica e repara Windows Update" -Color "Yellow"
+        Show-MenuItem -Number 2 -ID "Install" -Description "Instala atualizações" -Color "Green"
         Write-Host ""
         Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
         Write-Host ""
-        
+
         $escolha = Read-MenuKey -Prompt "  Escolha uma opcao"
 
         switch ($escolha) {

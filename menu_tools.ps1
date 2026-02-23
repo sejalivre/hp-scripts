@@ -26,6 +26,14 @@ $7zTxe = Join-Path $ToolsPath "7z.txe"
 $7zDll = Join-Path $TempPath "7z.dll"
 $7zTxl = Join-Path $ToolsPath "7z.txl"
 
+# ============================================================
+# IMPORTAR MÓDULO UI-UTILS
+# ============================================================
+$uiUtilsPath = Join-Path $ScriptPath "scripts\ui-utils.ps1"
+if (Test-Path $uiUtilsPath) {
+    . $uiUtilsPath
+}
+
 function Check-Internet {
     try {
         # Tenta Ping primeiro (rápido)
@@ -169,45 +177,16 @@ function Start-Tool {
     }
 }
 
-# Função para captura de tecla instantânea (sem ENTER)
-function Read-MenuKey {
-    param(
-        [string]$Prompt = "Selecione uma opcao"
-    )
-
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
-
-    # Tenta usar ReadKey para resposta instantânea
-    if ($Host.Name -eq 'ConsoleHost') {
-        try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
-        }
-        catch {
-            return Read-Host $Prompt
-        }
-    }
-    else {
-        return Read-Host $Prompt
-    }
-}
-
-# Função para limpar cabeçalho
+# Função Show-Header usa Show-BoxHeader do ui-utils
 function Show-Header {
     Clear-Host
-    Write-Host ""
-    Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "  ║           🔧  MENU DE FERRAMENTAS PORTÁTEIS  🔧              ║" -ForegroundColor Cyan
-    Write-Host "  ║                    HP Scripts v1.0                           ║" -ForegroundColor DarkCyan
-    Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
-    Write-Host ""
+    Show-BoxHeader -Title "MENU DE FERRAMENTAS PORTÁTEIS" -Subtitle "HP Scripts v1.0"
 }
 
 # Menu Principal
 function Show-MainMenu {
     Show-Header
+
     Write-Host "  ┌──────────────────────────────────────────────────────────────┐" -ForegroundColor Gray
     Write-Host "  │  [1] Diagnóstico de Hardware         [5] Gerenciamento Disco │" -ForegroundColor White
     Write-Host "  │  [2] Otimização do Sistema           [6] Ferramentas de Rede │" -ForegroundColor White
@@ -217,18 +196,17 @@ function Show-MainMenu {
     Write-Host ""
 }
 
-# Submenu - Diagnóstico de Hardware 
+# Submenu - Diagnóstico de Hardware
 function Show-DiagnosticoMenu {
     Show-Header
-    Write-Host "  ══════════════════  DIAGNÓSTICO DE HARDWARE  ══════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] CPU-Z              - Informações detalhadas do processador" -ForegroundColor White
-    Write-Host "  [2] AD                 - Diagnóstico completo do sistema" -ForegroundColor White
-    Write-Host "  [3] Core Temp          - Monitor de temperatura da CPU" -ForegroundColor White
-    Write-Host "  [4] CrystalDiskInfo    - Saúde do disco rígido/SSD" -ForegroundColor White
-    Write-Host "  [5] SSD Life           - Vida útil de SSDs" -ForegroundColor White
-    Write-Host "  [6] BatteryInfoView    - Informações da bateria" -ForegroundColor White
-    Write-Host "  [7] Teste de Teclado   - Verificar teclas" -ForegroundColor White
+    Show-MenuSeparator -Text "DIAGNÓSTICO DE HARDWARE"
+    Show-MenuItem -Number 1 -ID "CPU-Z" -Description "Informações detalhadas do processador"
+    Show-MenuItem -Number 2 -ID "AIDA64" -Description "Diagnóstico completo do sistema"
+    Show-MenuItem -Number 3 -ID "CoreTemp" -Description "Monitor de temperatura da CPU"
+    Show-MenuItem -Number 4 -ID "CrystalDisk" -Description "Saúde do disco rígido/SSD"
+    Show-MenuItem -Number 5 -ID "SSDLife" -Description "Vida útil de SSDs"
+    Show-MenuItem -Number 6 -ID "BatteryInfo" -Description "Informações da bateria"
+    Show-MenuItem -Number 7 -ID "KBTutility" -Description "Teste de teclado"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -250,13 +228,12 @@ function Show-DiagnosticoMenu {
 # Submenu - Otimização
 function Show-OtimizacaoMenu {
     Show-Header
-    Write-Host "  ══════════════════  OTIMIZAÇÃO DO SISTEMA  ═══════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] Optimizer          - Otimização completa do Windows" -ForegroundColor White
-    Write-Host "  [2] Winaero Tweaker    - Personalização avançada" -ForegroundColor White
-    Write-Host "  [3] Autoruns           - Gerenciar inicialização" -ForegroundColor White
-    Write-Host "  [4] LastActivityView   - Últimas atividades do sistema" -ForegroundColor White
-    Write-Host "  [5] Bloqueador Update  - Bloquear Windows Update" -ForegroundColor White
+    Show-MenuSeparator -Text "OTIMIZAÇÃO DO SISTEMA"
+    Show-MenuItem -Number 1 -ID "Optimizer" -Description "Otimização completa do Windows"
+    Show-MenuItem -Number 2 -ID "Winaero" -Description "Personalização avançada"
+    Show-MenuItem -Number 3 -ID "Autoruns" -Description "Gerenciar inicialização"
+    Show-MenuItem -Number 4 -ID "LastActivity" -Description "Últimas atividades do sistema"
+    Show-MenuItem -Number 5 -ID "WUB" -Description "Bloquear Windows Update"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -276,13 +253,12 @@ function Show-OtimizacaoMenu {
 # Submenu - Senha e Usuários
 function Show-SenhaMenu {
     Show-Header
-    Write-Host "  ═════════════════════  SENHA E USUÁRIOS  ══════════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] Password Reset     - Resetar senha de usuário" -ForegroundColor White
-    Write-Host "  [2] Active Password    - Alterar senha ativa" -ForegroundColor White
-    Write-Host "  [3] Admin Resetter     - Resetar senha admin" -ForegroundColor White
-    Write-Host "  [4] Daosoft Password   - Ferramenta Daosoft" -ForegroundColor White
-    Write-Host "  [5] OO UserManager     - Gerenciador de usuários" -ForegroundColor White
+    Show-MenuSeparator -Text "SENHA E USUÁRIOS"
+    Show-MenuItem -Number 1 -ID "PassReset" -Description "Resetar senha de usuário"
+    Show-MenuItem -Number 2 -ID "ActivePass" -Description "Alterar senha ativa"
+    Show-MenuItem -Number 3 -ID "AdminReset" -Description "Resetar senha admin"
+    Show-MenuItem -Number 4 -ID "Daossoft" -Description "Ferramenta Daosoft"
+    Show-MenuItem -Number 5 -ID "OOUserMgr" -Description "Gerenciador de usuários"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -302,16 +278,15 @@ function Show-SenhaMenu {
 # Submenu - Utilitários
 function Show-UtilitariosMenu {
     Show-Header
-    Write-Host "  ═══════════════════  UTILITÁRIOS DIVERSOS  ════════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] Notepad++          - Editor de texto avançado" -ForegroundColor White
-    Write-Host "  [2] UltraISO           - Editor/Criador de ISOs" -ForegroundColor White
-    Write-Host "  [3] Unlocker           - Desbloquear arquivos em uso" -ForegroundColor White
-    Write-Host "  [4] TakeOwnership Pro  - Assumir propriedade" -ForegroundColor White
-    Write-Host "  [5] Revo Uninstaller   - Desinstalar programas" -ForegroundColor White
-    Write-Host "  [6] Screenshot         - Captura de tela" -ForegroundColor White
-    Write-Host "  [7] USB Show           - Recuperar arquivos USB" -ForegroundColor White
-    Write-Host "  [8] Bloq. Firewall     - Bloquear no firewall" -ForegroundColor White
+    Show-MenuSeparator -Text "UTILITÁRIOS DIVERSOS"
+    Show-MenuItem -Number 1 -ID "Notepad++" -Description "Editor de texto avançado"
+    Show-MenuItem -Number 2 -ID "UltraISO" -Description "Editor/Criador de ISOs"
+    Show-MenuItem -Number 3 -ID "Unlocker" -Description "Desbloquear arquivos em uso"
+    Show-MenuItem -Number 4 -ID "TakeOwner" -Description "Assumir propriedade"
+    Show-MenuItem -Number 5 -ID "Revo" -Description "Desinstalar programas"
+    Show-MenuItem -Number 6 -ID "Screenshot" -Description "Captura de tela"
+    Show-MenuItem -Number 7 -ID "USBShow" -Description "Recuperar arquivos USB"
+    Show-MenuItem -Number 8 -ID "Firewall" -Description "Bloquear no firewall"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -334,11 +309,10 @@ function Show-UtilitariosMenu {
 # Submenu - Disco
 function Show-DiscoMenu {
     Show-Header
-    Write-Host "  ════════════════════  GERENCIAMENTO DISCO  ════════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] WizTree            - Analisar espaço em disco" -ForegroundColor White
-    Write-Host "  [2] Disk Defrag        - Desfragmentar disco" -ForegroundColor White
-    Write-Host "  [3] ChkDsk GUI         - Verificar disco (interface)" -ForegroundColor White
+    Show-MenuSeparator -Text "GERENCIAMENTO DISCO"
+    Show-MenuItem -Number 1 -ID "WizTree" -Description "Analisar espaço em disco"
+    Show-MenuItem -Number 2 -ID "DiskDefrag" -Description "Desfragmentar disco"
+    Show-MenuItem -Number 3 -ID "ChkDskGUI" -Description "Verificar disco (interface)"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -356,10 +330,9 @@ function Show-DiscoMenu {
 # Submenu - Rede
 function Show-RedeMenu {
     Show-Header
-    Write-Host "  ═══════════════════  FERRAMENTAS DE REDE  ═════════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] Advanced IP Scanner  - Escanear rede local" -ForegroundColor White
-    Write-Host "  [2] Mudar MAC            - Alterar endereço MAC" -ForegroundColor White
+    Show-MenuSeparator -Text "FERRAMENTAS DE REDE"
+    Show-MenuItem -Number 1 -ID "AdvIPScan" -Description "Escanear rede local"
+    Show-MenuItem -Number 2 -ID "ChangeMAC" -Description "Alterar endereço MAC"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
@@ -376,13 +349,12 @@ function Show-RedeMenu {
 # Submenu - Boot e Recuperação
 function Show-BootMenu {
     Show-Header
-    Write-Host "  ═════════════════════  BOOT E RECUPERAÇÃO  ═══════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  [1] NTBOOTAutoFix      - Reparar boot do Windows" -ForegroundColor White
-    Write-Host "  [2] BOOTICE            - Editor de boot avançado" -ForegroundColor White
-    Write-Host "  [3] EasyBCD            - Editar configuração BCD (Windows 10)" -ForegroundColor White
-    Write-Host "  [4] EasyUEFI           - Gerenciar boot UEFI" -ForegroundColor White
-    Write-Host "  [5] QEMU Simple Boot   - Testar boot de ISO" -ForegroundColor White
+    Show-MenuSeparator -Text "BOOT E RECUPERAÇÃO"
+    Show-MenuItem -Number 1 -ID "NTBOOTFix" -Description "Reparar boot do Windows"
+    Show-MenuItem -Number 2 -ID "BOOTICE" -Description "Editor de boot avançado"
+    Show-MenuItem -Number 3 -ID "EasyBCD" -Description "Editar configuração BCD (Windows 10)"
+    Show-MenuItem -Number 4 -ID "EasyUEFI" -Description "Gerenciar boot UEFI"
+    Show-MenuItem -Number 5 -ID "QemuBoot" -Description "Testar boot de ISO"
     Write-Host ""
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
