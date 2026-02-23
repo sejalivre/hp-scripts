@@ -44,11 +44,70 @@ $7zDll = Join-Path $TempPath "7z.dll"
 $7zTxl = Join-Path $ToolsPath "7z.txl"
 
 # ============================================================
-# IMPORTAR MÓDULO UI-UTILS
+# IMPORTAR MÓDULO UI-UTILS (com fallback remoto e inline)
 # ============================================================
+$_uiLoaded = $false
+$baseUrl = "get.hpinfo.com.br"
+
+# Estágio 1: Tentar caminho local relativo
 $uiUtilsPath = Join-Path (Split-Path -Parent $ScriptPath) "scripts\ui-utils.ps1"
 if (Test-Path $uiUtilsPath) {
     . $uiUtilsPath
+    $_uiLoaded = $true
+}
+
+# Estágio 2: Fallback remoto via URL
+if (-not $_uiLoaded) {
+    try {
+        $uiUtilsUrl = "https://$baseUrl/scripts/ui-utils"
+        $uiContent = Invoke-RestMethod -Uri $uiUtilsUrl -UseBasicParsing -ErrorAction Stop
+        Invoke-Expression $uiContent
+        $_uiLoaded = $true
+        Write-Host "[INFO] ui-utils carregado remotamente." -ForegroundColor DarkGray
+    }
+    catch {
+        Write-Warning "[AVISO] Falha ao carregar ui-utils remotamente: $($_.Exception.Message)"
+    }
+}
+
+# Estágio 3: Fallback inline mínimo
+if (-not $_uiLoaded) {
+    function Show-BoxHeader {
+        param([string]$Title, [string]$Subtitle = "", [int]$Width = 76)
+        Write-Host ""
+        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Cyan
+        Write-Host ""
+    }
+    function Show-HardwareInfo {
+        $cpu = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Name
+        $ram = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).TotalPhysicalMemory
+        Write-Host "  CPU: $cpu | RAM: $([math]::Round($ram/1GB,1))GB" -ForegroundColor Gray
+        Write-Host ""
+    }
+    function Show-MenuItem {
+        param([int]$Number, [string]$ID, [string]$Description, [string]$Color = "White")
+        Write-Host ("  [{0}] {1,-11}  {2}" -f $Number, $ID, $Description) -ForegroundColor $Color
+    }
+    function Show-MenuSeparator {
+        param([string]$Text = "")
+        Write-Host ""
+        if ($Text) { Write-Host "  --- $Text ---" -ForegroundColor Yellow } else { Write-Host "  ---" -ForegroundColor DarkGray }
+        Write-Host ""
+    }
+    function Show-MenuFooter {
+        param([string[]]$Options = @("Q"), [string[]]$Labels = @("Sair"), [string]$HelpURL = "")
+        $parts = for ($i = 0; $i -lt $Options.Count; $i++) { "[$($Options[$i])] $($Labels[$i])" }
+        Write-Host ("  " + ($parts -join " | ")) -ForegroundColor DarkGray
+        Write-Host ""
+    }
+    function Read-MenuKey {
+        param([string]$Prompt = "Selecione uma opcao")
+        Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+        if ($Host.Name -eq 'ConsoleHost') {
+            try { $k = [Console]::ReadKey($true); Write-Host $k.KeyChar -ForegroundColor Yellow; return $k.KeyChar.ToString() }
+            catch { return Read-Host }
+        } else { return Read-Host }
+    }
 }
 
 function Check-Internet {
