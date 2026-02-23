@@ -181,6 +181,31 @@ function Start-Tool {
     }
 }
 
+# Função para captura de tecla instantânea (sem ENTER)
+function Read-MenuKey {
+    param(
+        [string]$Prompt = "Selecione uma opcao"
+    )
+
+    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+
+    # Tenta usar ReadKey para resposta instantânea
+    if ($Host.Name -eq 'ConsoleHost') {
+        try {
+            $key = [Console]::ReadKey($true)
+            $char = $key.KeyChar.ToString()
+            Write-Host $char -ForegroundColor Yellow
+            return $char
+        }
+        catch {
+            return Read-Host $Prompt
+        }
+    }
+    else {
+        return Read-Host $Prompt
+    }
+}
+
 # Função para limpar cabeçalho
 function Show-Header {
     Clear-Host
@@ -220,7 +245,7 @@ function Show-DiagnosticoMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "cpuz_All.7z" "cpuz_All.exe" }
         "2" { Start-Tool "ad.7z" "ad.exe" }
@@ -248,7 +273,7 @@ function Show-OtimizacaoMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "Optimizer-16.7.7z" "Optimizer-16.7.exe" }
         "2" { Start-Tool "WinaeroTweaker.7z" "WinaeroTweaker.exe" }
@@ -274,7 +299,7 @@ function Show-SenhaMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "PasswordReset.7z" "PasswordReset.exe" }
         "2" { Start-Tool "ActivePasswordChanger.7z" "PasswordChanger.exe" }
@@ -303,7 +328,7 @@ function Show-UtilitariosMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "Notepad++.7z" "notepad++.exe" }
         "2" { Start-Tool "UltraISO.7z" "UltraISO.exe" }
@@ -330,7 +355,7 @@ function Show-DiscoMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "wiztree.7z" "WizTree64.exe" }
         "2" { Start-Tool "DiskDefrag.7z" "DiskDefrag.exe" }
@@ -351,7 +376,7 @@ function Show-RedeMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "advancedipscanner.7z" "advanced_ip_scanner.exe" }
         "2" { Start-Tool "MudarMAC.7z" "TMAC_Manager.exe" }
@@ -373,7 +398,7 @@ function Show-BootMenu {
     Write-Host "  [0] Voltar" -ForegroundColor DarkGray
     Write-Host ""
     
-    $choice = Read-Host "  Escolha uma opção"
+    $choice = Read-MenuKey -Prompt "  Escolha uma opcao"
     switch ($choice) {
         "1" { Start-Tool "NTBOOTAutoFix.7z" "NTBOOTautofix.exe" }
         "2" { Start-Tool "BOOTICEx64.7z" "BOOTICEx64.exe" }
@@ -388,7 +413,7 @@ function Show-BootMenu {
 function Main {
     do {
         Show-MainMenu
-        $mainChoice = Read-Host "  Escolha uma categoria"
+        $mainChoice = Read-MenuKey -Prompt "  Escolha uma categoria"
         
         switch ($mainChoice) {
             "1" { Show-DiagnosticoMenu }

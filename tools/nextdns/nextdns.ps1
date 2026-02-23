@@ -10,6 +10,31 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Host.UI.RawUI.WindowTitle = "HP Scripts - Gerenciamento NextDNS"
 
+# Função para captura de tecla instantânea (sem ENTER)
+function Read-MenuKey {
+    param(
+        [string]$Prompt = "Selecione uma opcao"
+    )
+
+    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+
+    # Tenta usar ReadKey para resposta instantânea
+    if ($Host.Name -eq 'ConsoleHost') {
+        try {
+            $key = [Console]::ReadKey($true)
+            $char = $key.KeyChar.ToString()
+            Write-Host $char -ForegroundColor Yellow
+            return $char
+        }
+        catch {
+            return Read-Host $Prompt
+        }
+    }
+    else {
+        return Read-Host $Prompt
+    }
+}
+
 function Show-Header {
     Clear-Host
     Write-Host ""
@@ -54,8 +79,8 @@ function Show-NextDNSMenu {
         Write-Host ""
         Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
         Write-Host ""
-        
-        $escolha = Read-Host "  Escolha uma opção"
+
+        $escolha = Read-MenuKey -Prompt "  Escolha uma opcao"
 
         switch ($escolha) {
             "1" {

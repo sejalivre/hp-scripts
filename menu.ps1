@@ -138,6 +138,56 @@ function Set-ExecutionPolicy-Unrestricted {
     }
 }
 
+# Função para obter informações de hardware
+function Get-HardwareInfo {
+    try {
+        $cpu = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Name
+        if (-not $cpu) { $cpu = "N/A" }
+
+        $ram = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+        $ramTotal = if ($ram) { [math]::Round($ram.TotalPhysicalMemory / 1GB, 2) } else { 0 }
+
+        $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'" -ErrorAction SilentlyContinue
+        $diskFree = if ($disk) { [math]::Round($disk.FreeSpace / 1GB, 2) } else { 0 }
+        $diskTotal = if ($disk) { [math]::Round($disk.Size / 1GB, 2) } else { 0 }
+
+        return @{
+            CPU = $cpu
+            RAM = $ramTotal
+            DiskFree = $diskFree
+            DiskTotal = $diskTotal
+        }
+    }
+    catch {
+        return $null
+    }
+}
+
+# Função para captura de tecla instantânea (sem ENTER)
+function Read-MenuKey {
+    param(
+        [string]$Prompt = "Selecione uma opcao"
+    )
+
+    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+
+    # Tenta usar ReadKey para resposta instantânea
+    if ($Host.Name -eq 'ConsoleHost') {
+        try {
+            $key = [Console]::ReadKey($true)
+            $char = $key.KeyChar.ToString()
+            Write-Host $char -ForegroundColor Yellow
+            return $char
+        }
+        catch {
+            return Read-Host $Prompt
+        }
+    }
+    else {
+        return Read-Host $Prompt
+    }
+}
+
 function Show-MainMenu {
     do {
         Clear-Host
@@ -147,6 +197,14 @@ function Show-MainMenu {
         Write-Host "  ║              Suporte: docs.hpinfo.com.br | v1.5              ║" -ForegroundColor DarkCyan
         Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
+
+        # Exibir informações de hardware
+        $hw = Get-HardwareInfo
+        if ($hw) {
+            Write-Host "  CPU: $($hw.CPU)" -ForegroundColor Gray
+            Write-Host "  RAM: $($hw.RAM)GB | Disco C: $($hw.DiskFree)GB/$($hw.DiskTotal)GB" -ForegroundColor Gray
+            Write-Host ""
+        }
         
         # 2. Renderização Dinâmica do Menu  
         for ($i = 0; $i -lt $ferramentas.Count; $i++) {
@@ -159,7 +217,7 @@ function Show-MainMenu {
         Write-Host "  [Q] Sair" -ForegroundColor DarkGray
         Write-Host ""
         
-        $escolha = Read-Host "Selecione uma opção"
+        $escolha = Read-MenuKey -Prompt "Selecione uma opcao"
 
         if ($escolha -eq "Q" -or $escolha -eq "q") { 
             Write-Host "`nEncerrando..." -ForegroundColor Green
