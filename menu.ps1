@@ -188,13 +188,75 @@ function Read-MenuKey {
     }
 }
 
+function Show-MatrixEffect {
+    param([int]$DurationSeconds = 2)
+
+    # Caracteres para o efeito matrix
+    $chars = "0123456789ABCDEF"
+    $width = $Host.UI.RawUI.WindowSize.Width
+    $height = $Host.UI.RawUI.WindowSize.Height
+
+    # Salvar cor original
+    $originalColor = $Host.UI.RawUI.ForegroundColor
+    $originalBg = $Host.UI.RawUI.BackgroundColor
+
+    # Fundo preto
+    $Host.UI.RawUI.BackgroundColor = "Black"
+    Clear-Host
+
+    $startTime = Get-Date
+
+    while (((Get-Date) - $startTime).TotalSeconds -lt $DurationSeconds) {
+        # Posicionar cursor em local aleatório
+        $x = Get-Random -Minimum 0 -Maximum $width
+        $y = Get-Random -Minimum 0 -Maximum ($height - 5)
+
+        # Mover cursor
+        $Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates($x, $y)
+
+        # Escolher caractere aleatório
+        $char = $chars[(Get-Random -Minimum 0 -Maximum $chars.Length)]
+
+        # Cor verde com variação de intensidade
+        $greenShades = @("DarkGreen", "Green", "DarkGreen")
+        $color = $greenShades[(Get-Random -Minimum 0 -Maximum $greenShades.Length)]
+
+        Write-Host $char -ForegroundColor $color -NoNewline
+
+        # Pequeno delay para criar efeito de "chuva"
+        Start-Sleep -Milliseconds 10
+    }
+
+    # Restaurar cores originais
+    $Host.UI.RawUI.ForegroundColor = $originalColor
+    $Host.UI.RawUI.BackgroundColor = $originalBg
+    Clear-Host
+}
+
+# Executar efeito Matrix antes de carregar o menu
+Show-MatrixEffect -DurationSeconds 2
+
+# Iniciar menu principal
 function Show-MainMenu {
     do {
         Clear-Host
         Write-Host ""
         Write-Host "  ╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-        Write-Host "  ║           🚀  HPCRAFT - HUB DE AUTOMAÇÃO TI  🚀              ║" -ForegroundColor Cyan
-        Write-Host "  ║              Suporte: docs.hpinfo.com.br | v1.5              ║" -ForegroundColor DarkCyan
+        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ██╗  ██╗██████╗                           ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ██║  ██║██╔══██╗                          ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ███████║██████╔╝                          ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ██╔══██║██╔═══╝                           ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ██║  ██║██║                               ║" -ForegroundColor Cyan
+        Write-Host "  ║                    ╚═╝  ╚═╝╚═╝                               ║" -ForegroundColor Cyan
+        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
+        Write-Host "  ║              ██╗███╗   ██╗███████ ██████╗                    ║" -ForegroundColor Cyan
+        Write-Host "  ║              ██║████╗  ██║██╔════╝██╔══██╗                   ║" -ForegroundColor Cyan
+        Write-Host "  ║              ██║██╔██╗ ██║█████╗  ██████╔╝                   ║" -ForegroundColor Cyan
+        Write-Host "  ║              ██║██║╚██╗██║██╔══╝  ██╔══██╗                   ║" -ForegroundColor Cyan
+        Write-Host "  ║              ██║██║ ╚████║██║     ██║  ██║                   ║" -ForegroundColor Cyan
+        Write-Host "  ║              ╚═╝╚═╝  ╚═══╝╚═╝     ╚═╝  ╚═╝                   ║" -ForegroundColor Cyan
+        Write-Host "  ║                                                              ║" -ForegroundColor Cyan
         Write-Host "  ╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
         Write-Host ""
 
