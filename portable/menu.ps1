@@ -20,7 +20,25 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 # Configuração de TLS 1.2
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 
-# Configuração de Origem 
+# ============================================================
+# LIBERAR POLITICA DE EXECUCAO AUTOMATICAMENTE
+# ============================================================
+try {
+    $currentPolicy = Get-ExecutionPolicy -Scope CurrentUser -ErrorAction SilentlyContinue
+    if ($currentPolicy -eq "Restricted" -or $currentPolicy -eq "AllSigned" -or $currentPolicy -eq "Undefined") {
+        Write-Host "[INFO] Liberando politica de execucao do PowerShell..." -ForegroundColor Cyan
+        Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser -Force -ErrorAction SilentlyContinue
+        $newPolicy = Get-ExecutionPolicy -Scope CurrentUser
+        if ($newPolicy -eq "Unrestricted" -or $newPolicy -eq "RemoteSigned" -or $newPolicy -eq "Bypass") {
+            Write-Host "[OK] Politica liberada: $newPolicy" -ForegroundColor Green
+        }
+    }
+}
+catch {
+    # Silenciosamente ignora erros - o usuario pode usar a opcao 16 manualmente
+}
+
+# Configuração de Origem
 $baseUrl = "get.hpinfo.com.br"
 
 # 1. Definição das Ferramentas
