@@ -118,6 +118,31 @@ function Write-Status {
     Write-Host "$icon $Message" -ForegroundColor $Color
 }
 
+# Função para captura de tecla instantânea (sem ENTER)
+function Read-MenuKey {
+    param(
+        [string]$Prompt = "Selecione uma opcao"
+    )
+
+    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+
+    # Tenta usar ReadKey para resposta instantânea
+    if ($Host.Name -eq 'ConsoleHost') {
+        try {
+            $key = [Console]::ReadKey($true)
+            $char = $key.KeyChar.ToString()
+            Write-Host $char -ForegroundColor Yellow
+            return $char
+        }
+        catch {
+            return Read-Host $Prompt
+        }
+    }
+    else {
+        return Read-Host $Prompt
+    }
+}
+
 function Show-RepairMenu {
     Clear-Host
     Write-Host ""
@@ -149,6 +174,7 @@ function Show-RepairMenu {
     Write-Host "  [99] 📋 Reparo Completo (Todas as Categorias)" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "  [L] 📝 Ver Log de Reparos Executados" -ForegroundColor Gray
+    Write-Host "  [0] Menu Principal" -ForegroundColor DarkGray
     Write-Host "  [Q] Sair" -ForegroundColor DarkGray
     Write-Host ""
 }
@@ -1244,7 +1270,7 @@ function Stop-TranscriptLog {
 # Menu principal
 do {
     Show-RepairMenu
-    $choice = Read-Host "Selecione uma opção"
+    $choice = Read-MenuKey -Prompt "Selecione uma opcao"
     
     switch ($choice) {
         "1" {
@@ -1375,9 +1401,17 @@ do {
             }
             Read-Host "`nPressione ENTER para continuar"
         }
-        "Q" { 
+        "0" {
+            Write-Host "`nVoltando ao Menu Principal..." -ForegroundColor Yellow
+            return
+        }
+        "Q" {
             Write-Host "`nEncerrando script de reparo..." -ForegroundColor Green
-            break 
+            break
+        }
+        "q" {
+            Write-Host "`nEncerrando script de reparo..." -ForegroundColor Green
+            break
         }
         default {
             Write-Host "Opção inválida!" -ForegroundColor Red
