@@ -75,38 +75,63 @@ if (-not $_uiLoaded) {
     function Show-BoxHeader {
         param([string]$Title, [string]$Subtitle = "", [int]$Width = 76)
         Write-Host ""
-        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Cyan
+        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Green
         Write-Host ""
     }
     function Show-HardwareInfo {
+        param([int]$Width = 76)
         $cpu = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Name
         $ram = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).TotalPhysicalMemory
-        Write-Host "  CPU: $cpu | RAM: $([math]::Round($ram/1GB,1))GB" -ForegroundColor Gray
+        Write-Host "  CPU: $cpu | RAM: $([math]::Round($ram/1GB,1))GB" -ForegroundColor DarkGreen
         Write-Host ""
     }
     function Show-MenuItem {
-        param([int]$Number, [string]$ID, [string]$Description, [string]$Color = "White")
-        Write-Host ("  [{0}] {1,-11}  {2}" -f $Number, $ID, $Description) -ForegroundColor $Color
+        param([int]$Number, [string]$ID, [string]$Description, [string]$Color = "DarkGreen", [int]$Width = 76)
+        $numStr = $Number.ToString("D2")
+        $idPadded = $ID.PadRight(11)
+        $descWidth = $Width - 19
+        $descPadded = $Description.PadRight($descWidth)
+        Write-Host "  [{0}] {1}  {2}" -f $numStr, $idPadded, $descPadded -ForegroundColor DarkGreen
     }
     function Show-MenuSeparator {
         param([string]$Text = "")
         Write-Host ""
-        if ($Text) { Write-Host "  --- $Text ---" -ForegroundColor Yellow } else { Write-Host "  ---" -ForegroundColor DarkGray }
+        if ($Text) { Write-Host "  --- $Text ---" -ForegroundColor DarkGreen } else { Write-Host "  ---" -ForegroundColor DarkGreen }
         Write-Host ""
     }
     function Show-MenuFooter {
-        param([string[]]$Options = @("Q"), [string[]]$Labels = @("Sair"), [string]$HelpURL = "")
+        param([string[]]$Options = @("Q"), [string[]]$Labels = @("Sair"), [string]$HelpURL = "", [int]$Width = 76)
         $parts = for ($i = 0; $i -lt $Options.Count; $i++) { "[$($Options[$i])] $($Labels[$i])" }
-        Write-Host ("  " + ($parts -join " | ")) -ForegroundColor DarkGray
+        Write-Host ("  " + ($parts -join " | ")) -ForegroundColor DarkGreen
         Write-Host ""
     }
     function Read-MenuKey {
-        param([string]$Prompt = "Selecione uma opcao")
-        Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 500)
+        Write-Host "$Prompt " -NoNewline -ForegroundColor Green
         if ($Host.Name -eq 'ConsoleHost') {
-            try { $k = [Console]::ReadKey($true); Write-Host $k.KeyChar -ForegroundColor Yellow; return $k.KeyChar.ToString() }
-            catch { return Read-Host }
-        } else { return Read-Host }
+            try {
+                $key = [Console]::ReadKey($true)
+                $char = $key.KeyChar
+                $buffer = $char.ToString()
+                if ([char]::IsDigit($char)) {
+                    $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                    while ([DateTime]::Now -lt $deadline -and $buffer.Length -lt 2) {
+                        if ([Console]::KeyAvailable) {
+                            $k2 = [Console]::ReadKey($true)
+                            if ([char]::IsDigit($k2.KeyChar)) {
+                                $buffer += $k2.KeyChar.ToString()
+                                $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                            }
+                            else { break }
+                        }
+                        Start-Sleep -Milliseconds 15
+                    }
+                }
+                Write-Host $buffer -ForegroundColor Green
+                return $buffer
+            }
+            catch { return Read-Host $Prompt }
+        } else { return Read-Host $Prompt }
     }
 }
 

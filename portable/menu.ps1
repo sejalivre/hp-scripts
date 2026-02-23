@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Launcher Principal HP-Scripts - Hub de Automação Profissional.
 .DESCRIPTION
@@ -26,7 +26,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 try {
     $currentPolicy = Get-ExecutionPolicy -Scope CurrentUser -ErrorAction SilentlyContinue
     if ($currentPolicy -eq "Restricted" -or $currentPolicy -eq "AllSigned" -or $currentPolicy -eq "Undefined") {
-        Write-Host "[INFO] Liberando politica de execucao do PowerShell..." -ForegroundColor Cyan
+        Write-Host "[INFO] Liberando politica de execucao do PowerShell..." -ForegroundColor Yellow
         Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser -Force -ErrorAction SilentlyContinue
         $newPolicy = Get-ExecutionPolicy -Scope CurrentUser
         if ($newPolicy -eq "Unrestricted" -or $newPolicy -eq "RemoteSigned" -or $newPolicy -eq "Bypass") {
@@ -61,9 +61,16 @@ $_uiLoaded = $false
 
 # Estágio 1: Tentar caminho local relativo
 $uiUtilsPath = Join-Path $ScriptRoot "..\scripts\ui-utils.ps1"
+$uiUtilsStage = "não carregado"
 if (Test-Path $uiUtilsPath) {
-    . $uiUtilsPath
-    $_uiLoaded = $true
+    try {
+        . $uiUtilsPath
+        $_uiLoaded = $true
+        $uiUtilsStage = "carregado"
+    }
+    catch {
+        $uiUtilsStage = "falha: $($_.Exception.Message)"
+    }
 }
 
 # Estágio 2: Fallback remoto via URL
@@ -73,9 +80,11 @@ if (-not $_uiLoaded) {
         $uiContent = Invoke-RestMethod -Uri $uiUtilsUrl -UseBasicParsing -ErrorAction Stop
         Invoke-Expression $uiContent
         $_uiLoaded = $true
-        Write-Host "[INFO] ui-utils carregado remotamente." -ForegroundColor DarkGray
+        $uiUtilsStage = "carregado remotamente"
+        Write-Host "[INFO] ui-utils carregado remotamente." -ForegroundColor DarkGreen
     }
     catch {
+        $uiUtilsStage = "falha remota: $($_.Exception.Message)"
         Write-Warning "[AVISO] Falha ao carregar ui-utils remotamente: $($_.Exception.Message)"
     }
 }
@@ -85,81 +94,117 @@ if (-not $_uiLoaded) {
     function Show-BoxHeader {
         param([string]$Title, [string]$Subtitle = "", [int]$Width = 76)
         Write-Host ""
-        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Cyan
+        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Green
         Write-Host ""
     }
     function Show-HardwareInfo {
+        param([int]$Width = 76)
         $cpu = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1).Name
         $ram = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).TotalPhysicalMemory
-        Write-Host "  CPU: $cpu | RAM: $([math]::Round($ram/1GB,1))GB" -ForegroundColor Gray
+        Write-Host "  CPU: $cpu | RAM: $([math]::Round($ram/1GB,1))GB" -ForegroundColor DarkGreen
         Write-Host ""
     }
     function Show-MenuItem {
-        param([int]$Number, [string]$ID, [string]$Description, [string]$Color = "White")
-        Write-Host ("  [{0}] {1,-11}  {2}" -f $Number, $ID, $Description) -ForegroundColor $Color
+        param([int]$Number, [string]$ID, [string]$Description, [string]$Color = "DarkGreen", [int]$Width = 76)
+        $numStr = $Number.ToString("D2")
+        $idPadded = $ID.PadRight(11)
+        $descWidth = $Width - 19
+        $descPadded = $Description.PadRight($descWidth)
+        Write-Host "  [{0}] {1}  {2}" -f $numStr, $idPadded, $descPadded -ForegroundColor DarkGreen
     }
     function Show-MenuSeparator {
         param([string]$Text = "")
         Write-Host ""
-        if ($Text) { Write-Host "  --- $Text ---" -ForegroundColor Yellow } else { Write-Host "  ---" -ForegroundColor DarkGray }
+        if ($Text) { Write-Host "  --- $Text ---" -ForegroundColor DarkGreen } else { Write-Host "  ---" -ForegroundColor DarkGreen }
         Write-Host ""
     }
     function Show-MenuFooter {
-        param([string[]]$Options = @("Q"), [string[]]$Labels = @("Sair"), [string]$HelpURL = "")
+        param([string[]]$Options = @("Q"), [string[]]$Labels = @("Sair"), [string]$HelpURL = "", [int]$Width = 76)
         $parts = for ($i = 0; $i -lt $Options.Count; $i++) { "[$($Options[$i])] $($Labels[$i])" }
-        Write-Host ("  " + ($parts -join " | ")) -ForegroundColor DarkGray
+        Write-Host ("  " + ($parts -join " | ")) -ForegroundColor DarkGreen
         Write-Host ""
     }
     function Read-MenuKey {
-        param([string]$Prompt = "Selecione uma opcao")
-        Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 500)
+        Write-Host "$Prompt " -NoNewline -ForegroundColor Green
         if ($Host.Name -eq 'ConsoleHost') {
-            try { $k = [Console]::ReadKey($true); Write-Host $k.KeyChar -ForegroundColor Yellow; return $k.KeyChar.ToString() }
-            catch { return Read-Host }
-        } else { return Read-Host }
+            try {
+                $key = [Console]::ReadKey($true)
+                $char = $key.KeyChar
+                $buffer = $char.ToString()
+                if ([char]::IsDigit($char)) {
+                    $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                    while ([DateTime]::Now -lt $deadline -and $buffer.Length -lt 2) {
+                        if ([Console]::KeyAvailable) {
+                            $k2 = [Console]::ReadKey($true)
+                            if ([char]::IsDigit($k2.KeyChar)) {
+                                $buffer += $k2.KeyChar.ToString()
+                                $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                            }
+                            else { break }
+                        }
+                        Start-Sleep -Milliseconds 15
+                    }
+                }
+                Write-Host $buffer -ForegroundColor Green
+                return $buffer
+            }
+            catch { return Read-Host $Prompt }
+        } else { return Read-Host $Prompt }
     }
     function Show-HelpMenu {
         param([string]$HelpURL = "https://docs.hpinfo.com.br")
         Clear-Host
         Show-BoxHeader -Title "AJUDA" -Subtitle "Documentação Oficial"
-        Write-Host "  Documentacao Online: $HelpURL" -ForegroundColor Cyan
+        Write-Host "  Documentacao Online: $HelpURL" -ForegroundColor Green
         Write-Host ""
-        Write-Host "  Atalhos Gerais:" -ForegroundColor Yellow
-        Write-Host "  [0] Voltar ao menu anterior" -ForegroundColor White
-        Write-Host "  [Q] Sair do script atual" -ForegroundColor White
-        Write-Host "  [H] Abrir este menu de ajuda" -ForegroundColor White
+        Write-Host "  Atalhos Gerais:" -ForegroundColor Green
+        Write-Host "  [0] Voltar ao menu anterior" -ForegroundColor DarkGreen
+        Write-Host "  [Q] Sair do script atual" -ForegroundColor DarkGreen
+        Write-Host "  [H] Abrir este menu de ajuda" -ForegroundColor DarkGreen
         Write-Host ""
         $openDocs = Read-MenuKey -Prompt "  Deseja abrir a documentacao no navegador? (S/N)"
         if ($openDocs -match '^[sS]') {
-            try { Start-Process $HelpURL; Write-Host "`n  [OK] Documentacao aberta no navegador." -ForegroundColor Green }
+            try { Start-Process $HelpURL; Write-Host "`n  Documentacao aberta no navegador." -ForegroundColor Green }
             catch { Write-Host "`n  [ERRO] Nao foi possivel abrir a documentacao." -ForegroundColor Red }
         }
-        Write-Host "`n  Pressione qualquer tecla para voltar..." -ForegroundColor Gray
+        Write-Host "`n  Pressione qualquer tecla para voltar..." -ForegroundColor DarkGreen
         if ($Host.Name -eq 'ConsoleHost' -and $Host.UI.RawUI) {
             try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") }
             catch { Read-Host "  Pressione ENTER" }
         } else { Read-Host "  Pressione ENTER" }
     }
+    # Stub de logging para fallback
+    function Write-HPLog {
+        param([string]$Message, [string]$Level = 'INFO')
+        # Silencioso no fallback
+    }
+    $uiUtilsStage = "fallback inline"
 }
 
-# 1. Definição das Ferramentas
+# Log de inicialização
+Write-HPLog -Message "=== HPCraft iniciado (PORTABLE) ===" -Level INFO
+Write-HPLog -Message "Modo de execucao: Local (portable)" -Level INFO
+Write-HPLog -Message "ui-utils: $uiUtilsStage" -Level INFO
+
+# 1. Definição das Ferramentas (sem cores individuais - tudo usa tema Matrix)
 $ferramentas = @(
-    @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "../scripts/check" ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "REPAIR"     ; Desc = "Reparo Automático do Sistema"       ; Path = "../scripts/repair" ; Color = "Magenta" ; IsLocalScript = $true }
-    @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "../scripts/sfc"   ; Color = "Red" ; IsLocalScript = $true }
-    @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; Color = "Cyan" ; IsCmd = $true }
-    @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "../scripts/winforge" ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "../scripts/limp"  ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "../scripts/update_menu"; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "../scripts/hora"  ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "../scripts/net"   ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "../scripts/print" ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "../scripts/backup"; Color = "Yellow" ; IsLocalScript = $true }
+    @{ ID = "CHECK"      ; Desc = "Verificações Rápidas e Integridade" ; Path = "../scripts/check" ; IsLocalScript = $true }
+    @{ ID = "REPAIR"     ; Desc = "Reparo Automático do Sistema"       ; Path = "../scripts/repair" ; IsLocalScript = $true }
+    @{ ID = "SFC"        ; Desc = "Diagnóstico e Reparação Completa"   ; Path = "../scripts/sfc"   ; IsLocalScript = $true }
+    @{ ID = "INSTALLPS1" ; Desc = "Instalar/Atualizar PowerShell"   ; Path = "installps1.cmd" ; IsCmd = $true }
+    @{ ID = "WINFORGE"   ; Desc = "Instalação e Otimização do Sistema" ; Path = "../scripts/winforge" ; IsLocalScript = $true }
+    @{ ID = "LIMP"       ; Desc = "Limpeza de Arquivos Temporários"     ; Path = "../scripts/limp"  ; IsLocalScript = $true }
+    @{ ID = "UPDATE"     ; Desc = "Atualizações do Sistema"             ; Path = "../scripts/update_menu"; IsLocalScript = $true }
+    @{ ID = "HORA"       ; Desc = "Sincronizando Horário"               ; Path = "../scripts/hora"  ; IsLocalScript = $true }
+    @{ ID = "REDE"       ; Desc = "Reparo de Rede e Conectividade"      ; Path = "../scripts/net"   ; IsLocalScript = $true }
+    @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "../scripts/print" ; IsLocalScript = $true }
+    @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "../scripts/backup"; IsLocalScript = $true }
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
-    @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "../scripts/wallpaper" ; Color = "Yellow" ; IsLocalScript = $true }
-    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "../tools/nextdns/nextdns.ps1" ; Color = "Yellow" ; IsLocal = $true }
-    @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; Color = "Green" ; IsLocal = $true }
-    @{ ID = "POLICY"     ; Desc = "Liberar Política de Execução"        ; Path = "SetExecutionPolicy" ; Color = "Magenta" ; IsFunction = $true }
+    @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "../scripts/wallpaper" ; IsLocalScript = $true }
+    @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "../tools/nextdns/nextdns.ps1" ; IsLocal = $true }
+    @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; IsLocal = $true }
+    @{ ID = "POLICY"     ; Desc = "Liberar Política de Execução"        ; Path = "SetExecutionPolicy" ; IsFunction = $true }
 )
 
 function Set-ExecutionPolicy-Unrestricted {
@@ -174,18 +219,21 @@ function Set-ExecutionPolicy-Unrestricted {
         }
 
         Write-Host "[INFO] Política atual: $currentPolicy" -ForegroundColor Yellow
-        Write-Host "[INFO] Tentando alterar para Unrestricted..." -ForegroundColor Cyan
+        Write-Host "[INFO] Tentando alterar para Unrestricted..." -ForegroundColor Yellow
 
         Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser -Force -ErrorAction Stop
 
         $newPolicy = Get-ExecutionPolicy -Scope CurrentUser
         Write-Host "[OK] Política alterada com sucesso para: $newPolicy" -ForegroundColor Green
-        Write-Host "[INFO] Comando executado: $command" -ForegroundColor Gray
+        Write-Host "[INFO] Comando executado: $command" -ForegroundColor DarkGreen
+        Write-HPLog -Message "Politica de execucao alterada para: $newPolicy" -Level INFO
     }
     catch {
         Write-Host "[AVISO] Não foi possível alterar automaticamente." -ForegroundColor Yellow
-        Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
-        Write-Host "`n[INFO] Copiando comando para área de transferência..." -ForegroundColor Cyan
+        Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+        Write-HPLog -Message "ERRO ao alterar politica: $($_.Exception.Message)" -Level ERRO
+
+        Write-Host "`n[INFO] Copiando comando para área de transferência..." -ForegroundColor Yellow
 
         try {
             Set-Clipboard -Value $command
@@ -193,8 +241,8 @@ function Set-ExecutionPolicy-Unrestricted {
             Write-Host "[INFO] Cole no PowerShell com CTRL+V e execute como Administrador" -ForegroundColor Yellow
         }
         catch {
-            Write-Host "[INFO] Comando para copiar manualmente:" -ForegroundColor Cyan
-            Write-Host $command -ForegroundColor White
+            Write-Host "[INFO] Comando para copiar manualmente:" -ForegroundColor Yellow
+            Write-Host $command -ForegroundColor Green
         }
     }
 }
@@ -262,20 +310,22 @@ function Show-MainMenu {
         for ($i = 0; $i -lt $ferramentas.Count; $i++) {
             $n = $i + 1
             $item = $ferramentas[$i]
-            $color = if ($item.Color) { $item.Color } else { "White" }
-            Show-MenuItem -Number $n -ID $item.ID -Description $item.Desc -Color $color
+            Show-MenuItem -Number $n -ID $item.ID -Description $item.Desc
         }
 
         Show-MenuFooter -Options @("Q", "H") -Labels @("Sair", "Ajuda")
 
         $escolha = Read-MenuKey -Prompt "Selecione uma opcao"
+        Write-HPLog -Message "Opcao selecionada: '$escolha'" -Level INFO
 
         if ($escolha -eq "Q" -or $escolha -eq "q") {
             Write-Host "`nEncerrando..." -ForegroundColor Green
+            Write-HPLog -Message "Encerrando HPCraft (opcao Q)" -Level INFO
             break
         }
 
         if ($escolha -eq "H" -or $escolha -eq "h") {
+            Write-HPLog -Message "Menu Ajuda aberto" -Level INFO
             Show-HelpMenu -HelpURL "https://docs.hpinfo.com.br"
             continue
         }
@@ -284,9 +334,9 @@ function Show-MainMenu {
         $idx = 0 
         if ([int]::TryParse($escolha, [ref]$idx) -and $idx -le $ferramentas.Count -and $idx -gt 0) {
             $selecionada = $ferramentas[$idx - 1]
-            $cor = if ($selecionada.Color) { $selecionada.Color } else { "White" }
             
-            Write-Host "`n[🚀] Iniciando $($selecionada.ID)..." -ForegroundColor $cor
+            Write-Host "`n  Iniciando $($selecionada.ID)..." -ForegroundColor Green
+            Write-HPLog -Message "Iniciando modulo: $($selecionada.ID)" -Level INFO
             
             # Verificar se é um arquivo .cmd (batch)
             if ($selecionada.IsCmd) {
@@ -295,52 +345,83 @@ function Show-MainMenu {
                 $TempCmd = "$env:TEMP\HPTI_Exec_$($selecionada.ID).cmd"
                 
                 try {
-                    Write-Host "[INFO] Baixando instalador..." -ForegroundColor Gray
+                    Write-Host "  [INFO] Baixando instalador..." -ForegroundColor Yellow
                     Invoke-WebRequest -Uri $finalUrl -OutFile $TempCmd -UseBasicParsing
                     
                     if (Test-Path $TempCmd) {
-                        Write-Host "[INFO] Executando instalador..." -ForegroundColor Gray
+                        Write-Host "  [INFO] Executando instalador..." -ForegroundColor Yellow
                         # Executar o .cmd e aguardar conclusão
                         Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$TempCmd`"" -Wait -NoNewWindow
                         
                         # Remove após execução
                         Remove-Item $TempCmd -Force -ErrorAction SilentlyContinue
+                        Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
                     }
                     else {
                         throw "Arquivo não foi baixado corretamente."
                     }
                 }
                 catch {
-                    Write-Host "`n[❌] ERRO: Falha ao executar instalador." -ForegroundColor Red
-                    Write-Host "URL: $finalUrl" -ForegroundColor Gray
-                    Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                    Write-Host "`n  [ERRO] Falha ao executar instalador." -ForegroundColor Red
+                    Write-Host "  URL: $finalUrl" -ForegroundColor DarkGreen
+                    Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+                    Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
                 }
             }
             elseif ($selecionada.IsLocalScript) {
                 # Para scripts PowerShell locais (dentro de ../scripts/)
                 $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
                 if (Test-Path $scriptPath) {
-                    & $scriptPath
+                    try {
+                        & $scriptPath
+                        Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
+                    }
+                    catch {
+                        Write-Host "`n  [ERRO] Erro durante execucao do modulo." -ForegroundColor Red
+                        Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+                        Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
+                    }
                 }
                 else {
-                    Write-Host "`n[❌] ERRO: Script local não encontrado: $scriptPath" -ForegroundColor Red
+                    Write-Host "`n  [ERRO] Script local não encontrado: $scriptPath" -ForegroundColor Red
+                    Write-HPLog -Message "ERRO: Script local nao encontrado: $scriptPath" -Level ERRO
                 }
             }
             elseif ($selecionada.IsLocal) {
                 # Para scripts locais
                 $scriptPath = Join-Path $ScriptRoot $selecionada.Path
                 if (Test-Path $scriptPath) {
-                    & $scriptPath
+                    try {
+                        & $scriptPath
+                        Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
+                    }
+                    catch {
+                        Write-Host "`n  [ERRO] Erro durante execucao do modulo." -ForegroundColor Red
+                        Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+                        Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
+                    }
                 }
                 else {
-                    Write-Host "`n[❌] ERRO: Script local não encontrado: $($selecionada.Path)" -ForegroundColor Red
+                    Write-Host "`n  [ERRO] Script local não encontrado: $($selecionada.Path)" -ForegroundColor Red
+                    Write-HPLog -Message "ERRO: Script local nao encontrado: $($selecionada.Path)" -Level ERRO
                 }
             }
             elseif ($selecionada.IsFunction) {
                 # Para funções internas (não requerem download)
                 switch ($selecionada.Path) {
-                    "SetExecutionPolicy" { Set-ExecutionPolicy-Unrestricted }
-                    default { Write-Warning "Função desconhecida: $($selecionada.Path)" }
+                    "SetExecutionPolicy" { 
+                        try {
+                            Set-ExecutionPolicy-Unrestricted 
+                            Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
+                        }
+                        catch {
+                            Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
+                        }
+                    }
+                    default { 
+                        Write-Warning "Função desconhecida: $($selecionada.Path)" 
+                        Write-HPLog -Message "Funcao desconhecida: $($selecionada.Path)" -Level WARN
+                    }
                 }
             }
             else {
@@ -358,20 +439,23 @@ function Show-MainMenu {
                     
                     # Executar o conteúdo diretamente
                     Invoke-Expression $scriptContent
+                    Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
                 }
                 catch {
-                    Write-Host "`n[❌] ERRO: Falha na execução remota." -ForegroundColor Red
-                    Write-Host "URL: $finalUrl" -ForegroundColor Gray
-                    Write-Host "Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGray
+                    Write-Host "`n  [ERRO] Falha na execução remota." -ForegroundColor Red
+                    Write-Host "  URL: $finalUrl" -ForegroundColor DarkGreen
+                    Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+                    Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
                 }
             }
         }
         else {
             Write-Warning "Opção inválida!"
+            Write-HPLog -Message "Opcao invalida: '$escolha'" -Level WARN
             Start-Sleep -Seconds 1
         }
         
-        Write-Host "`nPressione qualquer tecla para voltar..." -ForegroundColor Gray
+        Write-Host "`n  Pressione qualquer tecla para voltar..." -ForegroundColor DarkGreen
         
         # Compatibilidade: ReadKey() não funciona em ISE ou sessões remotas
         if ($Host.Name -eq 'ConsoleHost' -and $Host.UI.RawUI) {
@@ -379,11 +463,11 @@ function Show-MainMenu {
                 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
             }
             catch {
-                Read-Host "Pressione ENTER para continuar"
+                Read-Host "  Pressione ENTER para continuar"
             }
         }
         else {
-            Read-Host "Pressione ENTER para continuar"
+            Read-Host "  Pressione ENTER para continuar"
         }
 
     } while ($true)

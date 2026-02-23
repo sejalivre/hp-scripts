@@ -5,9 +5,84 @@
     Funções reutilizáveis para desenhar menus com layout moderno e consistente
 .NOTES
     Autor: HP-Scripts Team
-    Versão: 1.0
+    Versão: 2.0
     Compatibilidade: PowerShell 5.1+ (Windows 10/11)
 #>
+
+# ============================================================
+# SISTEMA DE LOG
+# ============================================================
+
+# Determinação do caminho de log (executado quando o módulo é carregado)
+$script:HPLogPath = $null
+$script:HPLogReady = $false
+
+function Initialize-HPLog {
+    <#
+    .SYNOPSIS
+        Inicializa o sistema de log — determina caminho e cria diretório
+    #>
+    try {
+        $primaryDir = Join-Path $env:ProgramFiles 'HPTI'
+        $primaryLog = Join-Path $primaryDir 'hpcraft.log'
+        
+        # Tentar usar o diretório primário
+        if (-not (Test-Path $primaryDir)) {
+            New-Item -ItemType Directory -Path $primaryDir -Force -ErrorAction Stop | Out-Null
+        }
+        # Teste de escrita
+        $testFile = Join-Path $primaryDir '.write_test'
+        [System.IO.File]::WriteAllText($testFile, 'test', [System.Text.Encoding]::UTF8)
+        Remove-Item $testFile -Force -ErrorAction SilentlyContinue
+        
+        $script:HPLogPath  = $primaryLog
+        $script:HPLogReady = $true
+    }
+    catch {
+        # Fallback: usar %TEMP%\HPTI\
+        try {
+            $fallbackDir = Join-Path $env:TEMP 'HPTI'
+            if (-not (Test-Path $fallbackDir)) {
+                New-Item -ItemType Directory -Path $fallbackDir -Force -ErrorAction Stop | Out-Null
+            }
+            $script:HPLogPath  = Join-Path $fallbackDir 'hpcraft.log'
+            $script:HPLogReady = $true
+        }
+        catch {
+            $script:HPLogReady = $false
+        }
+    }
+}
+
+function Write-HPLog {
+    <#
+    .SYNOPSIS
+        Registra mensagem no arquivo de log (silencioso — não exibe na tela)
+    .PARAMETER Message
+        Mensagem a registrar
+    .PARAMETER Level
+        Nível: INFO (padrão), ERRO, WARN
+    #>
+    param(
+        [string]$Message,
+        [ValidateSet('INFO','ERRO','WARN')]
+        [string]$Level = 'INFO'
+    )
+
+    if (-not $script:HPLogReady) { return }
+
+    try {
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $line      = "[$timestamp] [$Level] $Message"
+        [System.IO.File]::AppendAllText($script:HPLogPath, $line + "`r`n", [System.Text.Encoding]::UTF8)
+    }
+    catch {
+        # Silencioso — nunca lança exceção para o chamador
+    }
+}
+
+# Inicializar log ao carregar o módulo
+Initialize-HPLog
 
 # ============================================================
 # FUNÇÕES DE INFORMAÇÕES DE HARDWARE
@@ -46,15 +121,29 @@ function Get-HardwareInfo {
 function Show-HardwareInfo {
     <#
     .SYNOPSIS
-        Exibe informações de hardware formatadas em uma linha
+        Exibe informações de hardware formatadas dentro da box
+    .PARAMETER Width
+        Largura interna da box (padrão: 76)
     #>
+    param([int]$Width = 76)
+
     $hw = Get-HardwareInfo
     if ($hw) {
-        $cpuShort = if ($hw.CPU.Length -gt 35) { $hw.CPU.Substring(0, 35) + "..." } else { $hw.CPU }
-        Write-Host "  🖥️  CPU: $cpuShort" -ForegroundColor Gray
-        Write-Host "  💾 RAM: $($hw.RAM)GB | Disco: $($hw.DiskFree)GB/$($hw.DiskTotal)GB" -ForegroundColor Gray
-        Write-Host ""
+        $cpuShort = if ($hw.CPU.Length -gt 45) { $hw.CPU.Substring(0, 45) + "..." } else { $hw.CPU }
+        
+        $lineCpu = ("CPU: " + $cpuShort).PadRight($Width)
+        $lineRam = ("RAM: " + $hw.RAM + "GB   Disco: " + $hw.DiskFree + "GB / " + $hw.DiskTotal + "GB").PadRight($Width)
+        
+        Write-Host ("  ║" + $lineCpu + "║") -ForegroundColor DarkGreen
+        Write-Host ("  ║" + $lineRam + "║") -ForegroundColor DarkGreen
     }
+    else {
+        $lineNA = "Hardware info indisponivel".PadRight($Width)
+        Write-Host ("  ║" + $lineNA + "║") -ForegroundColor DarkGreen
+    }
+
+    # Separador após hardware
+    Write-Host ("  ╠" + ("═" * $Width) + "╣") -ForegroundColor DarkGreen
 }
 
 # ============================================================
@@ -64,7 +153,7 @@ function Show-HardwareInfo {
 function Show-BoxHeader {
     <#
     .SYNOPSIS
-        Desenha cabeçalho com título centralizado
+        Desenha cabeçalho com título centralizado (abre a box)
     .PARAMETER Title
         Título do menu
     .PARAMETER Subtitle
@@ -78,49 +167,32 @@ function Show-BoxHeader {
         [int]$Width = 76
     )
 
-    $padding = ($Width - $Title.Length) / 2
-    $leftPad = [math]::Floor($padding)
-    $rightPad = [math]::Ceiling($padding)
+    $titlePad  = ($Width - $Title.Length) / 2
+    $tLeft     = [math]::Floor($titlePad)
+    $tRight    = [math]::Ceiling($titlePad)
 
     Write-Host ""
-    Write-Host ("  ╔" + ("═" * $Width) + "╗") -ForegroundColor Cyan
+    # Linha superior
+    Write-Host ("  ╔" + ("═" * $Width) + "╗") -ForegroundColor DarkGreen
 
-    if ([string]::IsNullOrWhiteSpace($Subtitle)) {
-        # Apenas título
-        Write-Host ("  ║" + (" " * $leftPad) + $Title + (" " * $rightPad) + "║") -ForegroundColor Cyan
-    }
-    else {
-        # Título + Subtítulo
-        $subPadding = ($Width - $Subtitle.Length) / 2
-        $subLeftPad = [math]::Floor($subPadding)
-        $subRightPad = [math]::Ceiling($subPadding)
+    # Linha do título (brilhante)
+    Write-Host ("  ║" + (" " * $tLeft) + $Title + (" " * $tRight) + "║") -ForegroundColor Green
 
-        Write-Host ("  ║" + (" " * $leftPad) + $Title + (" " * $rightPad) + "║") -ForegroundColor Cyan
-        Write-Host ("  ║" + (" " * $subLeftPad) + $Subtitle + (" " * $subRightPad) + "║") -ForegroundColor DarkCyan
+    if (-not [string]::IsNullOrWhiteSpace($Subtitle)) {
+        $subPad  = ($Width - $Subtitle.Length) / 2
+        $sLeft   = [math]::Floor($subPad)
+        $sRight  = [math]::Ceiling($subPad)
+        Write-Host ("  ║" + (" " * $sLeft) + $Subtitle + (" " * $sRight) + "║") -ForegroundColor DarkGreen
     }
 
-    Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor Cyan
-    Write-Host ""
-}
-
-function Show-BoxFooter {
-    <#
-    .SYNOPSIS
-        Desenha fechamento da box
-    .PARAMETER Width
-        Largura da box (padrão: 76)
-    #>
-    param([int]$Width = 76)
-
-    Write-Host ""
-    Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor Cyan
-    Write-Host ""
+    # Separador (box continua aberta para hardware e itens)
+    Write-Host ("  ╠" + ("═" * $Width) + "╣") -ForegroundColor DarkGreen
 }
 
 function Show-MenuItem {
     <#
     .SYNOPSIS
-        Renderiza item de menu com numeração alinhada
+        Renderiza item de menu com numeração alinhada dentro da box
     .PARAMETER Number
         Número da opção
     .PARAMETER ID
@@ -128,23 +200,38 @@ function Show-MenuItem {
     .PARAMETER Description
         Descrição da ferramenta
     .PARAMETER Color
-        Cor do texto (padrão: White)
+        Parâmetro mantido para compatibilidade (ignorado - usa tema Matrix)
+    .PARAMETER Width
+        Largura interna da box (padrão: 76)
     #>
     param(
         [int]$Number,
         [string]$ID,
         [string]$Description,
-        [string]$Color = "White"
+        [string]$Color = "DarkGreen",   # mantido por retrocompatibilidade
+        [int]$Width = 76
     )
 
-    $idPadded = $ID.PadRight(11)
-    Write-Host ("  [{0}] {1}  {2}" -f $Number, $idPadded, $Description) -ForegroundColor $Color
+    $numStr    = $Number.ToString("D2")        # zero-pad: "01", "10", "16"
+    $idPadded  = $ID.PadRight(11)
+    # Conteúdo interno: "  [NN] ID(11)  Desc" preenchido até Width
+    # Cálculo: 2 espaços + 1[ + 2NN + 1] + 1 espaço + 11ID + 2 espaços + desc = 19 + desc
+    $descWidth = $Width - 19
+    $descPadded = $Description.PadRight($descWidth)
+    $inner     = "  [{0}] {1}  {2}" -f $numStr, $idPadded, $descPadded
+    
+    # Número em Green (brilhante), resto em DarkGreen
+    Write-Host "  ║" -ForegroundColor DarkGreen -NoNewline
+    Write-Host "  [" -ForegroundColor DarkGreen -NoNewline
+    Write-Host $numStr  -ForegroundColor Green      -NoNewline
+    Write-Host "] {0}  {1}" -f $idPadded, $descPadded -ForegroundColor DarkGreen -NoNewline
+    Write-Host "║"      -ForegroundColor DarkGreen
 }
 
 function Show-MenuSeparator {
     <#
     .SYNOPSIS
-        Exibe linha separadora com texto
+        Exibe linha separadora com texto (usado em submenus)
     .PARAMETER Text
         Texto do separador
     #>
@@ -153,15 +240,14 @@ function Show-MenuSeparator {
     )
 
     if ([string]::IsNullOrWhiteSpace($Text)) {
-        Write-Host "  " + ("─" * 76) -ForegroundColor DarkGray
+        Write-Host "  " + ("─" * 76) -ForegroundColor DarkGreen
     }
     else {
-        $textLen = $Text.Length + 4
-        $dashCount = (76 - $textLen) / 2
+        $textLen    = $Text.Length + 4
+        $dashCount  = (76 - $textLen) / 2
         $leftDashes = [math]::Floor($dashCount)
-        $rightDashes = [math]::Ceiling($dashCount)
-
-        Write-Host ("  " + ("─" * $leftDashes) + " $Text " + ("─" * $rightDashes)) -ForegroundColor Yellow
+        $rightDashes= [math]::Ceiling($dashCount)
+        Write-Host ("  " + ("─" * $leftDashes) + " $Text " + ("─" * $rightDashes)) -ForegroundColor DarkGreen
     }
     Write-Host ""
 }
@@ -169,31 +255,56 @@ function Show-MenuSeparator {
 function Show-MenuFooter {
     <#
     .SYNOPSIS
-        Exibe rodapé com opções de navegação
+        Exibe rodapé com opções de navegação e fecha a box
     .PARAMETER Options
         Array de opções para exibir (ex: @("Q", "H"))
     .PARAMETER Labels
         Array de labels para cada opção (ex: @("Sair", "Ajuda"))
     .PARAMETER HelpURL
         URL para abrir com a opção H
+    .PARAMETER Width
+        Largura interna da box (padrão: 76)
     #>
     param(
-        [string[]]$Options = @("Q"),
-        [string[]]$Labels = @("Sair"),
-        [string]$HelpURL = "https://docs.hpinfo.com.br"
+        [string[]]$Options  = @("Q"),
+        [string[]]$Labels   = @("Sair"),
+        [string]$HelpURL    = "https://docs.hpinfo.com.br",
+        [int]$Width         = 76
     )
 
-    $footerParts = @()
+    # Construir texto do footer
+    $parts = @()
     for ($i = 0; $i -lt $Options.Count; $i++) {
-        $footerParts += "[$($Options[$i])] $($Labels[$i])"
+        $parts += "[$($Options[$i])] $($Labels[$i])"
     }
+    $footerText = $parts -join "  |  "
 
-    $footerText = $footerParts -join " | "
-    $padding = (76 - $footerText.Length) / 2
-    $leftPad = [math]::Floor($padding)
-    $rightPad = [math]::Ceiling($padding)
+    # Centralizar dentro de $Width
+    $pad   = ($Width - $footerText.Length) / 2
+    $lPad  = [math]::Floor($pad)
+    $rPad  = [math]::Ceiling($pad)
 
-    Write-Host ("  " + (" " * $leftPad) + $footerText + (" " * $rightPad)) -ForegroundColor DarkGray
+    # Separador antes do footer
+    Write-Host ("  ╠" + ("═" * $Width) + "╣") -ForegroundColor DarkGreen
+
+    # Linha do footer
+    Write-Host ("  ║" + (" " * $lPad) + $footerText + (" " * $rPad) + "║") -ForegroundColor DarkGreen
+
+    # Fechamento da box
+    Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor DarkGreen
+    Write-Host ""
+}
+
+function Show-BoxFooter {
+    <#
+    .SYNOPSIS
+        Desenha fechamento da box (para uso em submenus que não usam Show-MenuFooter)
+    .PARAMETER Width
+        Largura da box (padrão: 76)
+    #>
+    param([int]$Width = 76)
+
+    Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor DarkGreen
     Write-Host ""
 }
 
@@ -204,32 +315,66 @@ function Show-MenuFooter {
 function Read-MenuKey {
     <#
     .SYNOPSIS
-        Captura tecla instantânea (sem ENTER) no ConsoleHost
+        Captura tecla com buffer de timeout para números de 2+ dígitos
     .PARAMETER Prompt
         Texto do prompt
+    .PARAMETER DigitTimeoutMs
+        Timeout em ms para acumular dígitos (padrão: 500)
     .OUTPUTS
-        Caractere digitado
+        String digitada (caractere ou número acumulado)
     #>
     param(
-        [string]$Prompt = "Selecione uma opcao"
+        [string]$Prompt       = "Selecione uma opcao",
+        [int]$DigitTimeoutMs  = 500
     )
 
-    Write-Host "$Prompt " -NoNewline -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  $Prompt: " -NoNewline -ForegroundColor Green
 
-    # Tenta usar ReadKey para resposta instantânea
     if ($Host.Name -eq 'ConsoleHost') {
         try {
-            $key = [Console]::ReadKey($true)
-            $char = $key.KeyChar.ToString()
-            Write-Host $char -ForegroundColor Yellow
-            return $char
+            # Lê o primeiro caractere (bloqueante)
+            $key    = [Console]::ReadKey($true)
+            $char   = $key.KeyChar
+            $buffer = $char.ToString()
+
+            # Se for um dígito, aguarda mais dígitos com timeout
+            if ([char]::IsDigit($char)) {
+                $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                $maxDigits = 2  # Limitar a 2 dígitos (para 01-99)
+
+                while ([DateTime]::Now -lt $deadline -and $buffer.Length -lt $maxDigits) {
+                    if ([Console]::KeyAvailable) {
+                        $k2 = [Console]::ReadKey($true)
+                        if ([char]::IsDigit($k2.KeyChar)) {
+                            $buffer  += $k2.KeyChar.ToString()
+                            # Reset deadline a cada novo dígito recebido
+                            $deadline = [DateTime]::Now.AddMilliseconds($DigitTimeoutMs)
+                        }
+                        else {
+                            # Tecla não-dígito: descarta e para
+                            break
+                        }
+                    }
+                    Start-Sleep -Milliseconds 15
+                }
+            }
+
+            # Eco do que foi digitado
+            Write-Host $buffer -ForegroundColor Green
+            Write-HPLog -Message "Usuario digitou: '$buffer'" -Level INFO
+            return $buffer
         }
         catch {
-            return Read-Host $Prompt
+            $result = Read-Host $Prompt
+            Write-HPLog -Message "Usuario digitou (fallback): '$result'" -Level INFO
+            return $result
         }
     }
     else {
-        return Read-Host $prompt
+        $result = Read-Host $Prompt
+        Write-HPLog -Message "Usuario digitou (Read-Host): '$result'" -Level INFO
+        return $result
     }
 }
 
@@ -247,34 +392,39 @@ function Show-HelpMenu {
     Clear-Host
     Show-BoxHeader -Title "AJUDA" -Subtitle "Documentação Oficial"
 
-    Write-Host "  📚 Documentação Online: $HelpURL" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "  Atalhos Gerais:" -ForegroundColor Yellow
-    Write-Host "  [0] Voltar ao menu anterior" -ForegroundColor White
-    Write-Host "  [Q] Sair do script atual" -ForegroundColor White
-    Write-Host "  [H] Abrir este menu de ajuda" -ForegroundColor White
-    Write-Host ""
+    # Linhas dentro da box
+    $lines = @(
+        "Documentacao Online: $HelpURL",
+        "",
+        "Atalhos Gerais:",
+        "[0] Voltar ao menu anterior",
+        "[Q] Sair do script atual",
+        "[H] Abrir este menu de ajuda"
+    )
+    foreach ($l in $lines) {
+        $inner = ("  " + $l).PadRight(76)
+        Write-Host ("  ║" + $inner + "║") -ForegroundColor DarkGreen
+    }
 
-    $openDocs = Read-MenuKey -Prompt "  Deseja abrir a documentação no navegador? (S/N)"
+    Show-MenuFooter -Options @("S","N") -Labels @("Abrir docs","Voltar")
+    
+    $openDocs = Read-MenuKey -Prompt "Deseja abrir a documentação no navegador? (S/N)"
     if ($openDocs -match '^[sS]') {
         try {
             Start-Process $HelpURL
-            Write-Host "`n  [OK] Documentação aberta no navegador." -ForegroundColor Green
+            Write-Host "  Documentacao aberta no navegador." -ForegroundColor Green
+            Write-HPLog -Message "Documentacao aberta: $HelpURL" -Level INFO
         }
         catch {
-            Write-Host "`n  [ERRO] Não foi possível abrir a documentação." -ForegroundColor Red
-            Write-Host "  URL: $HelpURL" -ForegroundColor Gray
+            Write-Host "  [ERRO] Nao foi possivel abrir a documentacao." -ForegroundColor Red
+            Write-HPLog -Message "ERRO ao abrir docs: $($_.Exception.Message)" -Level ERRO
         }
     }
 
-    Write-Host "`n  Pressione qualquer tecla para voltar..." -ForegroundColor Gray
+    Write-Host "`n  Pressione qualquer tecla para voltar..." -ForegroundColor DarkGreen
     if ($Host.Name -eq 'ConsoleHost' -and $Host.UI.RawUI) {
-        try {
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
-        catch {
-            Read-Host "  Pressione ENTER"
-        }
+        try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") }
+        catch { Read-Host "  Pressione ENTER" }
     }
     else {
         Read-Host "  Pressione ENTER"
