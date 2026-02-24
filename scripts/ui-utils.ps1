@@ -224,7 +224,7 @@ function Show-MenuItem {
     Write-Host "  ║" -ForegroundColor DarkGreen -NoNewline
     Write-Host "  [" -ForegroundColor DarkGreen -NoNewline
     Write-Host $numStr  -ForegroundColor Green      -NoNewline
-    Write-Host "] {0}  {1}" -f $idPadded, $descPadded -ForegroundColor DarkGreen -NoNewline
+    Write-Host ("] {0}  {1}" -f $idPadded, $descPadded) -ForegroundColor DarkGreen -NoNewline
     Write-Host "║"      -ForegroundColor DarkGreen
 }
 
