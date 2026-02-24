@@ -121,7 +121,7 @@ if (-not $_uiLoaded) {
         $idPadded = $ID.PadRight(11)
         $descWidth = $Width - 19
         $descPadded = $Description.PadRight($descWidth)
-        Write-Host "  [{0}] {1}  {2}" -f $numStr, $idPadded, $descPadded -ForegroundColor DarkGreen
+        Write-Host ("  [{0}] {1}  {2}" -f $numStr, $idPadded, $descPadded) -ForegroundColor DarkGreen
     }
     function Show-MenuSeparator {
         param([string]$Text = "")
