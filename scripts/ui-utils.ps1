@@ -325,7 +325,7 @@ function Read-MenuKey {
     #>
     param(
         [string]$Prompt       = "Selecione uma opcao",
-        [int]$DigitTimeoutMs  = 500
+        [int]$DigitTimeoutMs  = 2000
     )
 
     Write-Host ""

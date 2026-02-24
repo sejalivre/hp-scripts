@@ -106,7 +106,7 @@ if (-not $_uiLoaded) {
         Write-Host ""
     }
     function Read-MenuKey {
-        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 500)
+        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 2000)
         Write-Host "$Prompt " -NoNewline -ForegroundColor Green
         if ($Host.Name -eq 'ConsoleHost') {
             try {

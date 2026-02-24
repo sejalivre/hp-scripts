@@ -117,8 +117,19 @@ if (-not $_uiLoaded) {
 if (-not $_uiLoaded) {
     function Show-BoxHeader {
         param([string]$Title, [string]$Subtitle = "", [int]$Width = 76)
+        $titlePad  = ($Width - $Title.Length) / 2
+        $tLeft     = [math]::Floor($titlePad)
+        $tRight    = [math]::Ceiling($titlePad)
         Write-Host ""
-        Write-Host ("  === $Title ===" + $(if ($Subtitle) { " | $Subtitle" })) -ForegroundColor Green
+        Write-Host ("  ╔" + ("═" * $Width) + "╗") -ForegroundColor DarkGreen
+        Write-Host ("  ║" + (" " * $tLeft) + $Title + (" " * $tRight) + "║") -ForegroundColor Green
+        if ($Subtitle) {
+            $subPad = ($Width - $Subtitle.Length - 4) / 2
+            $sLeft = [math]::Floor($subPad)
+            $sRight = [math]::Ceiling($subPad)
+            Write-Host ("  ║" + (" " * $sLeft) + $Subtitle + (" " * $sRight) + "║") -ForegroundColor DarkGreen
+        }
+        Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor DarkGreen
         Write-Host ""
     }
     function Show-HardwareInfo {
@@ -149,7 +160,7 @@ if (-not $_uiLoaded) {
         Write-Host ""
     }
     function Read-MenuKey {
-        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 500)
+        param([string]$Prompt = "Selecione uma opcao", [int]$DigitTimeoutMs = 2000)
         Write-Host "$Prompt " -NoNewline -ForegroundColor Green
         if ($Host.Name -eq 'ConsoleHost') {
             try {
@@ -339,7 +350,7 @@ function Show-MainMenu {
 
         Show-MenuFooter -Options @("Q", "H") -Labels @("Sair", "Ajuda")
 
-        $escolha = Read-MenuKey -Prompt "Selecione uma opcao"
+        $escolha = Read-MenuKey -Prompt "Selecione uma opcao" -DigitTimeoutMs 2000
         Write-HPLog -Message "Opcao selecionada: '$escolha'" -Level INFO
 
         if ($escolha -eq "Q" -or $escolha -eq "q") {
