@@ -93,16 +93,16 @@ if (-not $_uiLoaded) {
 if (-not $_uiLoaded) {
     function Show-BoxHeader {
         param([string]$Title, [string]$Subtitle = "", [int]$Width = 76)
-        $titlePad  = ($Width - $Title.Length) / 2
-        $tLeft     = [math]::Floor($titlePad)
-        $tRight    = [math]::Ceiling($titlePad)
+        $contentWidth = $Width
+        $titlePad = ($contentWidth - $Title.Length) / 2
+        $tLeft = [math]::Floor($titlePad)
+        $tRight = $contentWidth - $Title.Length - $tLeft
         Write-Host ""
         Write-Host ("  ╔" + ("═" * $Width) + "╗") -ForegroundColor DarkGreen
         Write-Host ("  ║" + (" " * $tLeft) + $Title + (" " * $tRight) + "║") -ForegroundColor Green
         if ($Subtitle) {
-            $subPad = ($Width - $Subtitle.Length - 4) / 2
-            $sLeft = [math]::Floor($subPad)
-            $sRight = [math]::Ceiling($subPad)
+            $sLeft = [math]::Floor(($contentWidth - $Subtitle.Length) / 2)
+            $sRight = $contentWidth - $Subtitle.Length - $sLeft
             Write-Host ("  ║" + (" " * $sLeft) + $Subtitle + (" " * $sRight) + "║") -ForegroundColor DarkGreen
         }
         Write-Host ("  ╚" + ("═" * $Width) + "╝") -ForegroundColor DarkGreen
