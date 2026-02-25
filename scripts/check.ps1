@@ -71,7 +71,7 @@ else {
     try {
         if (-not (Test-Path $7zipExe)) {
             Write-Host "   -> Baixando dependência (7-Zip)..." -NoNewline -ForegroundColor Gray
-            Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zipExe -UseBasicParsing
+            Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zipExe -UseBasicParsing -MaximumRedirection 0
             Write-Host " [OK]" -ForegroundColor Green
         }
     }
@@ -106,7 +106,7 @@ if (Test-Path $7zipExe) {
                 # Só baixa se ainda não tiver baixado
                 try {
                     Write-Host "   -> Baixando $($tool.Name)..." -NoNewline -ForegroundColor Gray
-                    Invoke-WebRequest -Uri "$BaseUrl/$($tool.Archive)" -OutFile $tempArchive -UseBasicParsing
+                    Invoke-WebRequest -Uri "$BaseUrl/$($tool.Archive)" -OutFile $tempArchive -UseBasicParsing -MaximumRedirection 0
                     Write-Host " [OK]" -ForegroundColor Green
                 }
                 catch {

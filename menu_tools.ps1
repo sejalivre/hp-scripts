@@ -30,7 +30,7 @@ if ([string]::IsNullOrEmpty($ScriptPath)) {
 $ToolsPath = Join-Path $ScriptPath "tools"
 $TempPath = Join-Path $env:TEMP "HP-Tools"
 $BaseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
-$baseUrl = "get.hpinfo.com.br"
+$CfBaseUrl = "get.hpinfo.com.br"
 $7zExe = Join-Path $TempPath "7z.exe"
 $7zTxe = Join-Path $ToolsPath "7z.txe"
 $7zDll = Join-Path $TempPath "7z.dll"
@@ -51,7 +51,7 @@ if (Test-Path $uiUtilsPath) {
 # Estágio 2: Fallback remoto via URL
 if (-not $_uiLoaded) {
     try {
-        $uiUtilsUrl = "https://$baseUrl/scripts/ui-utils"
+        $uiUtilsUrl = "https://$CfBaseUrl/scripts/ui-utils"
         $uiContent = Invoke-RestMethod -Uri $uiUtilsUrl -UseBasicParsing -ErrorAction Stop
         Invoke-Expression $uiContent
         $_uiLoaded = $true
@@ -158,7 +158,7 @@ function Initialize-7Zip {
             if (Check-Internet) {
                 Write-Host "  -> Baixando dependência 7-Zip..." -ForegroundColor Gray
                 try {
-                    Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zExe -UseBasicParsing
+                    Invoke-WebRequest -Uri "$BaseUrl/7z.txe" -OutFile $7zExe -UseBasicParsing -MaximumRedirection 0
                 }
                 catch { Write-Host "  [ERRO] Falha ao baixar 7z.exe" -ForegroundColor Red }
             }
@@ -203,7 +203,7 @@ function Start-Tool {
             Write-Host "  -> Tentando baixar de: $BaseUrl/$ArchiveName" -ForegroundColor Cyan
             try {
                 if (-not (Test-Path $TempPath)) { New-Item -ItemType Directory -Path $TempPath -Force | Out-Null }
-                Invoke-WebRequest -Uri "$BaseUrl/$ArchiveName" -OutFile $tempArchive -UseBasicParsing
+                Invoke-WebRequest -Uri "$BaseUrl/$ArchiveName" -OutFile $tempArchive -UseBasicParsing -MaximumRedirection 0
                 if (Test-Path $tempArchive) {
                     $archiveToUse = $tempArchive
                     Write-Host "  [OK] Download concluído." -ForegroundColor Green
