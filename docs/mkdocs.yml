@@ -54,6 +54,7 @@ nav:
       - Limpeza (LIMP): scripts/limp.md
       - Update: scripts/update.md
       - Hora (NTP): scripts/hora.md
+      - Energia: scripts/energia.md
       - Rede: scripts/rede.md
       - Print (Impressão): scripts/print.md
       - Wallpaper: scripts/wall.md
