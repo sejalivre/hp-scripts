@@ -214,6 +214,7 @@ $ferramentas = @(
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
     @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "../scripts/wallpaper" ; IsLocalScript = $true }
     @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "../tools/nextdns/nextdns.ps1" ; IsLocal = $true }
+    @{ ID = "ENERGIA"    ; Desc = "Gerenciamento de Energia"           ; Path = "../scripts/energia" ; IsLocalScript = $true }
     @{ ID = "TOOLS"      ; Desc = "Menu de Ferramentas Portáteis"       ; Path = "menu_tools.ps1" ; IsLocal = $true }
     @{ ID = "POLICY"     ; Desc = "Liberar Política de Execução"        ; Path = "SetExecutionPolicy" ; IsFunction = $true }
 )

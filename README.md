@@ -31,6 +31,7 @@ irm get.hpinfo.com.br/scripts/update   | iex    # Atualizações
 irm get.hpinfo.com.br/scripts/limp     | iex    # Limpeza
 irm get.hpinfo.com.br/scripts/backup   | iex    # Backup
 irm get.hpinfo.com.br/scripts/hora     | iex    # Sincronização de horário
+irm get.hpinfo.com.br/scripts/energia  | iex    # Gerenciamento de energia
 irm get.hpinfo.com.br/scripts/wallpaper| iex    # Wallpaper corporativo
 ```
 
@@ -74,7 +75,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | 5  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
 | 6  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
 | 7  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
-| 8  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
+| 8  | ⚡ ENERGIA                   | Planos de energia, hibernação, otimização desktop/notebook, diagnóstico            |
+| 9  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
 | 9  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
 | 10 | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
 | 11 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
@@ -93,6 +95,7 @@ irm get.hpinfo.com.br/scripts/repair   | iex
 irm get.hpinfo.com.br/scripts/limp     | iex
 irm get.hpinfo.com.br/scripts/update   | iex
 irm get.hpinfo.com.br/scripts/hora     | iex
+irm get.hpinfo.com.br/scripts/energia   | iex
 irm get.hpinfo.com.br/scripts/net      | iex
 irm get.hpinfo.com.br/scripts/print    | iex
 irm get.hpinfo.com.br/scripts/wallpaper| iex
