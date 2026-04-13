@@ -236,6 +236,7 @@ $ferramentas = @(
     @{ ID = "PRINT"      ; Desc = "Módulo de Impressão"                 ; Path = "scripts/print" ; IsLocalScript = $true }
     @{ ID = "BACKUP"     ; Desc = "Rotina de Backup de Usuário"         ; Path = "scripts/backup"; IsLocalScript = $true }
     @{ ID = "ATIV"       ; Desc = "Ativação (get.activated.win)"        ; Path = "https://get.activated.win" ; External = $true }
+    @{ ID = "OFFICE"     ; Desc = "Gerenciamento Microsoft Office"     ; Path = "scripts/office" ; IsLocalScript = $true }
     @{ ID = "WALL"       ; Desc = "Configurar Wallpaper Padrão"         ; Path = "scripts/wallpaper" ; IsLocalScript = $true }
     @{ ID = "NEXTDNS"    ; Desc = "Gerenciamento NextDNS"               ; Path = "tools/nextdns/nextdns" ; IsLocal = $true }
     @{ ID = "ENERGIA"    ; Desc = "Gerenciamento de Energia"           ; Path = "scripts/energia" ; IsLocalScript = $true }
