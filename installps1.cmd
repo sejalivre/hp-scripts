@@ -28,7 +28,7 @@ echo.
 :: ============================================================
 echo [2/5] Verificando versao do PowerShell...
 if !PS_MISSING!==1 (
-    echo [INFO] Pulando verificacao de versao (PowerShell nao instalado)
+    echo [INFO] Pulando verificacao de versao ^(PowerShell nao instalado^)
     set NEEDS_UPDATE=1
     goto :STEP3
 )
@@ -36,14 +36,15 @@ if !PS_MISSING!==1 (
 for /f "delims=" %%i in ('powershell -NoProfile -Command "[int]$PSVersionTable.PSVersion.Major"') do set PS_VERSION=%%i
 echo [INFO] Versao do PowerShell detectada: !PS_VERSION!
 
-if !PS_VERSION! LSS 5 (
-    echo [AVISO] Versao insuficiente detectada ^(HP-Scripts requer 5.1+^)
-    echo [INFO] Sera necessario atualizar para PowerShell 7
-    set NEEDS_UPDATE=1
-) else (
-    echo [OK] Versao compativel ^(5.1+^)
-    set NEEDS_UPDATE=0
-)
+if !PS_VERSION! LSS 5 goto :VERSION_LOW
+echo [OK] Versao compativel ^(5.1+^)
+set NEEDS_UPDATE=0
+goto :STEP3
+
+:VERSION_LOW
+echo [AVISO] Versao insuficiente detectada ^(HP-Scripts requer 5.1+^)
+echo [INFO] Sera necessario atualizar para PowerShell 7
+set NEEDS_UPDATE=1
 
 :STEP3
 echo.
@@ -75,17 +76,7 @@ goto :METHOD_FALLBACK
 :METHOD_WINGET
 echo [INFO] Usando Winget para gerenciar PowerShell 7...
 winget list --id Microsoft.PowerShell --exact >nul 2>nul
-if !ERRORLEVEL! NEQ 0 (
-    echo [INFO] PowerShell 7 nao encontrado. Instalando...
-    winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
-    if !ERRORLEVEL! EQU 0 (
-        echo [OK] PowerShell 7 instalado com sucesso.
-        goto :STEP5
-    ) else (
-        echo [ERRO] Falha ao instalar PowerShell 7 via Winget.
-        goto :METHOD_FALLBACK
-    )
-)
+if !ERRORLEVEL! NEQ 0 goto :INSTALL_PWSH7
 
 echo [INFO] PowerShell 7 ja instalado. Verificando atualizacoes...
 winget upgrade --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
@@ -95,6 +86,17 @@ if !ERRORLEVEL! EQU 0 (
     echo [INFO] Nenhuma atualizacao disponivel ou ja esta na versao mais recente.
 )
 goto :STEP5
+
+:INSTALL_PWSH7
+echo [INFO] PowerShell 7 nao encontrado. Instalando...
+winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
+if !ERRORLEVEL! EQU 0 (
+    echo [OK] PowerShell 7 instalado com sucesso.
+    goto :STEP5
+) else (
+    echo [ERRO] Falha ao instalar PowerShell 7 via Winget.
+    goto :METHOD_FALLBACK
+)
 
 :METHOD_FALLBACK
 echo [INFO] Usando metodo alternativo ^(download direto da Microsoft^)...
@@ -122,14 +124,15 @@ echo.
 echo [5/5] Verificacao final...
 
 where pwsh.exe >nul 2>nul
-if !ERRORLEVEL! NEQ 0 (
-    echo [INFO] PowerShell 7 nao detectado no PATH ^(pode requerer reinicio^).
-    goto :FINISHED
-)
+if !ERRORLEVEL! NEQ 0 goto :NO_PWSH7
 
 echo [OK] PowerShell 7 ^(pwsh.exe^) detectado no sistema.
 for /f "tokens=*" %%i in ('pwsh -NoProfile -Command "$PSVersionTable.PSVersion.ToString()"') do set PWSH_VERSION=%%i
 echo [INFO] Versao instalada: PowerShell !PWSH_VERSION!
+goto :FINISHED
+
+:NO_PWSH7
+echo [INFO] PowerShell 7 nao detectado no PATH ^(pode requerer reinicio^).
 
 :FINISHED
 echo.
