@@ -111,6 +111,11 @@ Esta seção detalha as capacidades técnicas que o Agente deve saber manipular 
 - Reinicialização robusta do Spooler.
 - Limpeza forçada da pasta de spool (`system32\spool\PRINTERS`).
 
+### 📦 Microsoft Office (`scripts/office.ps1`)
+- **Instalação**: Deploy automatizado via script remoto.
+- **Manutenção**: Limpeza de cache de arquivos e acionamento de reparo rápido nativo.
+- **Remoção**: Desinstalação completa e limpa da suíte Office.
+
 ## 🚀 Workflow de Contribuição para IA
 1. **Análise**: Antes de codar, analisar `menu.ps1` para entender dependências.
 2. **Features**: Novas funcionalidades devem ser scripts `.ps1` separados em `/scripts`.

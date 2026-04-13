@@ -58,6 +58,7 @@ nav:
       - Rede: scripts/rede.md
       - Print (Impressão): scripts/print.md
       - Wallpaper: scripts/wall.md
+      - Microsoft Office: scripts/office.md
   - Ferramentas:
       - NextDNS: scripts/nextdns.md
       - PowerShell 7: utilitarios/installps1.md

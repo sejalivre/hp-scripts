@@ -33,6 +33,7 @@ irm get.hpinfo.com.br/scripts/backup   | iex    # Backup
 irm get.hpinfo.com.br/scripts/hora     | iex    # Sincronização de horário
 irm get.hpinfo.com.br/scripts/energia  | iex    # Gerenciamento de energia
 irm get.hpinfo.com.br/scripts/wallpaper| iex    # Wallpaper corporativo
+irm get.hpinfo.com.br/scripts/office   | iex    # Gerenciamento Microsoft Office
 ```
 
 ### Instalar PowerShell 7 (recomendado)
@@ -69,21 +70,23 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | #  | Opção                        | Descrição Principal                                                                 |
 |----|------------------------------|--------------------------------------------------------------------------------------|
 | 1  | 📊 CHECK                     | Verificações rápidas de integridade do sistema                                      |
-| 2  | 🔧 SFC                       | Diagnóstico e reparação completa do Windows (DISM, SFC, memória, processos)         |
-| 3  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
-| 4  | ⚙️ WINFORGE                  | Instalação de apps (Chrome, 7-Zip, Reader) + otimizações do sistema                |
-| 5  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
-| 6  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
-| 7  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
-| 8  | ⚡ ENERGIA                   | Planos de energia, hibernação, otimização desktop/notebook, diagnóstico            |
+| 2  | 🔧 REPAIR                    | Reparo automático do sistema (Rede, Disco, Updates, Segurança)                      |
+| 3  | 🔧 SFC                       | Diagnóstico e reparação completa do Windows (DISM, SFC, memória, processos)         |
+| 4  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
+| 5  | ⚙️ WINFORGE                  | Instalação de apps (Chrome, 7-Zip, Reader) + otimizações do sistema                |
+| 6  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
+| 7  | 🔄 UPDATE                    | Limpeza + instalação + atualização automática do Windows Update                   |
+| 8  | ⏰ HORA                      | Configura NTP BR + tarefa agendada para manter horário correto                      |
 | 9  | 🌐 REDE                      | Reset completo de rede, DNS, serviços, IP, winsock, proxy...                        |
-| 9  | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
-| 10 | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
-| 11 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
-| 12 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
-| 13 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
-| 14 | 🛠️ TOOLS                     | Menu de ferramentas portáteis (CoreTemp, CrystalDiskInfo, etc.)                     |
-| 15 | 🔓 POLICY                    | Libera política de execução do PowerShell (Unrestricted)                            |
+| 10 | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
+| 11 | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
+| 12 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
+| 13 | 📦 OFFICE                    | Gerenciamento Microsoft Office (Instalação, Reparo, Remoção)                        |
+| 14 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
+| 15 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
+| 16 | ⚡ ENERGIA                   | Planos de energia, hibernação, otimização desktop/notebook, diagnóstico            |
+| 17 | 🛠️ TOOLS                     | Menu de ferramentas portáteis (CoreTemp, CrystalDiskInfo, etc.)                     |
+| 18 | 🔓 POLICY                    | Libera política de execução do PowerShell (Unrestricted)                            |
 
 ## Scripts que você pode chamar diretamente
 
@@ -100,6 +103,7 @@ irm get.hpinfo.com.br/scripts/net      | iex
 irm get.hpinfo.com.br/scripts/print    | iex
 irm get.hpinfo.com.br/scripts/wallpaper| iex
 irm get.hpinfo.com.br/scripts/winforge | iex
+irm get.hpinfo.com.br/scripts/office   | iex
 ```
 
 ---
@@ -212,6 +216,7 @@ hp-scripts/
 │   ├── print.ps1           # Reparo de impressão
 │   ├── wallpaper.ps1       # Configuração de wallpaper
 │   ├── winforge.ps1        # Instalação e otimização
+│   ├── office.ps1          # Gerenciamento Microsoft Office
 
 ├── tools/                  # Ferramentas portáteis
 │   ├── nextdns/            # Módulo NextDNS
@@ -278,6 +283,7 @@ irm get.hpinfo.com.br/menu | iex
 | **`wallpaper.ps1`** | Aplicação de wallpaper corporativo padrão |
 | **`repair.ps1`** | Diagnóstico e reparo automático modular (Rede, Disco, Updates, Segurança) |
 | **`winforge.ps1`** | Instalação de aplicativos + otimizações do sistema |
+| **`office.ps1`** | Gerenciamento Microsoft Office (Instalação, Reparo, Remoção) |
 
 ---
 
