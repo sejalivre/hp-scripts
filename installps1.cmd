@@ -62,6 +62,7 @@ if !ERRORLEVEL! NEQ 0 (
 ) else (
     echo [OK] Winget disponivel.
     set USE_WINGET=1
+    winget source update --disable-interactivity --accept-source-agreements >nul 2>nul
 )
 echo.
 
@@ -75,11 +76,11 @@ goto :METHOD_FALLBACK
 
 :METHOD_WINGET
 echo [INFO] Usando Winget para gerenciar PowerShell 7...
-winget list --id Microsoft.PowerShell --exact >nul 2>nul
+where pwsh.exe >nul 2>nul
 if !ERRORLEVEL! NEQ 0 goto :INSTALL_PWSH7
 
 echo [INFO] PowerShell 7 ja instalado. Verificando atualizacoes...
-winget upgrade --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
+winget upgrade --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
 if !ERRORLEVEL! EQU 0 (
     echo [OK] PowerShell 7 atualizado com sucesso.
 ) else (
@@ -89,7 +90,7 @@ goto :STEP5
 
 :INSTALL_PWSH7
 echo [INFO] PowerShell 7 nao encontrado. Instalando...
-winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
+winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
 if !ERRORLEVEL! EQU 0 (
     echo [OK] PowerShell 7 instalado com sucesso.
     goto :STEP5

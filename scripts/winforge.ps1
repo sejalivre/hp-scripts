@@ -1,4 +1,4 @@
-﻿#Requires -RunAsAdministrator
+#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
     WinForge - Sistema de Instalação e Otimização do Windows
@@ -97,6 +97,11 @@ function Install-Apps {
     
     $UseWinget = Test-WingetAvailable
     
+    if ($UseWinget) {
+        Write-Log "Atualizando fontes do Winget..."
+        Start-Process -FilePath "winget" -ArgumentList "source update --disable-interactivity --accept-source-agreements" -Wait -NoNewWindow
+    }
+    
     if (-not $UseWinget) {
         Write-Log "Winget não disponível, tentando Chocolatey..." "WARNING"
         $ChocoAvailable = Test-Path "$env:ProgramData\chocolatey\bin\choco.exe"
@@ -113,7 +118,7 @@ function Install-Apps {
         Write-Log "Instalando $($App.Name)..."
         try {
             if ($UseWinget) {
-                $Process = Start-Process -FilePath "winget" -ArgumentList "install --id $($App.WingetId) --silent --accept-package-agreements --accept-source-agreements" -Wait -PassThru -NoNewWindow
+                $Process = Start-Process -FilePath "winget" -ArgumentList "install --id $($App.WingetId) --silent --accept-package-agreements --accept-source-agreements --disable-interactivity" -Wait -PassThru -NoNewWindow
                 if ($Process.ExitCode -eq 0) {
                     $Script:Results.Apps += "$($App.Name) - Instalado com sucesso (Winget)"
                     Write-Log "$($App.Name) instalado com sucesso" "SUCCESS"
