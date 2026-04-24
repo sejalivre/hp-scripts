@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Menu de Gerenciamento Microsoft Office - HPCRAFT
 .DESCRIPTION
@@ -32,6 +32,10 @@ if ([string]::IsNullOrEmpty($ScriptRoot)) {
 if (Test-Path (Join-Path $ScriptRoot "scripts")) {
     $IsLocalExecution = $true
 }
+# Fallback para estrutura portable
+elseif ($ScriptRoot -like "*portable*") {
+    $IsLocalExecution = $true
+}
 
 $baseUrl = "get.hpinfo.com.br"
 $installUrl = "https://get.hpinfo.com.br/tools/office/install.ps1"
@@ -49,6 +53,13 @@ $_uiLoaded = $false
 
 # Estágio 1: Tentar caminho local relativo
 $uiUtilsPath = Join-Path $ScriptRoot "ui-utils.ps1"
+if (-not (Test-Path $uiUtilsPath) -and $ScriptRoot -like "*scripts*") {
+     $uiUtilsPath = Join-Path $ScriptRoot "ui-utils.ps1"
+}
+elseif (-not (Test-Path $uiUtilsPath)) {
+     $uiUtilsPath = Join-Path $ScriptRoot "scripts\ui-utils.ps1"
+}
+
 if (Test-Path $uiUtilsPath) {
     try {
         . $uiUtilsPath
@@ -107,24 +118,64 @@ if (-not (Get-Command Write-HPLog -ErrorAction SilentlyContinue)) {
 # ============================================================
 
 function Install-Office {
+    param([string]$DownloadUrl)
     Write-Host "`n  [INFO] Iniciando instalação do Office..." -ForegroundColor Yellow
-    Write-HPLog -Message "Iniciando instalação do Office via $installUrl" -Level INFO
     
-    try {
-        $tempScript = Join-Path $env:TEMP "install_office.ps1"
-        Write-Host "  [INFO] Baixando script de instalação..." -ForegroundColor DarkGreen
-        Invoke-WebRequest -Uri $installUrl -OutFile $tempScript -UseBasicParsing -ErrorAction Stop
-        
-        if (Test-Path $tempScript) {
-            Write-Host "  [INFO] Executando instalador..." -ForegroundColor Green
-            & $tempScript
-            Remove-Item $tempScript -Force -ErrorAction SilentlyContinue
-            Write-HPLog -Message "Script de instalação do Office executado com sucesso." -Level INFO
+    # Determinar script de instalação
+    $localInstallScript = ""
+    # Tenta achar tools/office/install.ps1 relativo ao root
+    $potentialPaths = @(
+        Join-Path $ScriptRoot "tools\office\install.ps1",
+        Join-Path (Split-Path $ScriptRoot -Parent) "tools\office\install.ps1",
+        Join-Path $ScriptRoot "..\tools\office\install.ps1"
+    )
+    
+    foreach ($path in $potentialPaths) {
+        if (Test-Path $path) {
+            $localInstallScript = $path
+            break
         }
     }
-    catch {
-        Write-Host "  [ERRO] Falha ao baixar ou executar o instalador: $($_.Exception.Message)" -ForegroundColor Red
-        Write-HPLog -Message "ERRO na instalação do Office: $($_.Exception.Message)" -Level ERRO
+
+    $tempScript = Join-Path $env:TEMP "install_office.ps1"
+    $scriptToExecute = ""
+
+    if ($localInstallScript) {
+        $scriptToExecute = $localInstallScript
+        Write-Host "  [INFO] Usando script de instalação local." -ForegroundColor DarkGreen
+    }
+    else {
+        try {
+            Write-Host "  [INFO] Baixando script de instalação remoto..." -ForegroundColor DarkGreen
+            Invoke-WebRequest -Uri $installUrl -OutFile $tempScript -UseBasicParsing -ErrorAction Stop
+            $scriptToExecute = $tempScript
+        }
+        catch {
+            Write-Host "  [ERRO] Falha ao baixar o instalador: $($_.Exception.Message)" -ForegroundColor Red
+            Write-HPLog -Message "ERRO no download do Office: $($_.Exception.Message)" -Level ERRO
+            return
+        }
+    }
+
+    if (Test-Path $scriptToExecute) {
+        Write-Host "  [INFO] Executando instalador..." -ForegroundColor Green
+        try {
+            if ($DownloadUrl) {
+                & $scriptToExecute -DownloadUrl $DownloadUrl
+            } else {
+                & $scriptToExecute
+            }
+            Write-HPLog -Message "Script de instalação do Office executado com sucesso." -Level INFO
+        }
+        catch {
+            Write-Host "  [ERRO] Falha ao executar o instalador: $($_.Exception.Message)" -ForegroundColor Red
+            Write-HPLog -Message "ERRO na execução do instalador do Office: $($_.Exception.Message)" -Level ERRO
+        }
+        finally {
+            if ($scriptToExecute -eq $tempScript) {
+                Remove-Item $tempScript -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
 
@@ -212,13 +263,10 @@ function Show-OfficeMenu {
         $isInstalled = Test-Path $ctrPath
         $statusStr = if ($isInstalled) { "Instalado" } else { "Não detectado" }
         
-        if (Get-Command Show-MenuItem -ErrorAction SilentlyContinue) {
-             # Se ui-utils estiver carregado, podemos tentar injetar uma linha de status
-        }
-
         Show-MenuItem -Number 1 -ID "INSTALAR" -Description "Baixar e Instalar Microsoft Office"
         Show-MenuItem -Number 2 -ID "REPARAR"  -Description "Reparo Rápido e Limpeza de Cache"
         Show-MenuItem -Number 3 -ID "REMOVER"  -Description "Desinstalação Completa (Confirmação)"
+        Show-MenuItem -Number 4 -ID "BUSINESS" -Description "Instalar Office 365 Business (Via Link)"
         
         Write-Host ""
         Write-Host "  [0] Voltar ao Menu Principal" -ForegroundColor DarkGreen
@@ -230,6 +278,15 @@ function Show-OfficeMenu {
             "1" { Install-Office }
             "2" { Repair-Office }
             "3" { Remove-Office }
+            "4" { 
+                Write-Host ""
+                $url = Read-Host "  Digite a URL do instalador do Office 365 Business"
+                if (-not [string]::IsNullOrWhiteSpace($url)) {
+                    Install-Office -DownloadUrl $url
+                } else {
+                    Write-Host "  [AVISO] URL inválida." -ForegroundColor Yellow
+                }
+            }
             "0" { return }
             "Q" { exit }
             "q" { exit }
