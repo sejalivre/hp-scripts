@@ -38,7 +38,7 @@ elseif ($ScriptRoot -like "*portable*") {
 }
 
 $baseUrl = "get.hpinfo.com.br"
-$installUrl = "https://get.hpinfo.com.br/tools/office/install.ps1"
+$installUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools/office/install.ps1"
 
 # Identificar o ClickToRun Executable
 $ctrPath = "C:\Program Files\Common Files\microsoft shared\ClickToRun\OfficeClickToRun.exe"

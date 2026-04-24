@@ -21,7 +21,8 @@ function Show-Header {
 }
 
 function Show-NextDNSMenu {
-    $localBaseUrl = "get.hpinfo.com.br/tools/nextdns"
+    $toolsBaseUrl = "https://raw.githubusercontent.com/sejalivre/hp-scripts/main/tools"
+    $localBaseUrl = "$toolsBaseUrl/nextdns"
     
     # Lê o ID atual se existir
     $ConfigFile = "$env:ProgramFiles\HPTI\config.txt"
@@ -60,7 +61,7 @@ function Show-NextDNSMenu {
             "1" {
                 Write-Host "`n  [🚀] Instalando NextDNS..." -ForegroundColor Green
                 try {
-                    irm "https://$localBaseUrl/install" | iex
+                    irm "$localBaseUrl/install.ps1" | iex
                 }
                 catch {
                     Write-Host "`n  [❌] ERRO: Falha ao instalar." -ForegroundColor Red
@@ -87,7 +88,7 @@ function Show-NextDNSMenu {
                     $reinstalar = Read-Host "  Deseja reinstalar o NextDNS com o novo ID? (S/N)"
                     if ($reinstalar -match '^[sS]') {
                         try {
-                            irm "https://$localBaseUrl/install" | iex
+                            irm "$localBaseUrl/install.ps1" | iex
                         }
                         catch {
                             Write-Host "`n  [❌] ERRO: Falha ao reinstalar." -ForegroundColor Red
@@ -101,7 +102,7 @@ function Show-NextDNSMenu {
             "3" {
                 Write-Host "`n  [🚀] Restaurando DNS Padrão..." -ForegroundColor Cyan
                 try {
-                    irm "https://$localBaseUrl/dns_padrão" | iex
+                    irm "$localBaseUrl/dns_padrão.ps1" | iex
                 }
                 catch {
                     Write-Host "`n  [❌] ERRO: Falha ao restaurar DNS." -ForegroundColor Red
@@ -110,7 +111,7 @@ function Show-NextDNSMenu {
             "4" {
                 Write-Host "`n  [🚀] Reparando Instalação..." -ForegroundColor Yellow
                 try {
-                    irm "https://$localBaseUrl/reparar_nextdns" | iex
+                    irm "$localBaseUrl/reparar_nextdns.ps1" | iex
                 }
                 catch {
                     Write-Host "`n  [❌] ERRO: Falha ao reparar." -ForegroundColor Red
@@ -119,7 +120,7 @@ function Show-NextDNSMenu {
             "5" {
                 Write-Host "`n  [🚀] Removendo Configurações HPTI..." -ForegroundColor Red
                 try {
-                    irm "https://$localBaseUrl/remover_hpti" | iex
+                    irm "$localBaseUrl/remover_hpti.ps1" | iex
                 }
                 catch {
                     Write-Host "`n  [❌] ERRO: Falha ao remover." -ForegroundColor Red
