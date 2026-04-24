@@ -81,7 +81,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | 10 | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
 | 11 | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
 | 12 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
-| 13 | 📦 OFFICE                    | Gerenciamento Microsoft Office (Instalação, Reparo, Remoção)                        |
+| 13 | 📦 OFFICE                    | Gerenciamento Office (Instalação, Business via Link, Reparo, Remoção)           |
 | 14 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
 | 15 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
 | 16 | ⚡ ENERGIA                   | Planos de energia, hibernação, otimização desktop/notebook, diagnóstico            |
@@ -219,6 +219,8 @@ hp-scripts/
 │   ├── office.ps1          # Gerenciamento Microsoft Office
 
 ├── tools/                  # Ferramentas portáteis
+│   ├── office/             # Módulo Office
+│   │   └── install.ps1
 │   ├── nextdns/            # Módulo NextDNS
 │   │   ├── install.ps1
 │   │   ├── nextdns.ps1
