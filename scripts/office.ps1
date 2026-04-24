@@ -268,7 +268,8 @@ function Show-OfficeMenu {
         Show-MenuItem -Number 1 -ID "INSTALAR" -Description "Baixar e Instalar Microsoft Office"
         Show-MenuItem -Number 2 -ID "REPARAR"  -Description "Reparo Rápido e Limpeza de Cache"
         Show-MenuItem -Number 3 -ID "REMOVER"  -Description "Desinstalação Completa (Confirmação)"
-        Show-MenuItem -Number 4 -ID "BUSINESS" -Description "Instalar Office 365 Business (Via Link)"
+        Show-MenuItem -Number 4 -ID "BUSINESS" -Description "Instalar Office 365 Business (Com Outlook)"
+        Show-MenuItem -Number 5 -ID "CUSTOM"   -Description "Instalar via Link Personalizado"
         
         Write-Host ""
         Write-Host "  [0] Voltar ao Menu Principal" -ForegroundColor DarkGreen
@@ -281,8 +282,12 @@ function Show-OfficeMenu {
             "2" { Repair-Office }
             "3" { Remove-Office }
             "4" { 
+                $outlookUrl = "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365BusinessRetail&platform=x64&language=pt-br&version=O16GA"
+                Install-Office -DownloadUrl $outlookUrl
+            }
+            "5" { 
                 Write-Host ""
-                $url = Read-Host "  Digite a URL do instalador do Office 365 Business"
+                $url = Read-Host "  Digite a URL do instalador do Office"
                 if (-not [string]::IsNullOrWhiteSpace($url)) {
                     Install-Office -DownloadUrl $url
                 } else {

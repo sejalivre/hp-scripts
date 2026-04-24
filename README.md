@@ -81,7 +81,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 | 10 | 🖨️ PRINT                     | Reparo de spooler, limpeza de filas, ajustes de compatibilidade                     |
 | 11 | 💾 BACKUP                    | Backup de Wi-Fi, impressoras, programas, certificados, papel de parede...           |
 | 12 | 🔑 ATIVADOR                  | Link para ativação (get.activated.win)                                              |
-| 13 | 📦 OFFICE                    | Gerenciamento Office (Instalação, Business via Link, Reparo, Remoção)           |
+| 13 | 📦 OFFICE                    | Gerenciamento Office (Instalação, Business c/ Outlook, Reparo, Remoção)    |
 | 14 | 🎨 WALLPAPER                 | Aplica wallpaper corporativo padrão automaticamente                                 |
 | 15 | 🛡️ NEXTDNS                   | Instalação, reparo, remoção e gerenciamento completo do NextDNS                     |
 | 16 | ⚡ ENERGIA                   | Planos de energia, hibernação, otimização desktop/notebook, diagnóstico            |
@@ -285,7 +285,7 @@ irm get.hpinfo.com.br/menu | iex
 | **`wallpaper.ps1`** | Aplicação de wallpaper corporativo padrão |
 | **`repair.ps1`** | Diagnóstico e reparo automático modular (Rede, Disco, Updates, Segurança) |
 | **`winforge.ps1`** | Instalação de aplicativos + otimizações do sistema |
-| **`office.ps1`** | Gerenciamento Microsoft Office (Instalação, Reparo, Remoção) |
+| **`office.ps1`** | Gerenciamento Microsoft Office (Instalação, Business c/ Outlook, Reparo, Remoção) |
 
 ---
 
