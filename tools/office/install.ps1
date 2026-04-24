@@ -6,7 +6,7 @@
 #>
 
 param(
-    [string]$DownloadUrl = "https://go.microsoft.com/fwlink/p/?LinkID=2009112"
+    [string]$DownloadUrl = "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365AppsBasicRetail&platform=x64&language=pt-br&version=O16GA"
 )
 
 # --- VERIFICAÇÃO DE ADMINISTRADOR ---

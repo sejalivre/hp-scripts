@@ -50,7 +50,7 @@ if ([string]::IsNullOrEmpty($ScriptRoot)) {
         $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
     }
     if ([string]::IsNullOrEmpty($ScriptRoot)) {
-        $ScriptRoot = Get-Location | Select-Object -ExpandProperty Path
+        $ScriptRoot = (Get-Location | Select-Object -ExpandProperty Path | Select-Object -First 1)
     }
 }
 
