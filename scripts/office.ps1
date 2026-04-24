@@ -25,7 +25,7 @@ if ([string]::IsNullOrEmpty($ScriptRoot)) {
         $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
     }
     if ([string]::IsNullOrEmpty($ScriptRoot)) {
-        $ScriptRoot = Get-Location | Select-Object -ExpandProperty Path
+        $ScriptRoot = (Get-Location | Select-Object -ExpandProperty Path | Select-Object -First 1)
     }
 }
 
@@ -118,19 +118,25 @@ if (-not (Get-Command Write-HPLog -ErrorAction SilentlyContinue)) {
 # ============================================================
 
 function Install-Office {
-    param([string]$DownloadUrl)
+    param([string]$DownloadUrl = "https://c2rsetup.officeapps.live.com/c2r/download.aspx?ProductreleaseID=O365AppsBasicRetail&platform=x64&language=pt-br&version=O16GA")
     Write-Host "`n  [INFO] Iniciando instalação do Office..." -ForegroundColor Yellow
     
     # Determinar script de instalação
     $localInstallScript = ""
-    # Tenta achar tools/office/install.ps1 relativo ao root
-    $potentialPaths = @(
-        Join-Path $ScriptRoot "tools\office\install.ps1",
-        Join-Path (Split-Path $ScriptRoot -Parent) "tools\office\install.ps1",
-        Join-Path $ScriptRoot "..\tools\office\install.ps1"
-    )
     
-    foreach ($path in $potentialPaths) {
+    # Lista de locais para procurar o instalador local
+    $pathsToTry = @()
+    if ($ScriptRoot) {
+        try {
+            $pathsToTry += Join-Path $ScriptRoot "tools\office\install.ps1"
+            $parent = Split-Path $ScriptRoot -Parent
+            if ($parent) {
+                $pathsToTry += Join-Path $parent "tools\office\install.ps1"
+            }
+        } catch {}
+    }
+    
+    foreach ($path in $pathsToTry) {
         if (Test-Path $path) {
             $localInstallScript = $path
             break
@@ -160,11 +166,7 @@ function Install-Office {
     if (Test-Path $scriptToExecute) {
         Write-Host "  [INFO] Executando instalador..." -ForegroundColor Green
         try {
-            if ($DownloadUrl) {
-                & $scriptToExecute -DownloadUrl $DownloadUrl
-            } else {
-                & $scriptToExecute
-            }
+            & $scriptToExecute -DownloadUrl $DownloadUrl
             Write-HPLog -Message "Script de instalação do Office executado com sucesso." -Level INFO
         }
         catch {
