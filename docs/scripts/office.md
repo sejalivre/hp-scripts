@@ -27,8 +27,12 @@ Baixa e executa o script oficial de instalação da HP-Scripts.
 - Desinstalação total do Office usando a ferramenta nativa `ClickToRun`.
 - **Segurança**: Requer confirmação explícita do usuário antes de iniciar.
 
-### 4. Office 365 Business (Via Link)
-- Permite a instalação de versões específicas do Office (como Business) através de um link de download direto fornecido pelo usuário.
+### 4. Office 365 Business (Com Outlook)
+- Instalação pré-configurada para Office 365 Business que inclui o Outlook.
+- **URL**: Link direto da Microsoft para a versão Business Retail.
+
+### 5. Link Personalizado
+- Permite a instalação de versões específicas do Office através de um link de download direto fornecido pelo usuário.
 - Útil para quando o cliente possui uma licença específica com instalador personalizado.
 
 ---
@@ -74,8 +78,11 @@ Use a opção **[02] REPARAR** quando o Office estiver lento, travando ou aprese
 ### Limpeza de Licença ou Reinstalação
 Use a opção **[03] REMOVER** para limpar instalações anteriores antes de uma nova ativação ou mudança de versão.
 
-### Instalação de Versão Específica (Business)
-Use a opção **[04] BUSINESS** quando o cliente fornecer um link direto para o instalador do Office 365 Business ou outra variante.
+### Instalação de Versão Business (com Outlook)
+Use a opção **[04] BUSINESS** para instalar o Office 365 Business completo, incluindo o Outlook.
+
+### Instalação via Link Personalizado
+Use a opção **[05] CUSTOM** quando o cliente fornecer um link direto para o instalador de uma variante específica.
 
 ---
 
