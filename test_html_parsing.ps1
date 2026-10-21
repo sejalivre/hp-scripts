@@ -1,4 +1,4 @@
-# Test script to diagnose HTML parsing issue
+﻿# Test script to diagnose HTML parsing issue
 $reportPath = "c:\hp\GitHub\hp-scripts\HPTI\Reports\checkup_-PC_20260131_220116.html"
 
 Write-Host "`n=== Testing HTML Parsing ===" -ForegroundColor Cyan

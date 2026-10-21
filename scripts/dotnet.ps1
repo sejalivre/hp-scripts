@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     HP-Scripts .NET v1.0 - Reparo e Instalação de .NET Framework e Runtimes
 .DESCRIPTION
@@ -61,7 +61,7 @@ if (-not $_uiLoaded) {
     function Show-MenuItem { param([int]$Number, [string]$ID, [string]$Description) Write-Host "  [$Number] $ID - $Description" }
     function Show-MenuSeparator { param([string]$Text = "") Write-Host "`n--- $Text ---" -ForegroundColor Yellow }
     function Show-MenuFooter { Write-Host "" }
-    function Read-MenuKey { param([string]$Prompt = "Opção") Write-Host "$Prompt: " -NoNewline; return Read-Host }
+    function Read-MenuKey { param([string]$Prompt = "Opção") Write-Host "${Prompt}: " -NoNewline; return Read-Host }
 }
 
 function Write-Status {

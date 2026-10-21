@@ -13,6 +13,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **Paridade portable**: mesmo submenu em `portable/menu.ps1`, lendo os scripts de `../scripts`.
 - **Docs**: nova página `docs/scripts/diagnostico.md`, seção do submenu em `docs/scripts/sfc.md`, navegação em `docs/mkdocs.yml` e tabela do menu no `README.md`.
 
+### Corrigido
+- **Encoding UTF-8 com BOM nos scripts executados a partir do disco**: no modo remoto o menu baixa o `.ps1` para `%TEMP%` e executa o arquivo. Sem BOM, o PowerShell 5.1 lê o arquivo como ANSI e todo caractere acentuado/travessão quebra o parser (a sequência `E2 80 94` do travessão vira `”`, que o PowerShell interpreta como fechar aspas). Sintoma: `Token 'Cores' inesperado` e `')' de fechamento ausente`. BOM adicionado em 20 arquivos (scripts executados pelo menu, módulos do NextDNS/Office e scripts de teste).
+- **`scripts/ui-utils.ps1` e `scripts/dotnet.ps1` não parseavam**: `Write-Host "$Prompt: "` é lido como variável com escopo e gera erro de parser, derrubando o carregamento do `ui-utils` (o menu caía no fallback inline). Trocado por `"${Prompt}: "`.
+
 ## [v1.5] - 2026-01-27
 
 ### Adicionado

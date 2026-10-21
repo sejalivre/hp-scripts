@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Menu de Gerenciamento NextDNS - HP-Scripts
 .DESCRIPTION

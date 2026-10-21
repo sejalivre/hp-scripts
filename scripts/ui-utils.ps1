@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Módulo de Utilidades de UI para HP-Scripts
 .DESCRIPTION
@@ -329,7 +329,7 @@ function Read-MenuKey {
     )
 
     Write-Host ""
-    Write-Host "  $Prompt: " -NoNewline -ForegroundColor Green
+    Write-Host "  ${Prompt}: " -NoNewline -ForegroundColor Green
 
     if ($Host.Name -eq 'ConsoleHost') {
         try {

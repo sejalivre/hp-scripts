@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script de Remoção Total HPTI - NextDNS -> Google DNS
 .DESCRIPTION
