@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # SCRIPT: energia.ps1
 # DESCRIÇÃO: Soluções de problemas de energia, planos de energia e hibernação
 # REQUER: PowerShell 5.1+ (Windows 10/11)

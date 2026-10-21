@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Instalacao de Updates do Windows via PSWindowsUpdate
 #>

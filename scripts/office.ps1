@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Menu de Gerenciamento Microsoft Office - HPCRAFT
 .DESCRIPTION

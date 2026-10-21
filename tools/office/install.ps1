@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script de Instalação do Microsoft Office via URL Customizada - HPCRAFT
 .DESCRIPTION

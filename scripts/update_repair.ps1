@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Reparacao do Windows Update - HPCRAFT
 .DESCRIPTION

@@ -1,4 +1,4 @@
-# Teste do parsing HTML
+﻿# Teste do parsing HTML
 $htmlContent = Get-Content "c:\hp\GitHub\hp-scripts\HPTI\Reports\checkup_-PC_20260131_220116.html" -Raw -Encoding UTF8
 
 $problems = @()

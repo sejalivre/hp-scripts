@@ -1,4 +1,4 @@
-# Script de teste isolado para verificar o parsing HTML
+﻿# Script de teste isolado para verificar o parsing HTML
 $reportPath = "c:\hp\GitHub\hp-scripts\HPTI\Reports\checkup_-PC_20260131_220116.html"
 
 # Definir cores (simplificado)

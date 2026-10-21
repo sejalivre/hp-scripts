@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Menu de Gerenciamento do Windows Update - HPCRAFT
 .DESCRIPTION
