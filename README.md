@@ -71,7 +71,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 |----|------------------------------|--------------------------------------------------------------------------------------|
 | 1  | 📊 CHECK                     | Verificações rápidas de integridade do sistema                                      |
 | 2  | 🔧 REPAIR                    | Reparo automático do sistema (Rede, Disco, Updates, Segurança)                      |
-| 3  | 🔧 SFC                       | Diagnóstico e reparação completa do Windows (DISM, SFC, memória, processos)         |
+| 3  | 🔧 SFC                       | **Submenu** de diagnóstico: 1) Diagnóstico e Reparação Completa (DISM/SFC) · 2) Diagnóstico Técnico Completo (relatórios em `C:\DiagTecnico`) |
 | 4  | 🔧 INSTALLPS1                | Instalar ou atualizar PowerShell 7+ (verifica versão automaticamente)              |
 | 5  | ⚙️ WINFORGE                  | Instalação de apps (Chrome, 7-Zip, Reader) + otimizações do sistema                |
 | 6  | 🧹 LIMPEZA                   | Limpeza agressiva (temp, cache, update, lixeira, otimização de disco)               |
@@ -94,6 +94,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 irm get.hpinfo.com.br/scripts/check    | iex
 irm get.hpinfo.com.br/scripts/backup   | iex
 irm get.hpinfo.com.br/scripts/sfc      | iex
+irm get.hpinfo.com.br/scripts/Diagnostico | iex
 irm get.hpinfo.com.br/scripts/repair   | iex
 irm get.hpinfo.com.br/scripts/limp     | iex
 irm get.hpinfo.com.br/scripts/update   | iex

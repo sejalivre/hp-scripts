@@ -1,12 +1,23 @@
+#Requires -RunAsAdministrator
 <#
 .SYNOPSIS
 Script de diagnóstico completo para técnicos em informática.
+.DESCRIPTION
+Executa o diagnóstico técnico completo da máquina e gera, em C:\DiagTecnico,
+o relatório (Relatorio_*.txt), os scripts de reparo (Reparo_*.ps1 e Reparo_*.cmd),
+a lista de itens não consertados (NaoConsertado_*.txt) e os itens de inicialização
+(StartupItems_*.txt).
+.NOTES
+Chamado pelo menu HP Scripts em: 03 (SFC) > 2 (Diagnóstico Técnico Completo).
+Ao final devolve o controle ao menu (não encerra a sessão).
 #>
 
 # 1. VERIFICAÇÃO DE ADMINISTRADOR
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host 'ERRO: Execute como Administrador!' -ForegroundColor Red
-    pause; exit 1
+    Write-Host 'Pressione qualquer tecla para voltar ao menu...' -ForegroundColor Yellow
+    try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { Start-Sleep -Seconds 2 }
+    return
 }
 
 # 2. CONFIGURAÇÃO INICIAL
@@ -833,4 +844,5 @@ Write-Host "`nVerifique o Bloco de Notas aberto para revisar os itens de inicial
 Write-Host "Execute o script de reparo (PS1 ou CMD) para aplicar as correções geradas." -ForegroundColor Green
 Write-Host "=======================================================" -ForegroundColor Blue
 Write-Host ""
-pause
+Write-Host "Pressione qualquer tecla para voltar ao menu..." -ForegroundColor Yellow
+try { $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") } catch { Start-Sleep -Seconds 2 }
