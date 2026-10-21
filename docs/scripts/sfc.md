@@ -14,6 +14,18 @@ irm get.hpinfo.com.br/sfc | iex
 irm get.hpinfo.com.br/menu | iex  # Opção 2
 ```
 
+## 🧭 Submenu no Menu Principal (opção 03)
+
+Ao escolher a opção **03 – SFC** no menu principal (`irm get.hpinfo.com.br/menu | iex`), o HP-Scripts abre um submenu com duas rotinas de diagnóstico:
+
+| Opção | Item | O que executa |
+|-------|------|---------------|
+| `1` | Diagnóstico e Reparação Completa | `scripts/sfc.ps1` (este documento: DISM, SFC, memória, processos, disco, Update, Defender) |
+| `2` | Diagnóstico Técnico Completo | `scripts/Diagnostico.ps1` ([detalhes](diagnostico.md): gera relatórios e scripts de reparo em `C:\DiagTecnico`) |
+| `0` | Voltar | Retorna ao menu principal |
+
+As demais opções do menu principal mantêm a numeração original (04 a 19). No modo portable, o mesmo submenu está em `portable/menu.ps1` e os scripts são lidos de `../scripts`.
+
 ## ⚙️ Funcionalidades
 
 ### 1. 💾 Análise e Otimização de Memória

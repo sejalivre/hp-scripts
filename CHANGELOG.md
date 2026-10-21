@@ -5,6 +5,14 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+- **Submenu 03 (SFC) no menu principal**: a opção 03 agora abre um submenu com `1) Diagnóstico e Reparação Completa` (`scripts/sfc.ps1`), `2) Diagnóstico Técnico Completo` (`scripts/Diagnostico.ps1`) e `0) Voltar`. Numeração das demais opções (04+) preservada.
+- **scripts/Diagnostico.ps1**: diagnóstico técnico completo com geração de relatórios e scripts de reparo em `C:\DiagTecnico`, integrado ao menu (sem `pause`/`exit` que derrubem a sessão).
+- **Paridade portable**: mesmo submenu em `portable/menu.ps1`, lendo os scripts de `../scripts`.
+- **Docs**: nova página `docs/scripts/diagnostico.md`, seção do submenu em `docs/scripts/sfc.md`, navegação em `docs/mkdocs.yml` e tabela do menu no `README.md`.
+
 ## [v1.5] - 2026-01-27
 
 ### Adicionado

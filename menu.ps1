@@ -285,6 +285,94 @@ function Set-ExecutionPolicy-Unrestricted {
     }
 }
 
+# ============================================================
+# EXECUÇÃO DE MÓDULO LOCAL (usada pelo menu principal e pelos submenus)
+# ============================================================
+function Invoke-HPLocalScript {
+    param([hashtable]$Item)
+
+    # Para scripts PowerShell locais (dentro de ./scripts/)
+    if ($IsLocalExecution) {
+        # Modo local: executar arquivo do disco
+        $scriptPath = Join-Path $ScriptRoot "$($Item.Path).ps1"
+        if (Test-Path $scriptPath) {
+            try {
+                & $scriptPath
+                Write-HPLog -Message "Modulo $($Item.ID) concluido com sucesso" -Level INFO
+            }
+            catch {
+                Write-Host "`n  [ERRO] Erro durante execucao do modulo." -ForegroundColor Red
+                Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+                Write-HPLog -Message "ERRO em $($Item.ID): $($_.Exception.Message)" -Level ERRO
+            }
+        }
+        else {
+            Write-Host "`n  [ERRO] Script local não encontrado: $scriptPath" -ForegroundColor Red
+            Write-HPLog -Message "ERRO: Script local nao encontrado: $scriptPath" -Level ERRO
+        }
+    }
+    else {
+        # Modo remoto: baixar e executar
+        $finalUrl = "https://$baseUrl/$($Item.Path)"
+        $TempScript = Join-Path $env:TEMP "HPTI_$($Item.ID).ps1"
+        try {
+            Write-Host "  [INFO] Baixando script remoto..." -ForegroundColor Yellow
+            Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
+            if (Test-Path $TempScript) {
+                & $TempScript
+                Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
+                Write-HPLog -Message "Modulo $($Item.ID) concluido com sucesso" -Level INFO
+            }
+        }
+        catch {
+            Write-Host "`n  [ERRO] Falha ao baixar script remoto." -ForegroundColor Red
+            Write-Host "  URL: $finalUrl" -ForegroundColor DarkGreen
+            Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
+            Write-HPLog -Message "ERRO em $($Item.ID): $($_.Exception.Message)" -Level ERRO
+        }
+    }
+}
+
+# Submenu - SFC (opção 03 do menu principal): Diagnóstico e Reparação
+function Show-SFCSubmenu {
+    $itensSFC = @(
+        @{ ID = "SFC"     ; Desc = "Diagnostico e Reparacao Completa" ; Path = "scripts/sfc"         ; IsLocalScript = $true }
+        @{ ID = "DIAGTEC" ; Desc = "Diagnostico Tecnico Completo"     ; Path = "scripts/Diagnostico" ; IsLocalScript = $true }
+    )
+
+    do {
+        Clear-Host
+        Show-BoxHeader -Title "SFC - DIAGNOSTICO E REPARACAO" -Subtitle "Windows Optimization Tool"
+        Show-MenuSeparator -Text "ESCOLHA O TIPO DE DIAGNOSTICO"
+
+        for ($i = 0; $i -lt $itensSFC.Count; $i++) {
+            $n = $i + 1
+            $item = $itensSFC[$i]
+            Show-MenuItem -Number $n -ID $item.ID -Description $item.Desc
+        }
+
+        Show-MenuFooter -Options @("0") -Labels @("Voltar")
+
+        $escolhaSFC = Read-MenuKey -Prompt "  Escolha uma opcao" -DigitTimeoutMs 2000
+        Write-HPLog -Message "Submenu SFC - opcao selecionada: '$escolhaSFC'" -Level INFO
+
+        if ($escolhaSFC -eq "0" -or $escolhaSFC -eq "q") { return }
+
+        $idxSFC = 0
+        if ([int]::TryParse($escolhaSFC, [ref]$idxSFC) -and $idxSFC -le $itensSFC.Count -and $idxSFC -gt 0) {
+            $selecionadaSFC = $itensSFC[$idxSFC - 1]
+
+            Write-Host "`n  Iniciando $($selecionadaSFC.ID)..." -ForegroundColor Green
+            Write-HPLog -Message "Iniciando modulo: $($selecionadaSFC.ID) (submenu SFC)" -Level INFO
+
+            Invoke-HPLocalScript -Item $selecionadaSFC
+
+            Write-Host "`n  Pressione ENTER para voltar ao submenu SFC..." -ForegroundColor Yellow
+            try { [void](Read-Host) } catch { Start-Sleep -Seconds 2 }
+        }
+    } while ($true)
+}
+
 # Funções Read-MenuKey e Get-HardwareInfo estão disponíveis no ui-utils.ps1
 
 function Show-MatrixEffect {
@@ -407,45 +495,14 @@ function Show-MainMenu {
                 }
             }
             elseif ($selecionada.IsLocalScript) {
-                # Para scripts PowerShell locais (dentro de ./scripts/)
-                if ($IsLocalExecution) {
-                    # Modo local: executar arquivo do disco 
-                    $scriptPath = Join-Path $ScriptRoot "$($selecionada.Path).ps1"
-                    if (Test-Path $scriptPath) {
-                        try {
-                            & $scriptPath
-                            Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
-                        }
-                        catch {
-                            Write-Host "`n  [ERRO] Erro durante execucao do modulo." -ForegroundColor Red
-                            Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
-                            Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
-                        }
-                    }
-                    else {
-                        Write-Host "`n  [ERRO] Script local não encontrado: $scriptPath" -ForegroundColor Red
-                        Write-HPLog -Message "ERRO: Script local nao encontrado: $scriptPath" -Level ERRO
-                    }
+                # Opção 03 (SFC) abre um submenu com as duas rotinas de diagnóstico
+                if ($selecionada.ID -eq "SFC") {
+                    Write-HPLog -Message "Submenu SFC aberto" -Level INFO
+                    Show-SFCSubmenu
                 }
                 else {
-                    # Modo remoto: baixar e executar
-                    $finalUrl = "https://$baseUrl/$($selecionada.Path)"
-                    $TempScript = Join-Path $env:TEMP "HPTI_$($selecionada.ID).ps1"
-                    try {
-                        Write-Host "  [INFO] Baixando script remoto..." -ForegroundColor Yellow
-                        Invoke-WebRequest -Uri $finalUrl -OutFile $TempScript -UseBasicParsing
-                        if (Test-Path $TempScript) {
-                            & $TempScript
-                            Remove-Item $TempScript -Force -ErrorAction SilentlyContinue
-                            Write-HPLog -Message "Modulo $($selecionada.ID) concluido com sucesso" -Level INFO
-                        }
-                    }
-                    catch {
-                        Write-Host "`n  [ERRO] Falha ao baixar script remoto." -ForegroundColor Red
-                        Write-Host "  URL: $finalUrl" -ForegroundColor DarkGreen
-                        Write-Host "  Detalhe: $($_.Exception.Message)" -ForegroundColor DarkGreen
-                        Write-HPLog -Message "ERRO em $($selecionada.ID): $($_.Exception.Message)" -Level ERRO
-                    }
+                    # Para scripts PowerShell locais (dentro de ./scripts/)
+                    Invoke-HPLocalScript -Item $selecionada
                 }
             }
             elseif ($selecionada.IsLocal) {
